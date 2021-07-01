@@ -1,2 +1,6 @@
+# Credentials
 *access_token.py
 credentials.pkl
+
+# Metadata dump files
+dataset-metadata.json
