@@ -1,3 +1,5 @@
+import pandas as pd
+
 def is_nested(col):
     """Given an iterable, returns True if any item in the iterable is a dictionary or list"""
     return any([True for x in col if type(x) in (dict, list)])
