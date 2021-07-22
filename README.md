@@ -1,4 +1,4 @@
-# Scripts related to: A Review of Publishing and Sharing Practices for Machine Learning Objects for Informing Library Curation Practices]
+# Scripts related to: A Review of Publishing and Sharing Practices for Machine Learning Objects for Informing Library Curation Practices
 
 ## Project Overview
 The goal of this project is to inform internal and community practices for curating machine learning (ML) objects, so that the relationships between the components of ML objects—experiments, tasks, algorithms, datasets, features, models, hardware/software platforms, parameters, and evaluation measures—are made explicit and can be readily understood or reused when the objects are accessed by future users. To that end, this project documents and assesses the way ML objects are currently shared in scientific repositories, to identify commonalities in structure and documentation as well as any apparent barriers to reuse. These barriers may include, for example, missing components (for a given task), idiosyncrasies in labeling (or lack thereof) of components, and variability in file organization. By identifying the core components of various ML objects and their needed documentation, we hope to move the community toward a common practice for curation as well as to increase efficiency by facilitating interoperability and reuse of ML components.
@@ -25,7 +25,7 @@ This GitHub repository contains scripts used to query the APIs for the following
 * [Dryad](https://datadryad.org/stash)
   * A lightly curated generalist repository for datasets, with a soft limit of 300 GB/dataset. Assigns the CC0 public domain dedication to all submissions.
 * [UC San Diego Library Digital Collections](https://library.ucsd.edu/dc)
-  * Contains a small number of ML research objects, which have been lightly curated. Offers a variety of licenses; encourages CC-BY (????????)
+  * Contains a small number of ML research objects, which have been lightly curated. Offers a variety of licenses; default is CC-BY.
 * [Harvard Dataverse](https://dataverse.harvard.edu/)
   * Offers tiered curation with deposits and a limit of 1 TB. In addition to serving as a repository for research data, depositors can submit their data and code as a container “dataverse” with all necessary data and metadata. CC0 is highly encouraged, and applied by default.
 
