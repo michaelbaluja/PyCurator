@@ -22,11 +22,13 @@ VERSION = '0.1.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
+    'bs4',
     'flatten_json',
     'kaggle',
     'openml',
     'pandas',
     'requests',
+    'selenium',
     'tqdm'      
 ]
 
