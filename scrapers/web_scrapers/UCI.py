@@ -1,19 +1,14 @@
-import json
 import os
 import re
 
 import pandas as pd
 import selenium.webdriver.support.expected_conditions as EC
-from bs4 import BeautifulSoup
 from flatten_json import flatten
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
 from tqdm import tqdm
-from webdriver_manager.chrome import ChromeDriverManager
 
-from .base_scrapers import AbstractWebScraper
+from scrapers.base_scrapers import AbstractWebScraper
 
 
 class UCIScraper(AbstractWebScraper):
@@ -38,62 +33,25 @@ class UCIScraper(AbstractWebScraper):
         **kwargs
     ):
 
-        # Create driver
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        os.environ['WDM_LOG_LEVEL'] = '0'
-
-        driver = webdriver.Chrome(
-                ChromeDriverManager(print_first_line=False).install(), 
-                options=chrome_options
-            )
-
         super().__init__(
             repository_name='uci', 
-            driver=driver,
             path_file=path_file,
             flatten_output=flatten_output
         )
 
-        self.base_url = kwargs.get(
-            'base_url',
-            'https://archive-beta.ics.uci.edu/ml/datasets'
-        )
-        self.dataset_list_url = kwargs.get(
-            'dataset_list_url', 
-            f'{self.base_url}?&p%5Boffset%5D=0&p%5Blimit%5D=591&p%5BorderBy%5D='
-            'NumHits&p%5Border%5D=desc'
-        )
+        try:
+            self.structural_paths = self.path_dict['structural_paths']
+        except KeyError:
+            raise ValueError('Path file must contain structural paths')
 
-        self.instance_path = kwargs.get(
-            'instance_path',
-            'div:nth-child(2) > div > div > div.jss11 > div > '
-            'div.MuiTableContainer-root > table > tbody > tr > div > li > div > '
-            'div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.MuiGrid-grid-md-11'
-            ' > div > span > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs'
-            '-8.MuiGrid-grid-sm-10 > p > a'
-        )
+        self.base_url = 'https://archive-beta.ics.uci.edu/ml/datasets'
 
-        self.wait_path = kwargs.get(
-            'wait_path',
-            'div:nth-child(2) > div > div.MuiGrid-root.MuiGrid-'
-            'container.MuiGrid-align-items-xs-flex-start.MuiGrid-'
-            'justify-xs-center > div.MuiGrid-root.MuiGrid-item.'
-            'MuiGrid-grid-xs-12.MuiGrid-grid-md-9 > '
-            'div:nth-child(4) > div.MuiCollapse-container.'
-            'MuiCollapse-entered > div > div > div > div > table >'
-            ' tbody > tr:nth-child(1) > td:nth-child(2) > p'
-        )
+        self.dataset_list_url = f'{self.base_url}?&p%5Boffset%5D=0&p%5Blimit%' \
+            '5D=591&p%5BorderBy%5D=NumHits&p%5Border%5D=desc'
 
-        self.tabular_wait_path = kwargs.get(
-            'tabular_wait_path',
-            'div:nth-child(2) > div > div.MuiGrid-root.MuiGrid-container.'
-            'MuiGrid-align-items-xs-flex-start.MuiGrid-justify-xs-center > '
-            'div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.MuiGrid-grid-md-9'
-            ' > div:nth-child(5) > div.MuiCollapse-container.MuiCollapse-'
-            'entered > div > div > div > div > table > tbody > tr:nth-child(1)'
-            ' > td:nth-child(2) > p'
-        )
+        self.instance_path = self.structural_paths['instance_path']
+        self.wait_path = self.structural_paths['wait_path']
+        self.tabular_wait_path = self.structural_paths['tabular_wait_path']
 
 
     @staticmethod
@@ -144,7 +102,7 @@ class UCIScraper(AbstractWebScraper):
             if not os.path.isdir(save_dir):
                 os.makedirs(save_dir)
 
-            output_filename = os.path.join(save_dir, f'{repo_name}.csv')
+            output_filename = os.path.join(save_dir, f'{repo_name}.json')
             self.save_results(dataset_df, output_filename)
 
         return dataset_df
@@ -158,12 +116,14 @@ class UCIScraper(AbstractWebScraper):
         # Remove unnecessary text from temporal/numeric entries
         ## Make sure that the donation date is not null
         if '-' in donation_date:
-            results['donation_date'] = \
-                re.findall('\d+-\d+-\d+', donation_date)[0]
+            results['donation_date'] = re.findall(
+                '\d+-\d+-\d+', 
+                donation_date
+            )[0]
         if num_citations:
-            results['num_citations'] = re.findall('\d+', num_citations)[0]         
+            results['num_citations'] = self.parse_numeric(num_citations)[0]      
         if num_views:
-            results['num_views'] = re.findall('\d+', num_views)[0]
+            results['num_views'] = self.parse_numeric(num_views)[0]
 
         return results
 
@@ -205,11 +165,13 @@ class UCIScraper(AbstractWebScraper):
         )
         
         # Create parsable html object
-        soup = self._get_soup()
+        soup = self._get_soup(features='html.parser')
         
         # Gather the instances and parse the ids
-        dataset_ids = [instance.attrs['href'].split('/')[-1] for 
-                       instance in soup.select(instance_path)]
+        dataset_ids = [
+            instance.attrs['href'].split('/')[-1] 
+            for instance in soup.select(instance_path)
+        ]
         
         return dataset_ids
 
@@ -236,17 +198,33 @@ class UCIScraper(AbstractWebScraper):
         result_dict : dict
         """
         
-        single_attribute_paths = self.path_dict.get('single_attribute_paths', dict())
-        variable_attribute_paths = self.path_dict.get('variable_attribute_paths', dict())
-        tabular_attribute_paths = self.path_dict.get('tabular_attribute_paths', None)
+        single_attribute_paths = self.path_dict.get(
+            'single_attribute_paths', 
+            dict()
+        )
+        variable_attribute_paths = self.path_dict.get(
+            'variable_attribute_paths', 
+            dict()
+        )
+        tabular_attribute_paths = self.path_dict.get(
+            'tabular_attribute_paths', 
+            None
+        )
         
         # Get the requested url
         self.driver.get(url)
         
         # Wait for pertinent sections to load
-        WebDriverWait(self.driver, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, self.wait_path))
-        )
+        try:
+            WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, self.wait_path))
+            )
+        except:
+            # This occurs when a dataset listed is "External". The difference
+            # in page layout (which appears to be caused by the lack of author
+            # information) causes the above code to raise an error as the 
+            # wait path cannot be found.
+            return None
         
         # Extract and convert html data
         soup = self._get_soup(features='html.parser')
@@ -255,22 +233,31 @@ class UCIScraper(AbstractWebScraper):
         if self.is_tabular(soup) and tabular_attribute_paths:
             # Wait to ensure that tabular properties loaded
             WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, self.tabular_wait_path))
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, self.tabular_wait_path)
+                )
             )
 
             # Extract and convert html data
             soup = self._get_soup(features='html.parser')
 
             try:
-                single_attribute_paths = {**single_attribute_paths, **tabular_attribute_paths}
+                single_attribute_paths = {
+                    **single_attribute_paths, 
+                    **tabular_attribute_paths
+                }
             except NameError:
                 single_attribute_paths = tabular_attribute_paths
         
         # Retrieve attribute values from parsed html
-        single_values = {attribute: self.get_single_attribute_value(soup, path) 
-                        for attribute, path in single_attribute_paths.items()}
-        variable_values = {attribute: self.get_variable_attribute_values(soup, path)
-                        for attribute, path in variable_attribute_paths.items()}
+        single_values = {
+            attribute: self.get_single_attribute_value(soup=soup, path=path) 
+            for attribute, path in single_attribute_paths.items()
+        }
+        variable_values = {
+            attribute: self.get_variable_attribute_values(soup, path)
+            for attribute, path in variable_attribute_paths.items()
+        }
         
         # Add results
         if single_values and variable_values:
@@ -288,7 +275,10 @@ class UCIScraper(AbstractWebScraper):
         soup = self._get_soup(features='html.parser')
 
         if '404' not in soup.text:
-            result_dict['links'] = self.get_variable_attribute_values(soup, 'body > ul > li')
+            result_dict['links'] = self.get_variable_attribute_values(
+                soup, 
+                'body > ul > li'
+            )
         
         # Clean results (if instructed)
         if clean:
@@ -329,9 +319,11 @@ class UCIScraper(AbstractWebScraper):
             url = f'{self.base_url}/{page_id}'
             
             # Retrieve and clean results
-            results = self.get_individual_page_data(url=url, 
-                                                    clean=clean,
-                                                    flatten_output=flatten_output)
+            results = self.get_individual_page_data(
+                url=url, 
+                clean=clean,
+                flatten_output=flatten_output
+            )
             # Add results to total result dataframe
             dataset_df = dataset_df.append(results, ignore_index=True)
         
@@ -339,8 +331,10 @@ class UCIScraper(AbstractWebScraper):
         #   Datasets that don't have nested data will force the DataFrame to 
         #   keep the nested column names
         if flatten_output:
-            columns_to_drop = \
-                self.path_dict.get('variable_attribute_paths', dict()).keys()
+            columns_to_drop = self.path_dict.get(
+                'variable_attribute_paths', 
+                dict()
+            ).keys()
             dataset_df = dataset_df.drop(columns=columns_to_drop)
         
         return dataset_df
