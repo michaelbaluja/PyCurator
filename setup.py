@@ -29,7 +29,8 @@ REQUIRED = [
     'pandas',
     'requests',
     'selenium',
-    'tqdm'      
+    'tqdm',
+    'webdriver_manager'   
 ]
 
 # What packages are optional?
