@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 from collections import OrderedDict
 
 month_name_to_integer = {
@@ -16,41 +17,98 @@ month_name_to_integer = {
     'Dec': '12'
 }
 
-def is_nested(col):
-    """Given an iterable, returns True if any item is a dictionary or list."""
-    return any([True for x in col if type(x) in (dict, list, OrderedDict)])
-
-def button_label_frame(root, label_text, button_text, button_command, frame_row, frame_column):
+def button_label_frame(root, label_text, button_text, button_command):
     from tkinter import Button, Frame, Label
 
     # Create frame to hold label and button
     _frame = Frame(root)
 
     _label = Label(_frame, text=label_text)
-    _label.grid(row=0, column=0, pady=(0, 10), sticky='e')
+    _label.pack(side='left')
 
     _button = Button(_frame, text=button_text, command=button_command)
-    _button.grid(row=0, column=1, pady=(0, 10), sticky='w')
+    _button.pack(side='right')
 
-    # Align credential frame widgets together 
-    _frame.grid(row=frame_row, column=frame_column, sticky='w')
+    # Align frame widgets together 
+    _frame.pack(anchor='w')
 
-def select_file(root, file_type, repo_name=None, **kwargs):
-    """Allows user to select local file.
+def parse_numeric_string(entry, cast=False):
+    """Given a string, returns all integer numeric substrings.
+    
+    Paremeters
+    ----------
+    entry : str
+    cast : bool, optional (default=False)
+        Option for instances to be int type-casted
+
+    Returns
+    -------
+    numeric_instances
+        If none present, NoneType
+        If one present, returns int
+        If multiple present, returns list of ints 
+    """
+    
+    assert isinstance(entry, str)
+    assert isinstance(cast, bool)
+
+    numeric_instances = re.findall(r'\d+', entry)
+
+    if cast:
+        numeric_instances = [int(num_str) for num_str in numeric_instances]
+
+    # Format return variable based on docstring description
+    if len(numeric_instances) == 0:
+        numeric_instances = None
+    elif len(numeric_instances) == 1:
+        numeric_instances = numeric_instances[0]
+
+    return numeric_instances
+
+def find_first_match(string, pattern):
+    """Finds the first occurance of a regex pattern in a given string.
+
+    Parameters
+    ----------
+    string : str
+    pattern : str
+
+    Returns
+    -------
+    str
+
+    See Also
+    --------
+    re.search, re.Match.group
+    """
+
+    try:
+        return re.search(pattern, string).group()
+    except AttributeError:
+        # Occurs if re.search returns None, as None has no attribute .group()
+        return None
+
+def is_nested(col):
+    """Given an iterable, returns True if any item is a dictionary or list."""
+    return any([True for x in col if type(x) in (dict, list, OrderedDict)])
+
+def select_from_files(root, selection_type, repo_name=None, **kwargs):
+    """Allows user to select local file/directory.
 
     Parameters
     ----------
     root : Tkinter.Frame
-        Derived Frame class that contains UI. Must contain "files" dict
-        attribute to hold the selected file.
-    file_type : str
-        Type of file to be selected. Examples include "credentials", 
-        "path_file", etc.
+        Derived Frame class that contains UI. 
+        
+        If choosing file:
+            Root must contain "files" dict attribute to hold the selected file.
+    selection_type : str
+        Type of selection to be made. 
+        Examples include "credentials", "directory", "css_paths" etc.
     repo_name : str, optional (default=None)
-        The name of the repository that the file is associated with. If None,
-        the file is associated with all repositories. 
+        Name of repository to associate selection with.
     kwargs : dict, optional
-        Allows users to input file
+        Allows users to input filetype restrictions.
     
     If repo_name is passed, files are stored in the format 
         root.files[repo_name][filetype] = filename
@@ -68,13 +126,13 @@ def select_file(root, file_type, repo_name=None, **kwargs):
             ('All File Types', '*.*')
         ]
 
-    if file_type == 'directory':
-        root.base_save_dir = fd.askdirectory(
+    if 'dir' in selection_type:
+        selection = fd.askdirectory(
             title='Choose Directory',
             initialdir='.'
         )
     else:
-        filename = fd.askopenfilename(
+        selection = fd.askopenfilename(
             title='Choose File',
             initialdir='.',
             filetypes=filetypes
@@ -82,9 +140,9 @@ def select_file(root, file_type, repo_name=None, **kwargs):
 
         try:
             if repo_name:
-                root.files[repo_name][file_type] = filename
+                root.repo_params[repo_name][selection_type] = selection
             else:
-                root.files[file_type] = filename
+                root.files[selection_type] = selection
         except AttributeError:
             raise NotImplementedError(f'{root} must contain "files" attribute.')
 
