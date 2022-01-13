@@ -1,3 +1,4 @@
+import re
 from time import sleep
 
 import pandas as pd
@@ -5,6 +6,7 @@ from flatten_json import flatten
 from tqdm import tqdm
 
 from scrapers.base_scrapers import AbstractTermScraper, AbstractWebScraper
+from utils import parse_numeric_string
 
 
 class DryadScraper(AbstractTermScraper, AbstractWebScraper):
@@ -12,9 +14,12 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
     Parameters
     ----------
-    path_file : str
+    path_file : str, optional (default=None)
         Json file for loading path dict.
         Must be of the form {search_type: {path_type: path_dict}}
+    scrape : boolearn, optional (default=True)
+        Flag for requesting web scraping as a method for additional metadata
+        collection. 
     search_terms : list-like, optional
         Terms to search over. Can be (re)set via set_search_terms() or passed in
         directly to search functions.
@@ -26,33 +31,48 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         If filepath, data in file must be formatted as a dictionary of the form
         data_dict['{REPO_NAME}_TOKEN']: MY_KEY, or as a string containing the 
         key.
+
+    Notes
+    -----
+    The method of webscraping has changed for this class, rendering the presence
+    of a path_file unnecessary. The class initialization will change at a later
+    point to reflect this.
     """
 
     def __init__(
         self, 
-        path_file,
+        path_file=None,
+        scrape=True,
         search_terms=None, 
         flatten_output=None, 
         credentials=None,
     ):
+        self.scrape = scrape
 
         AbstractTermScraper.__init__(
             self,
             repository_name='dryad', 
             search_terms=search_terms, 
-            credentials=credentials
-        )
-
-        AbstractWebScraper.__init__(
-            self,
-            repository_name='dryad',
-            path_file=path_file,
+            credentials=credentials,
             flatten_output=flatten_output
         )
 
-        self.base_url = 'https://datadryad.org/api/v2'
-        self.scrape_url = 'https://datadryad.org/stash/dataset'
+        if self.scrape:
+            AbstractWebScraper.__init__(
+                self,
+                repository_name='dryad',
+                path_file=path_file,
+            )
 
+            self.scrape_url = 'https://datadryad.org/stash/dataset'
+
+            self.attr_dict = {
+                'numViews': r'\d+ views',
+                'numDownloads': r'\d+ downloads',
+                'numCitations': r'\d+ citations'
+            }
+
+        self.base_url = 'https://datadryad.org/api/v2'
         self.merge_on = 'version'
 
     @staticmethod
@@ -118,7 +138,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         Returns
         -------
-        pandas.DataFrame
+        search_df : pandas.DataFrame
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -139,13 +159,21 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         # Add dataset-specific version id for metadata querying
         search_df['version'] = self._extract_version_ids(search_df)
 
-        if self.path_dict is not None:
+        # Scrape additional metadata from object webpages
+        if self.scrape:
             urls = search_df['identifier'].apply(
                 lambda doi: f'{self.scrape_url}/{doi}'
             )
             web_df = self.get_web_output(urls)
-        
-        return pd.merge(search_df, web_df, how='outer', on='identifier')
+            
+            search_df = pd.merge(
+                search_df, 
+                web_df, 
+                how='outer', 
+                on='identifier'
+            )
+
+        return search_df
 
     def get_query_metadata(self, object_paths, **kwargs):
         """Retrieves the metadata for the file/files listed in object_paths.
@@ -204,6 +232,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         search_df : pandas.DataFrame
         """
 
+        self.queue.put('Scraping web metadata...')
+
         search_df = pd.DataFrame()
 
         for url in tqdm(object_urls):
@@ -211,26 +241,45 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
 
             while ('Request rejected due to rate limits.' in soup.text or 
-                    not (soup.select_one(self.path_dict['num_views']))):
+                not self._get_attribute_value(
+                        self.get_single_attribute(
+                            soup=soup, 
+                            string=re.compile(self.attr_dict['numViews'])
+                        )
+                    )
+            ):
+                self.queue.put('Rate limit hit, waiting for request...')
                 sleep(5)
                 self.driver.get(url)
                 soup = self._get_soup(features='html.parser')
-            
 
             object_dict = {
-                attr: self.get_single_attribute_value(soup=soup, path=path)
-                for attr, path in self.path_dict.items()
+                var: self._get_attribute_value(
+                    self.get_single_attribute(
+                        soup=soup, 
+                        string=re.compile(attr)
+                    )
+                )
+                for var, attr in self.attr_dict.items()
             }
 
             # Clean results
             for key, value in object_dict.items():
-                object_dict[key] = self.parse_numeric(value)[0]
+                object_dict[key] = parse_numeric_string(value)
 
             # Add identifier for merging
             object_dict['identifier'] = '/'.join(url.split('/')[-2:])
+            object_dict['title'] = self._get_attribute_value(
+                self.get_single_attribute(
+                    soup=soup, 
+                    path='h1.o-heading__level1'
+                )
+            )
 
             search_df = search_df.append(object_dict, ignore_index=True)
         
+        self.queue.put('Web metadata scraping complete.')
+
         return search_df
 
     def _extract_version_ids(self, df):

@@ -6,6 +6,7 @@ import re
 import time
 from abc import ABC, abstractmethod, abstractstaticmethod
 from collections import OrderedDict
+import queue
 
 import pandas as pd
 import requests
@@ -37,32 +38,37 @@ class AbstractScraper(ABC):
         self.repository_name = repository_name
         self.flatten_output = flatten_output
 
-    def get_repo_name(self):
-        return self.__class__.__name__.replace('Scraper', '')
+        self.queue = queue.Queue()
+
+    @classmethod
+    def get_repo_name(cls):
+        """Return the name of the class without the 'Scraper' suffix."""
+        return cls.__name__.replace('Scraper', '')
 
     @abstractstaticmethod
     def accept_user_credentials():
         pass
 
     def _print_progress(self, page):
-        print(f'Searching page {page}', end='\r', flush=True)
-
-    def parse_numeric(self, entry):
-        """Returns a list of numeric substrings."""
-        return re.findall(r'\d+', entry)
-
-    def _convert_key_to_str(self, key):
-        if isinstance(key, str):
-            return key
-        else:
-            return '_'.join(key)
+        """Update queue with current page being searched."""
+        self.queue.put(f'Searching page {page}')
 
     def _validate_save_filename(self, filename):
         """Removes quotations from filename, replaces spaces with underscore."""
-
         return filename.replace('"', '').replace("'", '').replace(' ', '_')
 
     def save_dataframes(self, results, data_dir):
+        """Export DataFrame objects to json file in specified directory.
+
+        Parameters
+        ----------
+        results : dict
+        data_dir : str
+        """
+
+        assert isinstance(results, dict)
+        assert isinstance(data_dir, str)
+
         # Create output dir if not already present
         if not os.path.isdir(data_dir):
             os.makedirs(data_dir)
@@ -96,6 +102,11 @@ class AbstractScraper(ABC):
             Location to store file in. Take note of output type as specified
             above, as appending the incorrect filetype may result in the file
             being unreadable.
+        
+        Raises
+        ------
+        ValueError
+            If a non-dataframe object is passed.
         """
 
         if isinstance(results, pd.DataFrame):
@@ -136,38 +147,93 @@ class AbstractWebScraper(AbstractScraper):
         chrome_options.add_argument('--headless')
         os.environ['WDM_LOG_LEVEL'] = '0'
 
+        self.queue.put('Initializing WebDriver.')
         self.driver = webdriver.Chrome(
             ChromeDriverManager(print_first_line=False).install(), 
             options=chrome_options
         )
 
-        with open(path_file) as f:
-            self.path_dict = json.load(f)
-    
-    def find_first_match(self, entry, pattern):
-        """Returns the first match of a regex pattern"""
-        try:
-            return re.search(pattern, entry).group()
-        except:
-            return None
+        # Load CSS Selector Path file
+        if path_file:
+            with open(path_file) as f:
+                self.path_dict = json.load(f)
 
     def _get_soup(self, **kwargs):
+        """Return a BeautifulSoup object for the object driver current page."""
         html = self.driver.page_source
         return BeautifulSoup(html, **kwargs)
 
-    def _get_single_attribute(self, soup, path):
-        try:
-            return soup.select_one(path)
-        except AttributeError:
-            return None
+    def _get_single_attribute_from_path(self, soup, path):
+        return soup.select_one(path)
+        
+    def _get_single_attribute_from_tag_info(
+        self, 
+        soup, 
+        class_type=re.compile(r''), 
+        **kwargs
+    ):
+        """Find and return BeautifulSoup Tag from given specifications."""
+        return soup.find(class_type, **kwargs)
 
-    def get_single_attribute_value(
+    def _get_parent_attribute(
+        self,
+        soup,
+        string,
+    ):
+        """Find BeautifulSoup Tag from given specifications, return parent."""
+        attr = self._get_single_attribute_from_tag_info(
+            soup=soup,
+            string=string
+        )
+        try:
+            parent_tag = attr.parent
+        except AttributeError:
+            parent_tag = None
+
+        return parent_tag
+
+    def _get_pibling_attributes(
+        self,
+        soup,
+        string,
+        **kwargs
+    ):
+        """Return the tag for the (p)arent tag's s(ibling) tags.
+
+        Parameters
+        ----------
+        soup : bs4.BeautifulSoup
+        string : str
+            Pattern for locating tag of interest.
+        **kwargs : dict, optional
+            Additional parameters passed to the 
+            bs4.element.Tag.find_next_siblings() call.
+        
+        Returns
+        -------
+        list
+
+        See Also
+        --------
+        bs4.element.Tag.find_next_siblings()
+        """
+
+        parent = self._get_parent_attribute(soup, string)
+        return parent.find_next_siblings(**kwargs)
+
+    def _get_attribute_value(self, tag, err_return=None, **kwargs):
+        """Return text for the provided Tag, queried with kwargs."""
+        try:
+            return tag.get_text(**kwargs)
+        except AttributeError:
+            return err_return
+
+    def get_single_attribute(
         self, 
         soup, 
         path=None, 
-        class_type=None,
-        id_=None,
-        err_return=None
+        class_type=re.compile(r''),
+        **find_kwargs
     ):
         """Retrieves the requested value from the soup object.
         
@@ -175,8 +241,8 @@ class AbstractWebScraper(AbstractScraper):
         ('abstract', 'num_instances', etc), returns the value. 
 
         Either a full CSS Selector Path must be passed via 'path', or an HTML
-        class and CSS ID path must be passed via 'class_type' and 'id_', 
-        respectively.
+        class and additional parameters must be passed via 'class_type' and 
+        **find_kwargs, respectively.
 
         For attributes with potentially multiple values, such as 'keywords', 
         use get_variable_attribute_values(...)
@@ -188,33 +254,46 @@ class AbstractWebScraper(AbstractScraper):
         path : str, optional (default=None)
             CSS Selector Path for attribute to scrape.
             If None:
-
-        class_type : str, optional (default=None)
-            HTML class type to find. Must be passed along with id_.
-        id_ : optional (default=None)
-            Value or pattern to pass to bs4.find() id argument. Must be passed
-            along with class_type.
-        err_return : optional (default=None)
-            Value to return in case of error.
+                Search is performed using class_type and **find_kwargs.
+        class_type : str, optional (default=re.compile(r''))
+            HTML class type to find.
+        **find_kwargs : dict, optional
+            Additional arguments for 'soup.find()' call.
 
         Returns
         -------
-        value of attribute
-        """
-        if path:
-            try:
-                return self._get_single_attribute(soup, path).text
-            except:
-                return err_return
-        elif class_type and id_:
-            try:
-                return soup.find(class_type, id=id_).text
-            except:
-                return err_return
-        else:
-            raise ValueError('Must pass a path or class type and id to get.')
+        attr : bs4.element.Tag
 
-    def get_variable_attribute_values(self, soup, path):
+        Raises
+        ------
+        ValueError
+            If no CSS path or find_kwargs are passed.
+
+        See Also
+        --------
+        re.compile : Compile a regular expression pattern into a regular
+            expression object, which can be used for matching using re.search().
+        """
+        
+        if path:
+            attr = self._get_single_attribute_from_path(soup, path)
+        elif find_kwargs:
+            attr = self._get_single_attribute_from_tag_info(
+                soup,
+                class_type, 
+                **find_kwargs
+            )
+        else:
+            raise ValueError('Must pass a CSS path or find attributes.')
+
+        return attr
+
+    def get_variable_attribute(
+        self, 
+        soup, 
+        path=None,
+        class_type=re.compile(r''),
+        **find_kwargs):
         """Retrieves the requested value from the soup object.
         
         For a page attribute with potentially multiple values, such as 
@@ -225,19 +304,31 @@ class AbstractWebScraper(AbstractScraper):
         ----------
         soup : BeautifulSoup
             BeautifulSoup object containing the html to be parsed.
-        path : str
+        path : str, optional (default=None)
             CSS Selector Path for attribute to scrape.
-        
+        class_type : str, optional (default=re.compile(r''))
+            HTML class type to find.
+        **find_kwargs : dict, optional
+            Additional arguments for 'soup.find_all()' call.
+
         Returns
         -------
-        list
-            Value(s) of attribute.
-        """ 
-        try:
-            return [tag.text for tag in soup.select(path)]
-        except:
-            print(soup.title, path)
+        attrs : list
 
+        Raises
+        ------
+        ValueError
+            If no CSS path or find_kwargs are passed.
+        """ 
+
+        if path:
+            attrs = soup.select(path)
+        elif find_kwargs:
+            attrs = soup.find_all(class_type, **find_kwargs)
+        else:
+            raise ValueError('Must pass a CSS path or find attributes.')
+
+        return attrs
 
 class AbstractAPIScraper(AbstractScraper):
     """Base class for all repository API scrapers. 
@@ -272,6 +363,7 @@ class AbstractAPIScraper(AbstractScraper):
             flatten_output=flatten_output
         )
 
+        # Load API credentials
         if credentials:
             self.load_credentials(credentials=credentials)
 
@@ -291,6 +383,12 @@ class AbstractAPIScraper(AbstractScraper):
                 Choice of format for opening pkl file. Choices include the
                 'mode' parameters for the python open() function. If none is 
                 provided, files with attempt to open via 'rb'.
+        
+        Raises
+        ------
+        ValueError
+            If "credentials" arg is not a str
+            If provided pkl file is not valid
         """
         
         if not isinstance(credentials, str):
@@ -308,7 +406,9 @@ class AbstractAPIScraper(AbstractScraper):
                         token_name = f'{self.repository_name.upper()}_TOKEN'
                         self.credentials = credential_file_data[token_name]
                     except KeyError:
-                        print(f'{token_name} not found. Attempting to run unverified...')
+                        self.queue.put(
+                            f'{token_name} not found. Attempting to run unverified...'
+                        )
                         self.credentials = ''
                 elif isinstance(credential_file_data, str):
                     self.credentials = credential_file_data
@@ -330,6 +430,11 @@ class AbstractAPIScraper(AbstractScraper):
         Returns
         -------
         object_paths : str/list-like
+
+        Raises
+        ------
+        ValueError
+            If no object paths are provided
         """
 
         # If a single object path is provided as a string, need to wrap as list
@@ -367,6 +472,7 @@ class AbstractAPIScraper(AbstractScraper):
         except json.decoder.JSONDecodeError as e:
             # 429: Rate limiting (wait and then try the request again)
             if r.status_code == 429:
+                self.queue.put('Rate limit hit, waiting for request...')
                 # Wait until we can make another request
                 reset_time = int(r.headers['RateLimit-Reset'])
                 current_time = int(time.time())
@@ -498,6 +604,8 @@ class AbstractTermScraper(AbstractAPIScraper):
                 output of get_all_search_outputs.
         """
 
+        self.queue.put(f'Running {self.get_repo_name()}...')
+
         # Get search_output
         search_dict = self.get_all_search_outputs(**kwargs)
 
@@ -506,8 +614,8 @@ class AbstractTermScraper(AbstractAPIScraper):
         merge_right_on = vars(self).get('merge_right_on')
         merge_left_on = vars(self).get('merge_left_on')
 
-        # Set save parameters
-        save_dataframe = kwargs.get('save_dataframe')
+        # Set save parameter
+        save_dir = kwargs.get('save_dir')
 
         # Try to get metadata (if available)
         try:
@@ -528,12 +636,12 @@ class AbstractTermScraper(AbstractAPIScraper):
             # TypeError: Tries to call function with incorrect arguments
             final_dict = search_dict
 
-        if save_dataframe:        
-            try:
-                save_dir = kwargs['save_dir']
-            except KeyError:
-                raise ValueError('Must pass save directory to run function.')
+        if save_dir:
+            self.queue.put(f'Saving output to "{save_dir}".')
             self.save_dataframes(final_dict, save_dir)
+            self.queue.put('Save complete.')
+        
+        self.queue.put(f'{self.get_repo_name()} run complete.')
 
     def get_all_search_outputs(self, **kwargs):
         """Queries the API for each search term.
@@ -558,18 +666,18 @@ class AbstractTermScraper(AbstractAPIScraper):
         search_dict = OrderedDict()
 
         for search_term in search_terms:
-            print(f'Searching {search_term}.')
+            self.queue.put(f'Searching {search_term}.')
             search_dict[search_term] = self.get_individual_search_output(
                 search_term, 
                 flatten_output=flatten_output
             )
-            print('Search completed.', flush=True)
+            self.queue.put('Search completed.')
 
         return search_dict
 
     @abstractmethod
     def get_individual_search_output(self, search_term, **kwargs):
-        print('abstract metadata')
+        pass
 
     def get_all_metadata(self, object_path_dict, **kwargs):
         """Retrieves all metadata related to the provided DataFrames.
@@ -593,11 +701,12 @@ class AbstractTermScraper(AbstractAPIScraper):
         metadata_dict = OrderedDict()
 
         for query, object_paths in object_path_dict.items():
-            print(f'Querying {query} metadata.')
+            self.queue.put(f'Querying {query} metadata.')
             metadata_dict[query] = self.get_query_metadata(
                 object_paths, 
                 flatten_output=flatten_output
             )
+            self.queue.put('Metadata query complete.')
         
         return metadata_dict
 
@@ -674,6 +783,8 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
                 output of get_all_search_outputs.
         """
 
+        self.queue.put(f'Running {self.get_repo_name()}...')
+
         # Get search_output
         search_dict = self.get_all_search_outputs(**kwargs)
 
@@ -683,7 +794,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         merge_left_on = vars(self).get('merge_left_on')
 
         # Set save parameters
-        save_dataframe = kwargs.get('save_dataframe')
+        save_dir = kwargs.get('save_dir')
 
         # Try to get metadata (if available)
         try:
@@ -702,15 +813,14 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         except (AttributeError, TypeError) as e:
             # Attribute Error: Tries to call a function that does not exist
             # TypeError: Tries to call function with incorrect arguments
-            print(e)
             final_dict = search_dict
             
-        if save_dataframe:        
-            try:
-                save_dir = kwargs['save_dir']
-            except KeyError:
-                raise ValueError('Must pass save directory to run function.')
+        if save_dir:
+            self.queue.put(f'Saving output to "{save_dir}".')
             self.save_dataframes(final_dict, save_dir)
+            self.queue.put('Save complete.')
+        
+        self.queue.put(f'{self.get_repo_name()} run complete.')
 
     def get_all_search_outputs(self, **kwargs):
         """Queries the API for each search term/type combination.
@@ -736,14 +846,14 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         search_dict = OrderedDict()
 
         for search_term, search_type in itertools.product(search_terms, search_types):
-            print(f'Searching {search_term} {search_type}.')
+            self.queue.put(f'Searching {search_term} {search_type}.')
             search_dict[(search_term, search_type)] = \
                 self.get_individual_search_output(
                     search_term=search_term, 
                     search_type=search_type, 
                     flatten_output=flatten_output
                 )
-            print('Search completed.', flush=True)
+            self.queue.put('Search completed.')
 
         return search_dict
 
@@ -774,12 +884,13 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
 
         for query, object_paths in object_path_dict.items():
             search_term, search_type = query
-            print(f'Querying {search_term} {search_type} metadata.')
+            self.queue.put(f'Querying {search_term} {search_type} metadata.')
 
             metadata_dict[query] = self.get_query_metadata(
                 object_paths=object_paths, 
                 flatten_output=flatten_output
             )
+            self.queue.put('Metadata query complete.')
         
         return metadata_dict
 
@@ -855,8 +966,8 @@ class AbstractTypeScraper(AbstractAPIScraper):
         merge_right_on = vars(self).get('merge_right_on')
         merge_left_on = vars(self).get('merge_left_on')
 
-        # Set save parameters
-        save_dataframe = kwargs.get('save_dataframe')
+        # Set save parameter
+        save_dir = kwargs.get('save_dir')
         
         # Try to get metadata (if available)
         try:
@@ -878,11 +989,7 @@ class AbstractTypeScraper(AbstractAPIScraper):
             print(e)
             final_dict = search_dict
 
-        if save_dataframe:        
-            try:
-                save_dir = kwargs['save_dir']
-            except KeyError:
-                raise ValueError('Must pass save directory to run function.')
+        if save_dir:
             self.save_dataframes(final_dict, save_dir)
 
     def get_all_search_outputs(self, **kwargs):
@@ -908,12 +1015,12 @@ class AbstractTypeScraper(AbstractAPIScraper):
         search_dict = OrderedDict()
 
         for search_type in search_types:
-            print(f'Searching {search_type}.')
+            self.queue.put(f'Searching {search_type}.')
             search_dict[search_type] = self.get_individual_search_output(
                 search_type,
                 flatten_output=flatten_output
             )
-            print('Search completed.', flush=True)
+            self.queue.put(f'{search_type} search completed.')
 
         return search_dict
 

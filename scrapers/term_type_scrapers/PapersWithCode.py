@@ -100,7 +100,10 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             # Ensure we've received results if they exist
             # 200: OK, 404: page not found (no more results)
             while response.status_code not in [200, 404]:
-                print(f'Search error "{response.status_code}" on page {search_params["page"]}')
+                self.queue.put(
+                    f'Search error "{response.status_code}" on '
+                    f'page {search_params["page"]}'
+                )
                 search_params['page'] += 1
 
                 # Conduct a search
@@ -135,7 +138,10 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         if not isinstance(search_term, str):
             raise ValueError('Search term must be a string.')
         if search_type not in PapersWithCodeScraper.search_type_options:
-            raise ValueError(f'Search type must be one of {PapersWithCodeScraper.search_type_options}')
+            raise ValueError(
+                'Search type must be one of '
+                f'{PapersWithCodeScraper.search_type_options}'
+            )
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
         search_url = f'{self.base_url}/{search_type}'
@@ -198,7 +204,8 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             print(f'Querying {metadata_type}.')
 
             for object_path in tqdm(object_paths):
-                search_url = f'{self.base_url}/{search_type}/{object_path}/{metadata_type}'
+                search_url = f'{self.base_url}/{search_type}/{object_path}/' \
+                             f'{metadata_type}'
                 search_params = {'page': 1}
 
                 # Conduct the search and add supplementary info to DataFrame
@@ -244,7 +251,9 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         for query, df in search_dict.items():
             if df is not None:
                 search_term, search_type = query
-                print(f'Querying {search_term} {search_type} metadata.')
+                self.queue.put(
+                    f'Querying {search_term} {search_type} metadata.'
+                )
                 
                 object_paths = df.id.values
 
@@ -252,6 +261,10 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
                     object_paths=object_paths,
                     search_type=search_type,
                     **kwargs
+                )
+
+                self.queue.put(
+                    f'{search_term} {search_type} metadata query complete.'
                 )
 
         return metadata_dict

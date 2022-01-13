@@ -9,6 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from tqdm import tqdm
 
 from scrapers.base_scrapers import AbstractWebScraper
+from utils import parse_numeric_string
 
 
 class UCIScraper(AbstractWebScraper):
@@ -16,7 +17,7 @@ class UCIScraper(AbstractWebScraper):
 
     Parameters
     ----------
-    path_file : str
+    path_file : str, optional (default=None)
         Json file for loading path dict.
         Must be of the form {'path_dict': path_dict}
     flatten_output : boolean, optional (default=False)
@@ -24,11 +25,17 @@ class UCIScraper(AbstractWebScraper):
         in directly to functions to override set parameter.
     **kwargs : dict, optional
         Allows user to overwrite hardcoded data
+
+    Notes
+    -----
+    The method of webscraping has changed for this class, rendering the presence
+    of a path_file unnecessary. The class initialization will change at a later
+    point to reflect this.
     """
 
     def __init__(
         self, 
-        path_file,
+        path_file=None,
         flatten_output=False,
         **kwargs
     ):
@@ -39,19 +46,51 @@ class UCIScraper(AbstractWebScraper):
             flatten_output=flatten_output
         )
 
-        try:
-            self.structural_paths = self.path_dict['structural_paths']
-        except KeyError:
-            raise ValueError('Path file must contain structural paths')
-
         self.base_url = 'https://archive-beta.ics.uci.edu/ml/datasets'
 
         self.dataset_list_url = f'{self.base_url}?&p%5Boffset%5D=0&p%5Blimit%' \
             '5D=591&p%5BorderBy%5D=NumHits&p%5Border%5D=desc'
 
-        self.instance_path = self.structural_paths['instance_path']
-        self.wait_path = self.structural_paths['wait_path']
-        self.tabular_wait_path = self.structural_paths['tabular_wait_path']
+        # Set scrape attribute dicts
+        self.parent_attr_dict = {
+            'keywords': r'Keywords',
+            'license': r'License'
+        }
+        self.sibling_attr_dict = {
+            'abstract': r'Abstract',
+            'dataset_characteristics': r'Dataset Characteristics',
+            'associated_tasks': r'Associated Tasks',
+            'num_instances': r'# of Instances',
+            'subject_area': r'Subject Area',
+            'doi': r'doi',
+            'creation_purpose': r'For what purpose was the dataset created?',
+            'funders': r'Who funded the creation of the dataset?',
+            'instances_represent': r'What do the instances that comprise the '
+                r'dataset represent?',
+            'recommended_data_split': r'Are there recommended data splits?',
+            'sensitive_data': r'Does the dataset contain data that might be'
+                r' considered sensitive in any way?',
+            'preprocessing_done': r'Was there any data preprocessing '
+                r'performed?',
+            'previous_tasks': r'Has the dataset been used for any tasks '
+                r'already?',
+            'additional_info': r'Additional Information',
+            'citation_requests/acknowledgements': r'Citation Requests'
+                r'/Acknowledgements',
+            'missing_values': r'Does this dataset contain missing values?',
+            'missing_value_placeholder': r'What symbol is used to indicate '
+                r'missing data?',
+            'num_attributes': r'Number of Attributes'
+        }
+        self.uncle_attr_dict = {
+            'creators': r'Creators'
+        }
+        self.individual_attr_dict = {
+            'donation_date': r'Donated on',
+            'link_date': r'Linked on',
+            'num_views': r'\d+ views',
+            'num_citations': r'\d+ citations'
+        }
 
 
     @staticmethod
@@ -79,51 +118,54 @@ class UCIScraper(AbstractWebScraper):
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
         # Set save parameters
-        save_dataframe = kwargs.get('save_dataframe')
+        save_dir = kwargs.get('save_dir')
         repo_name = self.get_repo_name()
 
         dataset_ids = self.get_dataset_ids(
             dataset_list_url=self.dataset_list_url,
-            instance_path=self.instance_path,
+            instance_path='p > a',
         )
 
         dataset_df = self.get_all_page_data(
             page_ids=dataset_ids,
             flatten_output=flatten_output
         )
-
-        if save_dataframe:
-            try:
-                save_dir = kwargs['save_dir']
-            except KeyError:
-                raise ValueError('Must pass save directory to run function.')
-
-            # Ensure save directory exists
-            if not os.path.isdir(save_dir):
-                os.makedirs(save_dir)
-
+        
+        if save_dir:
             output_filename = os.path.join(save_dir, f'{repo_name}.json')
+            self.queue.put(f'Saving output to "{output_filename}.')
             self.save_results(dataset_df, output_filename)
+            self.queue.put('Save complete.')
 
         return dataset_df
 
     def _clean_results(self, results):
         # Get variables to clean
         donation_date = results.get('donation_date')
+        link_date = results.get('link_date')
         num_citations = results.get('num_citations')
         num_views = results.get('num_views')
 
         # Remove unnecessary text from temporal/numeric entries
         ## Make sure that the donation date is not null
-        if '-' in donation_date:
-            results['donation_date'] = re.findall(
+        if donation_date:
+            try:
+                results['donation_date'] = re.findall(
+                    '\d+-\d+-\d+', 
+                    donation_date
+                )[0]
+            # Error occurs when no date is present
+            except IndexError:
+                results['donation_date'] = None
+        if link_date:
+            results['link_date'] = re.findall(
                 '\d+-\d+-\d+', 
-                donation_date
+                link_date
             )[0]
         if num_citations:
-            results['num_citations'] = self.parse_numeric(num_citations)[0]      
+            results['num_citations'] = parse_numeric_string(num_citations)
         if num_views:
-            results['num_views'] = self.parse_numeric(num_views)[0]
+            results['num_views'] = parse_numeric_string(num_views)
 
         return results
 
@@ -141,6 +183,20 @@ class UCIScraper(AbstractWebScraper):
 
         return 'Tabular Data Properties' in soup.text
 
+    def is_external(self, soup):
+        """Returns if the dataset is externally-hosted.
+
+        Parameters
+        ----------
+        soup : BeautifulSoup
+
+        Returns
+        -------
+        boolean
+        """
+
+        return soup.find('span', string='EXTERNAL')
+
     def get_dataset_ids(self, dataset_list_url, instance_path):
         """Returns the dataset ids for all datasets on the given page.
 
@@ -155,6 +211,8 @@ class UCIScraper(AbstractWebScraper):
         -------
         dataset_ids : list
         """
+
+        self.queue.put('Scraping dataset ids...')
 
         # Get the requested url
         self.driver.get(dataset_list_url)
@@ -172,8 +230,90 @@ class UCIScraper(AbstractWebScraper):
             instance.attrs['href'].split('/')[-1] 
             for instance in soup.select(instance_path)
         ]
+
+        self.queue.put('Dataset id scraping complete.')
         
         return dataset_ids
+    
+    def _get_sibling_attribute(
+        self,
+        soup, 
+        string,
+        pattern=re.compile(r'')
+    ):
+        """Find Tag from provided specifications, return sibling."""
+        try:
+            attr = self._get_single_attribute_from_tag_info(
+                soup=soup, 
+                class_type=pattern,
+                string=string,
+            ).next_sibling
+        except AttributeError:
+            attr = None
+
+        return attr
+
+    def _get_attribute_values(self, soup):
+        """Scrapes the possible attributes provided in the repository
+
+        Parameters
+        ----------
+        soup : BeautifulSoup
+            BeautifulSoup object containing the html to be parsed.
+
+        Returns
+        -------
+        result_dict : dict
+        """
+
+        result_dict = dict()
+        
+        # Get date (donation/linked), views, citattions
+        for var, attr in self.individual_attr_dict.items():
+            result_dict[var] = self._get_attribute_value(
+                self.get_single_attribute(
+                    soup=soup, 
+                    class_type=re.compile(r''),
+                    string=re.compile(attr)
+                )
+            )
+
+        # Get keywords/license
+        for var, attr in self.parent_attr_dict.items():
+            result_dict[var] = [
+                self._get_attribute_value(parent_subset)
+                for parent in self._get_parent_attribute(
+                    soup=soup, 
+                    string=re.compile(attr)
+                )
+                for parent_subset in parent.find_all(name=re.compile('(p|span)'))
+            ]
+
+        # Get General Information
+        for var, attr in self.sibling_attr_dict.items():
+            result_dict[var] = self._get_attribute_value(
+                self._get_sibling_attribute(soup, attr)
+            )
+
+        # Get creators
+        for var, attr in self.uncle_attr_dict.items():
+            try:
+                tag_texts = [
+                    self._get_attribute_value(pibling, separator='~').split('~')
+                    for pibling in self._get_pibling_attributes(
+                        soup=soup,
+                        string=r'Creators'
+                    )
+                ]
+                if len(tag_texts) == 1:
+                    tag_texts = tag_texts[0]
+
+                result_dict[var] = tag_texts
+            except:
+                pass
+
+        return result_dict
+    
 
     def get_individual_page_data(
         self,
@@ -198,87 +338,39 @@ class UCIScraper(AbstractWebScraper):
         result_dict : dict
         """
         
-        single_attribute_paths = self.path_dict.get(
-            'single_attribute_paths', 
-            dict()
-        )
-        variable_attribute_paths = self.path_dict.get(
-            'variable_attribute_paths', 
-            dict()
-        )
-        tabular_attribute_paths = self.path_dict.get(
-            'tabular_attribute_paths', 
-            None
-        )
-        
         # Get the requested url
         self.driver.get(url)
         
         # Wait for pertinent sections to load
-        try:
-            WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, self.wait_path))
-            )
-        except:
-            # This occurs when a dataset listed is "External". The difference
-            # in page layout (which appears to be caused by the lack of author
-            # information) causes the above code to raise an error as the 
-            # wait path cannot be found.
-            return None
+        WebDriverWait(self.driver, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'td > p'))
+        )
         
         # Extract and convert html data
         soup = self._get_soup(features='html.parser')
-
-        # Add tabular info
-        if self.is_tabular(soup) and tabular_attribute_paths:
-            # Wait to ensure that tabular properties loaded
-            WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, self.tabular_wait_path)
-                )
-            )
-
-            # Extract and convert html data
-            soup = self._get_soup(features='html.parser')
-
-            try:
-                single_attribute_paths = {
-                    **single_attribute_paths, 
-                    **tabular_attribute_paths
-                }
-            except NameError:
-                single_attribute_paths = tabular_attribute_paths
         
         # Retrieve attribute values from parsed html
-        single_values = {
-            attribute: self.get_single_attribute_value(soup=soup, path=path) 
-            for attribute, path in single_attribute_paths.items()
-        }
-        variable_values = {
-            attribute: self.get_variable_attribute_values(soup, path)
-            for attribute, path in variable_attribute_paths.items()
-        }
-        
-        # Add results
-        if single_values and variable_values:
-            result_dict = {**single_values, **variable_values}
-        elif single_values:
-            result_dict = single_values
-        elif variable_values:
-            result_dict = variable_values
-        else:
-            result_dict = dict()
+        result_dict = self._get_attribute_values(soup)
+        result_dict['url'] = self.driver.current_url
 
         # Get file info 
-        self.driver.find_element_by_link_text('Download').click()
-        
-        soup = self._get_soup(features='html.parser')
+        if not self.is_external(soup):
+            ## Open file tab and switch to it
+            self.driver.find_element_by_link_text('Download').click()
+            self.driver.switch_to_window(self.driver.window_handles[-1])        
 
-        if '404' not in soup.text:
-            result_dict['links'] = self.get_variable_attribute_values(
-                soup, 
-                'body > ul > li'
-            )
+            soup = self._get_soup(features='html.parser')
+            result_dict['files'] = [
+                self._get_attribute_value(child)
+                for child in self.get_variable_attribute(
+                    soup=soup, 
+                    path='li > a'
+                )
+            ]
+
+            ## Close new window and switch back to previous
+            self.driver.close()
+            self.driver.switch_to_window(self.driver.window_handles[0])
         
         # Clean results (if instructed)
         if clean:
@@ -311,11 +403,13 @@ class UCIScraper(AbstractWebScraper):
         dataset_df : DataFrame
         """
         
-        # Create hollow output dataframe
+        self.queue.put('Scraping page data...')
+
+        # Create output dataframe
         dataset_df = pd.DataFrame()
         
         # Loop for each dataset page
-        for page_id in tqdm(page_ids):
+        for page_id in tqdm(page_ids[:10]):
             url = f'{self.base_url}/{page_id}'
             
             # Retrieve and clean results
@@ -327,6 +421,8 @@ class UCIScraper(AbstractWebScraper):
             # Add results to total result dataframe
             dataset_df = dataset_df.append(results, ignore_index=True)
         
+        self.queue.put('Scraping complete.')
+
         # Remove unnecessary nested columns
         #   Datasets that don't have nested data will force the DataFrame to 
         #   keep the nested column names

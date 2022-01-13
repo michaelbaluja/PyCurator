@@ -1,3 +1,4 @@
+import os
 import re
 from collections import OrderedDict
 
@@ -13,9 +14,13 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
 
     Parameters
     ----------
-    path_file : str
+    path_file : str, optional 
+            (default=os.path.join('paths', 'dataverse_paths.json'))
         Json file for loading path dict.
         Must be of the form {search_type: {path_type: path_dict}}
+    scrape : boolearn, optional (default=True)
+        Flag for requesting web scraping as a method for additional metadata
+        collection. 
     search_terms : list-like, optional (default=None)
         Terms to search over. Can be (re)set via set_search_terms() or passed in
         directly to search functions.
@@ -38,26 +43,30 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
 
     def __init__(
         self,
-        path_file,
+        path_file=os.path.join('paths', 'dataverse_paths.json'),
+        scrape=True,
         search_terms=None,
         search_types=None,
         flatten_output=None,
         credentials=None,
     ):
 
+        self.scrape = scrape
+
         AbstractTermTypeScraper.__init__(
             self,
             repository_name='dataverse', 
             search_terms=search_terms,
             search_types=search_types, 
-        )
-
-        AbstractWebScraper.__init__(
-            self,
-            repository_name='dataverse',
-            path_file=path_file,
             flatten_output=flatten_output
         )
+
+        if self.scrape:
+            AbstractWebScraper.__init__(
+                self,
+                repository_name='dataverse',
+                path_file=path_file,
+            )
 
         self.base_url = 'https://dataverse.harvard.edu/api'
         self.file_url = 'https://dataverse.harvard.edu/file.xhtml?fileId='
@@ -249,7 +258,9 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
             
             landing_attribute_values = {
-                attribute: self.get_single_attribute_value(soup=soup, path=path) 
+                attribute: self._get_attribute_value(
+                    self.get_single_attribute(soup=soup, path=path)
+                )
                     for attribute, path in landing_attribute_paths.items()
             }
             attribute_value_dict = {
@@ -264,7 +275,9 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
             
             metadata_attribute_values = {
-                attribute: self.get_single_attribute_value(soup=soup, path=path) 
+                attribute: self._get_attribute_value(
+                    self.get_single_attribute(soup=soup, path=path) 
+                )
                     for attribute, path in metadata_attribute_paths.items()
             }
             attribute_value_dict = {
@@ -280,7 +293,9 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
             
             terms_attribute_values = {
-                attribute: self.get_single_attribute_value(soup=soup, path=path) 
+                attribute: self._get_attribute_value(
+                    self.get_single_attribute(soup=soup, path=path) 
+                )
                     for attribute, path in terms_attribute_paths.items()
             }
             attribute_value_dict = {
@@ -379,10 +394,15 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
 
         metadata_dict = OrderedDict()
 
+        if not self.scrape:
+            return metadata_dict
+
         for query, df in search_dict.items():
             if df is not None:
                 search_term, search_type = query
-                print(f'Querying {search_term} {search_type} metadata.')
+                self.queue.put(
+                    f'Querying {search_term} {search_type} metadata.'
+                )
 
                 if search_type == 'dataset':
                     object_paths = df['global_id'].apply(
@@ -395,5 +415,9 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
                     object_paths, 
                     **self.path_dict[search_type]
                 )
+            
+            self.queue.put(
+                f'{search_term} {search_type} metadata query complete.'
+            )
 
         return metadata_dict
