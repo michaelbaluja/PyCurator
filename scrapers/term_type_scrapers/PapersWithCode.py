@@ -5,7 +5,7 @@ import requests
 from flatten_json import flatten
 from tqdm import tqdm
 
-from scrapers.base_scrapers import AbstractTermTypeScraper
+from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
 
 class PapersWithCodeScraper(AbstractTermTypeScraper):
@@ -57,6 +57,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     def accept_user_credentials():
         return True
 
+    @AbstractScraper._pb_indeterminate
     def _conduct_search_over_pages(
         self,
         search_url,
@@ -68,7 +69,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         # Conduct a search, extract json results
         if print_progress:
-            self._print_progress(search_params['page'])
+            self._update_query_ref(page=search_params['page'])
         response, output = self.get_request_output(
             url=search_url, 
             params=search_params
@@ -94,8 +95,12 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
             # Conduct a search
             if print_progress:
-                self._print_progress(search_params['page'])
-            response = requests.get(search_url, params=search_params)
+                self._update_query_ref(page=search_params['page'])
+
+            response, output = self.get_request_output(
+                url=search_url,
+                params=search_params
+            )
 
             # Ensure we've received results if they exist
             # 200: OK, 404: page not found (no more results)
@@ -108,10 +113,12 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
                 # Conduct a search
                 if print_progress:
-                    self._print_progress(search_params['page'])
-                response = requests.get(search_url, params=search_params)
+                    self._update_query_ref(page=search_params['page'])
 
-            output = response.json()
+                response, output = self.get_request_output(
+                    url=search_url, 
+                    params=search_params
+                )
 
         if not search_df.empty:
             return search_df
@@ -201,9 +208,9 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         for metadata_type in metadata_types:
             search_df = pd.DataFrame()
-            print(f'Querying {metadata_type}.')
+            self.queue.put(f'Querying {metadata_type}.')
 
-            for object_path in tqdm(object_paths):
+            for object_path in self._pb_determinate(object_paths):
                 search_url = f'{self.base_url}/{search_type}/{object_path}/' \
                              f'{metadata_type}'
                 search_params = {'page': 1}

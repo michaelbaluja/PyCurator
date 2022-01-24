@@ -4,7 +4,7 @@ import pandas as pd
 from flatten_json import flatten
 from tqdm import tqdm
 
-from scrapers.base_scrapers import AbstractTermTypeScraper
+from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
 
 class FigshareScraper(AbstractTermTypeScraper):
@@ -78,6 +78,7 @@ class FigshareScraper(AbstractTermTypeScraper):
         super().load_credentials(credentials=credentials, **kwargs)
         self.headers['Authorization'] = f'token {self.credentials}'
 
+    @AbstractScraper._pb_indeterminate
     def get_individual_search_output(self, search_term, search_type, **kwargs):
         """Calls the Figshare API for the specified search term and type.
 
@@ -120,11 +121,12 @@ class FigshareScraper(AbstractTermTypeScraper):
         search_url = f'{self.base_url}/{search_type}'
 
         # Conduct initial search
-        self._print_progress(search_params['page'])
-        response, output = self.get_request_output(
-            url=search_url, 
+        response, output = self.get_request_output_and_update_query_ref(
+            url=search_url,
             params=search_params,
-            headers=self.headers
+            headers=self.headers,
+            published_since=search_date,
+            page=start_page
         )
 
         # Search as long as page is valid
@@ -148,11 +150,12 @@ class FigshareScraper(AbstractTermTypeScraper):
                 search_params['page'] += 1
 
                 # Conduct search
-                self._print_progress(search_params['page'])
-                response, output = self.get_request_output(
-                    search_url, 
-                    search_params,
-                    self.headers
+                response, output = self.get_request_output_and_update_query_ref(
+                    url=search_url,
+                    params=search_params,
+                    headers=self.headers,
+                    published_since=search_params['published_since'],
+                    page=search_params['page']
                 )
             try:
                 # If we did not get a full page of results, search is complete
@@ -173,6 +176,13 @@ class FigshareScraper(AbstractTermTypeScraper):
                 url=search_url, 
                 params=search_params, 
                 headers=self.headers
+            )
+            response, output = self.get_request_output_and_update_query_ref(
+                url=search_url,
+                params=search_params,
+                headers=self.headers,
+                published_since=search_params['published_since'],
+                page=search_params['page']
             )
 
         return search_df
@@ -203,7 +213,7 @@ class FigshareScraper(AbstractTermTypeScraper):
         metadata_df = pd.DataFrame()
 
         # Get details for each object
-        for object_path in tqdm(object_paths):
+        for object_path in self._pb_determinate(object_paths):
             # Download the metadata
             _, json_data = self.get_request_output(
                 url=object_path, 

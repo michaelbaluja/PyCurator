@@ -5,7 +5,8 @@ import pandas as pd
 from flatten_json import flatten
 from tqdm import tqdm
 
-from scrapers.base_scrapers import AbstractTermScraper, AbstractWebScraper
+from scrapers.base_scrapers import AbstractScraper, AbstractTermScraper, \
+    AbstractWebScraper
 from utils import parse_numeric_string
 
 
@@ -79,6 +80,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
     def accept_user_credentials():
         return False
 
+    @AbstractScraper._pb_indeterminate
     def _conduct_search_over_pages(
         self, 
         search_url, 
@@ -91,7 +93,10 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         # Perform initial search and convert results to json
         if print_progress:
-            self._print_progress(search_params['page'])
+            self._update_query_ref(
+                search_term=search_params['q'],
+                page=search_params['page']
+            )
         _, output = self.get_request_output(search_url, params=search_params)
 
         # Queries next page as long as current page isn't empty
@@ -119,7 +124,10 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
             # Perform next search and convert results to json
             if print_progress:
-                self._print_progress(search_params['page'])
+                self._update_query_ref(
+                    search_term=search_params['q'],
+                    page=search_params['page']
+                )   
             _, output = self.get_request_output(
                 url=search_url, 
                 params=search_params
@@ -147,7 +155,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         search_url = f'{self.base_url}/search'
 
         search_params = {'q': search_term, 'page': 1, 'per_page': 100}
-
+        
         search_df = self._conduct_search_over_pages(
             search_url=search_url, 
             search_params=search_params, 
@@ -199,7 +207,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         metadata_df = pd.DataFrame()
 
         # Query the metadata for each object
-        for object_path in tqdm(object_paths):
+        for object_path in self._pb_determinate(object_paths):
             search_url = f'{self.base_url}/versions/{object_path}/files'
             search_params = {'page': start_page}
 
@@ -208,7 +216,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
                 search_url, 
                 search_params, 
                 flatten_output, 
-                delim='stash:files'
+                delim='stash:files',
+                print_progress=False
             )
 
             # Add relevant data to DataFrame and merge
@@ -236,11 +245,12 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         search_df = pd.DataFrame()
 
-        for url in tqdm(object_urls):
+        for url in self._pb_determinate(object_urls):
             self.driver.get(url)
             soup = self._get_soup(features='html.parser')
 
-            while ('Request rejected due to rate limits.' in soup.text or 
+            while (
+                'Request rejected due to rate limits.' in soup.text or 
                 not self._get_attribute_value(
                         self.get_single_attribute(
                             soup=soup, 

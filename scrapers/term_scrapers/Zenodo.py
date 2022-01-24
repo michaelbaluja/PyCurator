@@ -1,7 +1,7 @@
 import pandas as pd
 from flatten_json import flatten
 
-from scrapers.base_scrapers import AbstractTermScraper
+from scrapers.base_scrapers import AbstractScraper, AbstractTermScraper
 
 
 class ZenodoScraper(AbstractTermScraper):
@@ -31,6 +31,7 @@ class ZenodoScraper(AbstractTermScraper):
     def accept_user_credentials():
         return True
 
+    @AbstractScraper._pb_indeterminate
     def get_individual_search_output(self, search_term, **kwargs):
         """Returns information about all records from Zenodo.
 
@@ -63,11 +64,12 @@ class ZenodoScraper(AbstractTermScraper):
         }
 
         # Run initial search & extract output
-        print(f'Searching {search_year}')
-        self._print_progress(search_params['page'])
-        response, output = self.get_request_output(
-            url=self.base_url, 
-            params=search_params
+        response, output = self.get_request_output_and_update_query_ref(
+            url=self.base_url,
+            params=search_params,
+            search_term=search_term,
+            year=search_year,
+            page=search_params['page']
         )
 
         # Loop over search years
@@ -92,10 +94,12 @@ class ZenodoScraper(AbstractTermScraper):
                 search_params['page'] += 1
                 
                 # Run search & extract output
-                self._print_progress(search_params['page'])
-                response, output = self.get_request_output(
-                    url=self.base_url, 
-                    params=search_params
+                response, output = self.get_request_output_and_update_query_ref(
+                    url=self.base_url,
+                    params=search_params,
+                    search_term=search_term,
+                    year=search_year,
+                    page=search_params['page']
                 )
 
             # Change search year, reset search page
@@ -108,11 +112,14 @@ class ZenodoScraper(AbstractTermScraper):
             search_params['page'] = 1
 
             # Run search & extract output
-            print(f'Searching {search_year}')
-            self._print_progress(search_params['page'])
-            response, output = self.get_request_output(
-                url=self.base_url, 
-                params=search_params
+            response, output = self.get_request_output_and_update_query_ref(
+                url=self.base_url,
+                params=search_params,
+                search_term=search_term,
+                year=search_year,
+                page=search_params['page']
             )
+
+        self.num_queries = False
 
         return search_df

@@ -164,7 +164,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         self.queue.put('Scraping dataset task/run information...')
 
         for url in tqdm(urls):
-            self.queue.put(f' Scraping {url}...')
+            self._update_query_ref(page=url)
 
             # Create aggregate containers
             num_runs_list = []
@@ -284,7 +284,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         search_df = pd.DataFrame()
 
         # Perform initial search
-        self._print_progress(index)
+        self._update_query_ref(page=index)
         search_results = list_queries(offset=(index * size), size=size)
 
         # Serach until all queries have been returned
@@ -300,7 +300,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             index += 1
 
             # Perform next search
-            self._print_progress(index)
+            self._update_query_ref(page=index)
             search_results = list_queries(offset=(index * size), size=size)
 
         # Flatten output (if necessary)
@@ -338,7 +338,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         queries = []
         error_queries = []
         for object_path in tqdm(object_paths):
-            self.queue.put(f' Querying {object_path}...')
+            self._update_query_ref(object_name=object_path)
             try:
                 queries.append(get_query(object_path))
             except:

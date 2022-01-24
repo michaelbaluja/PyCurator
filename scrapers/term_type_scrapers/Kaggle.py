@@ -8,7 +8,7 @@ from kaggle import KaggleApi
 from kaggle.rest import ApiException
 from tqdm import tqdm
 
-from scrapers.base_scrapers import AbstractTermTypeScraper
+from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
 
 class KaggleScraper(AbstractTermTypeScraper):
@@ -57,6 +57,7 @@ class KaggleScraper(AbstractTermTypeScraper):
     def accept_user_credentials():
         return False
 
+    @AbstractScraper._pb_indeterminate
     def get_individual_search_output(self, search_term, search_type, **kwargs):
         """Calls the Kaggle API for the specified search term and type.
 
@@ -87,11 +88,15 @@ class KaggleScraper(AbstractTermTypeScraper):
         search_df = pd.DataFrame()
 
         # Pulls a single page of results for the given search term
-        self._print_progress(page_idx)
+        self._update_query_ref(page='page_idx')
         output = list_queries(search=search_term, page=page_idx)
 
         # Search until we no longer recieve results
         while output:
+            # If user has requested termination, handle cleanup
+            if not self.continue_running:
+                self.terminate()
+
             if search_type == 'kernels':
                 output = [vars(result) for result in output]
             if flatten_output:
@@ -106,7 +111,7 @@ class KaggleScraper(AbstractTermTypeScraper):
             page_idx += 1
 
             # Pull next page of results
-            self._print_progress(page_idx)
+            self._update_query_ref(page=page_idx)
             output = list_queries(search=search_term, page=page_idx)
 
         # Only modify if the DataFrame contains data
@@ -139,6 +144,11 @@ class KaggleScraper(AbstractTermTypeScraper):
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
         data_path = kwargs.get('data_path', f'data{os.sep}')
+
+        # If user has requested termination, handle cleanup instead of querying
+        # additional results
+        if not self.continue_running:
+            self.terminate()
 
         # Download the metadata
         try:
@@ -185,7 +195,7 @@ class KaggleScraper(AbstractTermTypeScraper):
         metadata_df = pd.DataFrame()
 
         # Pulls meatadata information for each object
-        for object_path in tqdm(object_paths):
+        for object_path in self._pb_determinate(object_paths):
             # Download and load the metadata
             json_data = self._retrieve_object_json(
                 object_path, 
