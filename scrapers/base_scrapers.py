@@ -2,11 +2,12 @@ import itertools
 import json
 import os
 import pickle
+import queue
 import re
+import sys
 import time
 from abc import ABC, abstractmethod, abstractstaticmethod
 from collections import OrderedDict
-import queue
 
 import pandas as pd
 import requests
@@ -37,8 +38,65 @@ class AbstractScraper(ABC):
     ):
         self.repository_name = repository_name
         self.flatten_output = flatten_output
+        self.continue_running = True
 
+        # Container for holding status update messages
         self.queue = queue.Queue()
+
+        # Variable for updating progress over structured loop queries
+        self.num_queries = None
+        self.queries_completed = None
+        self.current_query_ref = None
+
+    def _pb_determinate(self, coll):
+        """Generator for iterating data and updating progress bar status.
+
+        Parameters
+        ----------
+        coll : iterable
+
+        Yields
+        ------
+        next object of coll
+        """
+
+        assert hasattr(coll, '__iter__'), 'Parameter "coll" must be iterable.'
+
+        # Initialize tracking vars
+        if not self.num_queries:
+            self.num_queries = len(coll)
+            self.queries_completed = 0
+
+        # Yield next item in coll and update tracking vars
+        for item in coll:
+            self.current_query_ref = str(item)
+            yield item
+            self.queries_completed += 1
+
+        # After all items have been yielded, reset tracking vars
+        self.num_queries = None
+        self.queries_completed = None
+        self.current_query_ref = None
+    
+    @staticmethod
+    def _pb_indeterminate(indeterminate_query_func):
+        """Progress bar wrapper for indeterminate-length querys."""
+        def update_pb(self, *args, **kwargs):
+            self.num_queries = True
+            results = indeterminate_query_func(self, *args, **kwargs)
+            self.num_queries = False
+            return results
+        
+        return update_pb
+
+    def request_execution(self):
+        """Raise flag to stop output."""
+        self.continue_running = False
+
+    def terminate(self):
+        """Handle program execution."""
+        self.queue.put('Requesting program termination.')
+        sys.exit()
 
     @classmethod
     def get_repo_name(cls):
@@ -52,6 +110,10 @@ class AbstractScraper(ABC):
     def _print_progress(self, page):
         """Update queue with current page being searched."""
         self.queue.put(f'Searching page {page}')
+
+    def _update_query_ref(self, **kwargs):
+        """Combine keywords and update self.current_query_ref."""
+        self.current_query_ref = kwargs
 
     def _validate_save_filename(self, filename):
         """Removes quotations from filename, replaces spaces with underscore."""
@@ -160,6 +222,11 @@ class AbstractWebScraper(AbstractScraper):
 
     def _get_soup(self, **kwargs):
         """Return a BeautifulSoup object for the object driver current page."""
+        # If user has requested termination, handle cleanup instead of querying
+        # additional results
+        if not self.continue_running:
+            self.terminate()
+
         html = self.driver.page_source
         return BeautifulSoup(html, **kwargs)
 
@@ -191,6 +258,30 @@ class AbstractWebScraper(AbstractScraper):
             parent_tag = None
 
         return parent_tag
+
+    def _get_sibling_attributes(self, soup, string, **kwargs):
+        """Return the sibling tags.
+
+        Parameters
+        ----------
+        soup : bs4.BeautifulSoup
+        string : str
+            Pattern for locating tag of interest.
+        **kwargs : dict, optional
+            Additional parameters passed to the 
+            bs4.element.Tag.find_next_siblings() call.
+
+        Returns
+        -------
+        list
+
+        See Also
+        --------
+        bs4.element.Tag.find_next_siblings()
+        """
+
+        tag = self._get_single_attribute_from_tag_info(soup=soup, string=string)
+        return tag.find_next_siblings(**kwargs)
 
     def _get_pibling_attributes(
         self,
@@ -447,6 +538,34 @@ class AbstractAPIScraper(AbstractScraper):
 
         return object_paths
 
+    def get_request_output_and_update_query_ref(
+        self, 
+        url, 
+        params=None, 
+        headers=None, 
+        **ref_kwargs
+    ):
+        """Return request output and update self.current_query_ref.
+
+        Parameters
+        ----------
+        url : str
+        params : dict, optional (default=None)
+        headers : dict, optional (default=None)
+        **ref_kwargs : dict, optional
+
+        Returns
+        -------
+        self.get_request_output(url, params, headers)
+
+        See Also
+        --------
+        self._update_query_ref()
+        self.get_request_output()
+        """
+
+        self._update_query_ref(**ref_kwargs)
+        return self.get_request_output(url, params, headers)
 
     def get_request_output(self, url, params=None, headers=None):
         """Performs a requests.get(...) call, returns response and json.
@@ -465,6 +584,11 @@ class AbstractAPIScraper(AbstractScraper):
         outpout : dict
             Json object from r(esponse).
         """
+
+        # If user has requested termination, handle cleanup instead of querying
+        # additional results
+        if not self.continue_running:
+            self.terminate()
 
         r = requests.get(url, params=params, headers=headers)
         try:
@@ -642,6 +766,7 @@ class AbstractTermScraper(AbstractAPIScraper):
             self.queue.put('Save complete.')
         
         self.queue.put(f'{self.get_repo_name()} run complete.')
+        self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs):
         """Queries the API for each search term.
@@ -821,6 +946,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
             self.queue.put('Save complete.')
         
         self.queue.put(f'{self.get_repo_name()} run complete.')
+        self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs):
         """Queries the API for each search term/type combination.
@@ -958,6 +1084,8 @@ class AbstractTypeScraper(AbstractAPIScraper):
                 output of get_all_search_outputs.
         """
 
+        self.queue.put(f'Running {self.get_repo_name()}...')
+
         # Get search_output
         search_dict = self.get_all_search_outputs(**kwargs)
 
@@ -990,7 +1118,12 @@ class AbstractTypeScraper(AbstractAPIScraper):
             final_dict = search_dict
 
         if save_dir:
+            self.queue.put(f'Saving output to "{save_dir}".')
             self.save_dataframes(final_dict, save_dir)
+            self.queue.put('Save complete.')
+
+        self.queue.put(f'{self.get_repo_name()} run complete.')
+        self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs):
         """Queries the API for each search type.
