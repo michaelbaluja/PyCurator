@@ -6,7 +6,9 @@ import pandas as pd
 from flatten_json import flatten
 from tqdm import tqdm
 
-from scrapers.base_scrapers import AbstractTermTypeScraper, AbstractWebScraper
+from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper, \
+    AbstractWebScraper
+from utils import parse_numeric_string
 
 
 class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
@@ -102,6 +104,7 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         super().load_credentials(credentials=credentials, **kwargs)
         self.headers['X-Dataverse-key'] = self.credentials
     
+    @AbstractScraper._pb_indeterminate
     def get_individual_search_output(self, search_term, search_type, **kwargs):
         """Scrapes Dataverse API for the specified search term and type.
 
@@ -140,11 +143,13 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         }
 
         # Conduct initial search & extract results
-        self._print_progress(page_idx)
-        _, output = self.get_request_output(
-            search_url, 
+        _, output = self.get_request_output_and_update_query_ref(
+            url=search_url,
             params=search_params,
-            headers=self.headers
+            headers=self.headers,
+            search_term=search_term,
+            search_type=search_type,
+            page=page_idx
         )
         output = output['data']
 
@@ -168,11 +173,13 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             page_idx += 1
 
             # Perform next search and convert results to json
-            self._print_progress(page_idx)
-            _, output = self.get_request_output(
-                search_url, 
+            _, output = self.get_request_output_and_update_query_ref(
+                url=search_url,
                 params=search_params,
-                headers=self.headers
+                headers=self.headers,
+                search_term=search_term,
+                search_type=search_type,
+                page=page_idx
             )
             output = output['data']
         
@@ -320,7 +327,7 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         num_downloads = results.get('num_downloads')
 
         if num_downloads:
-            results['num_downloads'] = re.findall(r'\d+', num_downloads)[0]
+            results['num_downloads'] = parse_numeric_string(num_downloads)
             
         return results   
 
@@ -348,7 +355,7 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         metadata_df = pd.DataFrame()
 
         # Get details for each object
-        for object_path in tqdm(object_paths):
+        for object_path in self._pb_determinate(object_paths):
             object_dict = dict()
 
             # Retrieve webpage

@@ -8,8 +8,8 @@ from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
 from tqdm import tqdm
 
-from scrapers.base_scrapers import AbstractWebScraper
-from utils import parse_numeric_string
+from scrapers.base_scrapers import AbstractScraper, AbstractWebScraper
+from utils import parse_numeric_string, find_first_match
 
 
 class UCIScraper(AbstractWebScraper):
@@ -137,6 +137,9 @@ class UCIScraper(AbstractWebScraper):
             self.save_results(dataset_df, output_filename)
             self.queue.put('Save complete.')
 
+        self.queue.put(f'{self.get_repo_name()} run complete.')
+        self.continue_running = False
+
         return dataset_df
 
     def _clean_results(self, results):
@@ -150,18 +153,18 @@ class UCIScraper(AbstractWebScraper):
         ## Make sure that the donation date is not null
         if donation_date:
             try:
-                results['donation_date'] = re.findall(
-                    '\d+-\d+-\d+', 
-                    donation_date
-                )[0]
+                results['donation_date'] = find_first_match(
+                    string=donation_date,
+                    pattern='\d+-\d+-\d+' 
+                )
             # Error occurs when no date is present
             except IndexError:
                 results['donation_date'] = None
         if link_date:
-            results['link_date'] = re.findall(
-                '\d+-\d+-\d+', 
-                link_date
-            )[0]
+            results['link_date'] = find_first_match(
+                string=link_date,
+                pattern='\d+-\d+-\d+'
+            )
         if num_citations:
             results['num_citations'] = parse_numeric_string(num_citations)
         if num_views:
@@ -197,6 +200,7 @@ class UCIScraper(AbstractWebScraper):
 
         return soup.find('span', string='EXTERNAL')
 
+    @AbstractScraper._pb_indeterminate
     def get_dataset_ids(self, dataset_list_url, instance_path):
         """Returns the dataset ids for all datasets on the given page.
 
@@ -228,7 +232,10 @@ class UCIScraper(AbstractWebScraper):
         # Gather the instances and parse the ids
         dataset_ids = [
             instance.attrs['href'].split('/')[-1] 
-            for instance in soup.select(instance_path)
+            for instance in self.get_variable_attribute(
+                soup, 
+                path=instance_path
+            )
         ]
 
         self.queue.put('Dataset id scraping complete.')
@@ -302,7 +309,7 @@ class UCIScraper(AbstractWebScraper):
                     self._get_attribute_value(pibling, separator='~').split('~')
                     for pibling in self._get_pibling_attributes(
                         soup=soup,
-                        string=r'Creators'
+                        string=attr
                     )
                 ]
                 if len(tag_texts) == 1:
@@ -313,7 +320,6 @@ class UCIScraper(AbstractWebScraper):
                 pass
 
         return result_dict
-    
 
     def get_individual_page_data(
         self,
@@ -341,13 +347,19 @@ class UCIScraper(AbstractWebScraper):
         # Get the requested url
         self.driver.get(url)
         
-        # Wait for pertinent sections to load
-        WebDriverWait(self.driver, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'td > p'))
-        )
-        
         # Extract and convert html data
         soup = self._get_soup(features='html.parser')
+        tag = self._get_sibling_attributes(soup, re.compile(r'Abstract'))[0]
+        tag_type = tag.name
+        tag_path_classes = tag.attrs['class']
+        wait_path = '.'.join([tag_type, *tag_path_classes])
+
+        WebDriverWait(self.driver, 5).until_not(
+            EC.text_to_be_present_in_element_value(
+                (By.CSS_SELECTOR, wait_path),
+                'N/A'
+            )
+        )
         
         # Retrieve attribute values from parsed html
         result_dict = self._get_attribute_values(soup)
@@ -407,9 +419,9 @@ class UCIScraper(AbstractWebScraper):
 
         # Create output dataframe
         dataset_df = pd.DataFrame()
-        
+
         # Loop for each dataset page
-        for page_id in tqdm(page_ids[:10]):
+        for page_id in self._pb_determinate(page_ids):
             url = f'{self.base_url}/{page_id}'
             
             # Retrieve and clean results
@@ -420,7 +432,7 @@ class UCIScraper(AbstractWebScraper):
             )
             # Add results to total result dataframe
             dataset_df = dataset_df.append(results, ignore_index=True)
-        
+
         self.queue.put('Scraping complete.')
 
         # Remove unnecessary nested columns
