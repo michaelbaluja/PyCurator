@@ -5,17 +5,17 @@ The goal of this project is to inform internal and community practices for curat
 
 The specific objectives for this project are to survey ML research objects currently published in common scientific data repositories, to assess: 1) which components of the ML lifecycle are being shared and 2) how ML objects are being documented. In evaluating this compiled information, we further aim to 3) formally specify the core features necessary in curated ML objects to enable reuse by a user with basic knowledge of ML.
 
-This GitHub repository contains scripts used to query the APIs for the following repositories:
+This GitHub repository contains a unified search tool along with scripts used to query data from the following repositories:
 
 **ML-focused repositories**
 * [Kaggle](https://www.kaggle.com/)
-  * Kaggle is a popular ML data and model hub, frequently used by students and others learning ML. Documentation can be variable, but components are intended to be reused, meaning documentation provided is “minimally viable” in terms of reuse.
+  * Kaggle is a popular ML and data science platform, frequently used both by ML newcomers as well as those with more experience. The platform hosts datasets as well as data analysis notebooks. Documentation can be variable, but components are intended to be reused, meaning documentation provided is “minimally viable” in terms of reuse.
 * [OpenML](https://www.openml.org/)
-  * summary TBD
-* [Papers with Code](https://paperswithcode.com/)
-  * summary TBD
-* [UC Irvine Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php)
-  * This popular ML repository primarily hosts training and test datasets, with broad variability in documentation. Useful for identifying which properties of ML datasets are documented when reuse is anticipated.
+  * OpenML is a platform with the goal to "build an open, organized, online ecosystem for machine learning." The platform provides datasets, machine learning tasks performed on the datasets, specific algorithms (flows) that are ran to complete the task, and individual runs of a task. There is a slight barrier due to the requirement of ARFF format for datasets. While the required information necessary for dataset upload is sparse, descriptive dataset properties are automatically extracted and made available.
+* [Papers With Code](https://paperswithcode.com/)
+  * Papers With Code is a platform aiming "to create a free and open resource with Machine Learning papers, code and evaluation tables." All content on the website is openly licensed under CC-BY-SA. There is no requirement that papers are uploaded with their code implementation, although due to the open nature of the website, anyone is allowed to upload their own unofficial implementation.
+* [UC Irvine Machine Learning Repository](https://archive-beta.ics.uci.edu)
+  * This popular ML repository primarily hosts training and test datasets, domain theories, and data generators, with broad variability in documentation. Useful for identifying which properties of ML datasets are documented when reuse is anticipated.
 
 **Generalist repositories**
 * [Figshare](https://figshare.com/)
@@ -29,10 +29,39 @@ This GitHub repository contains scripts used to query the APIs for the following
 * [Harvard Dataverse](https://dataverse.harvard.edu/)
   * Offers tiered curation with deposits and a limit of 1 TB. In addition to serving as a repository for research data, depositors can submit their data and code as a container “dataverse” with all necessary data and metadata. CC0 is highly encouraged, and applied by default.
 
-UCI Machine Learning Repository and UC San Diego Library Digital Collections do not have public-facing APIs. Data for these repositories was received directly from the respective repository owners.
+The UC Irvine Machine Learning Repository and UC San Diego Library Digital Collections do not have public-facing APIs. Data from the UC Irvine Machine Learning Repository is collected through the use of web-scraping, and data from the UC San Diego Library Digitial Collections was collected directly from the repository owners.
 
-Each notebook contains repository-specific code and instructions to query and extract metadata for all objects matching specified search terms.
+## Data Collection
+Data collection for each repository is available both through individual Jupyter [Notebooks](https://github.com/stephlabou/LAUC_ML/tree/main/notebooks) as well as the general user interface in ```main.py```. Each notebook contains repository-specific code and instructions to query and extract metadata for all objects matching specified search terms.
 
-In the case of ML-focused repositories, the code here extracts the entirety of the repository (search terms not necessary). For generalist repositories, search term is set as **XYZXYZXYZ** and can be edited as needed to meet alternative search criteria.
+Each repository is classified based on its format for collecting data. In this manner, there are repositories that search by search term (term\_scrapers), search type (type\_scrapers), search term and search type (term\_type\_scrapers), and those that search by web scraping (web\_scrapers). Due to API limitations, web scraping is required alongside traditional API calls for some repositories, though these are still classified by the above format.
 
+## Installation and use
+### General
+All scripts and tools used in this project are written in Python, with compatability tested as old as Python 3.7. To install Python, follow the instructions at [python.org](https://www.python.org/downloads/). 
+
+For macOS useres, while Python 2 is installed by default, Python 3 must also be installed for compatability reasons. If you are installing and using Python 3 on macOS, you must use the ```python3``` command instead of ```python``` when entering the following installation and use commands.
+
+To download the files necessary for use, click on the green ```code``` button near the top of the page and click *"Download ZIP"*.
+
+Additional python packages are required for installation, and are noted in the ```setup.py``` file. To easily install all requirements, you can use the command
+```bash
+$ python setup.py install
+```
+from your command terminal.
+
+### User Interface
+To run the UI, navigate to the repository folder on your command terminal and run the following command:
+```bash
+$ python main.py
+```
+
+# TODO: Add UI stuff
+
+### Notebooks
+To utilize the repository scraper notebooks, ensure that you have Jupyter installed, and simply open the ```repository_name.ipynb``` file via Jupyter Notebooks or JupyterLab. This option is beneficial for running individual repository scrapers where you may wish to tweak the commands (such as for viewing intermediate data results).
+
+Instructions on installation and use for Jupyter is available [here](https://jupyter.org/install).
+
+## Funding
 This project is funded by the Librarians Association of the University of California (LAUC).
