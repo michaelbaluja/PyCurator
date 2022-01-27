@@ -64,4 +64,4 @@ To utilize the repository scraper notebooks, ensure that you have Jupyter instal
 Instructions on installation and use for Jupyter is available [here](https://jupyter.org/install).
 
 ## Funding
-This project is funded by the Librarians Association of the University of California (LAUC).
+The initial development of this program was funded by the Librarians Association of the University of California (LAUC) and UC San Diego Library Research Data Curation Program (RDCP).
