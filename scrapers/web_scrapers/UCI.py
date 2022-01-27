@@ -3,6 +3,7 @@ import re
 
 import pandas as pd
 import selenium.webdriver.support.expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 from flatten_json import flatten
 from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -368,21 +369,25 @@ class UCIScraper(AbstractWebScraper):
         # Get file info 
         if not self.is_external(soup):
             ## Open file tab and switch to it
-            self.driver.find_element_by_link_text('Download').click()
-            self.driver.switch_to_window(self.driver.window_handles[-1])        
+            try:
+                self.driver.find_element_by_link_text('Download').click()
+            except NoSuchElementException:
+                pass
+            else:
+                self.driver.switch_to_window(self.driver.window_handles[-1])    
 
-            soup = self._get_soup(features='html.parser')
-            result_dict['files'] = [
-                self._get_attribute_value(child)
-                for child in self.get_variable_attribute(
-                    soup=soup, 
-                    path='li > a'
-                )
-            ]
+                soup = self._get_soup(features='html.parser')
+                result_dict['files'] = [
+                    self._get_attribute_value(child)
+                    for child in self.get_variable_attribute(
+                        soup=soup, 
+                        path='li > a'
+                    )
+                ]
 
-            ## Close new window and switch back to previous
-            self.driver.close()
-            self.driver.switch_to_window(self.driver.window_handles[0])
+                ## Close new window and switch back to previous
+                self.driver.close()
+                self.driver.switch_to_window(self.driver.window_handles[0])
         
         # Clean results (if instructed)
         if clean:
