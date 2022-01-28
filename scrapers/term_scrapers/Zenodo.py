@@ -1,3 +1,5 @@
+import warnings
+
 import pandas as pd
 from flatten_json import flatten
 
@@ -71,6 +73,12 @@ class ZenodoScraper(AbstractTermScraper):
             year=search_year,
             page=search_params['page']
         )
+
+        # Handle any potential errors
+        if response.status_code != 200:
+            warnings.warn(f'{response.status_code}: Returning without results.')
+            self.continue_running = False
+            self.terminate()
 
         # Loop over search years
         # searches until the current search year does not return any results
