@@ -225,7 +225,9 @@ class RunPage(Page):
         self.progress_bar.stop()
         self.progress_determinate_num['text'] = f'({self.threaded_run.scraper.queries_completed}/{self.threaded_run.scraper.num_queries})'
         self.progress_bar['mode'] = 'determinate'
-        self.progress_bar['value'] = self.threaded_run.scraper.queries_completed / self.threaded_run.scraper.num_queries * 100
+        self.progress_bar['value'] = \
+            (self.threaded_run.scraper.queries_completed /
+                self.threaded_run.scraper.num_queries * 100)
 
     def _update_progress_bar(self):
         """Update status of progress bar based on scraper status."""
@@ -256,6 +258,9 @@ class RunPage(Page):
                 # Empty queue
                 while not self.threaded_run.scraper.queue.empty():
                     self.process_updates()
+
+                # Stop progress bar
+                self.progress_bar.stop()
 
                 # Reactivate back button
                 self.back_button.config(state='normal')
