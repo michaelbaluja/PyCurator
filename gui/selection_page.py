@@ -13,7 +13,6 @@ class SelectionPage(Page):
 
     def show(self):
         """Display scraper selection widgets."""
-
         # Create Frames to divide page into selection/param sections
         # Frames are created as class vars so they can be updated from other
         # functions, as is necessary for the param frame
@@ -68,7 +67,6 @@ class SelectionPage(Page):
 
     def show_repo_params(self, *args):
         """Create and display Frame with repo-specific query parameters."""
-
         # Clear frame
         for widget in self.param_frame.winfo_children():
             widget.destroy()
@@ -220,15 +218,17 @@ class SelectionPage(Page):
 
         if search_terms and not search_terms.get():
             requirements_left.append('search term(s)')
-        if search_types and not any([type_.get() for type_ in search_types]):
+        if (search_types and 
+            not any([type_.get() for type_ in search_types.values()])):
             requirements_left.append('search type(s)')
 
-        if requirements_left:
-            try:
-                self.requirement_label.pack_forget()
-            except:
-                pass
+        # Remove any previous requirement label
+        try:
+            self.requirement_label.pack_forget()
+        except:
+            pass
 
+        if requirements_left:
             self.requirement_label = tk.Label(
                 self.param_frame, 
                 fg='#FF0000',
