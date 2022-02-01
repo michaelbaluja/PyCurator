@@ -91,7 +91,7 @@ class SelectionPage(Page):
         self.run_button = tk.Button(
             self.param_frame,
             text=f'Run {repo_name}',
-            command=lambda: self.master.run_page.run(repo_name, repo_class)
+            command=lambda: self.validate_and_run(repo_name, repo_class)
         )
 
         # Get save location
@@ -154,10 +154,7 @@ class SelectionPage(Page):
             path_dict_frame.pack(anchor='w')
 
         # Get search terms, if needed
-        if issubclass(
-            repo_class, 
-            (AbstractTermScraper, AbstractTermTypeScraper)
-        ):
+        if hasattr(repo_class, 'set_search_terms'):
             search_term_frame = tk.Frame(self.param_frame)
             self.master.repo_params[repo_name]['search_terms'] = tk.StringVar()
 
@@ -175,13 +172,7 @@ class SelectionPage(Page):
             search_term_frame.pack()
 
         # Get search types, if needed
-        if issubclass(
-            repo_class, 
-            (AbstractTypeScraper, AbstractTermTypeScraper)
-        ):
-            # Disable run button (re-enabled upon search type selection)
-            self.run_button.config(state=tk.DISABLED)
-
+        if hasattr(repo_class, 'set_search_types'):
             search_type_outer_frame = tk.Frame(self.param_frame)
             search_type_inner_frame = tk.Frame(search_type_outer_frame)
             search_type_label = tk.Label(
@@ -199,13 +190,8 @@ class SelectionPage(Page):
                     search_type_inner_frame,
                     text=search_type.title(),
                     variable=self.master.repo_params[repo_name] \
-                        ['search_types'][search_type],
-                    command=lambda: self._toggle_button_state(
-                        self.master.repo_params[repo_name] \
-                            ['search_types'].values(), 
-                        self.run_button
+                        ['search_types'][search_type]
                     )
-                ) 
                 search_type_button.pack(side='top', anchor='w')
 
             search_type_label.pack(side='left', anchor='n')
@@ -213,7 +199,44 @@ class SelectionPage(Page):
             search_type_outer_frame.pack(anchor='w')
 
         # Run button
-        self.run_button.pack(anchor='center', pady=(5, 0))
+        self.run_button.pack(side='bottom', anchor='center', pady=(5, 0))
+
+    def validate_and_run(self, repo_name, repo_class):
+        """Ensure all required parameters are entered before running.
+
+        Parameters
+        ----------
+        repo_name : str
+        repo_class : AbstractScraper derivative
+
+        See Also
+        --------
+        scrapers.base_scrapers
+        """
+
+        requirements_left = []
+        search_terms = self.master.repo_params[repo_name].get('search_terms')
+        search_types = self.master.repo_params[repo_name].get('search_types')
+
+        if search_terms and not search_terms.get():
+            requirements_left.append('search term(s)')
+        if search_types and not any([type_.get() for type_ in search_types]):
+            requirements_left.append('search type(s)')
+
+        if requirements_left:
+            try:
+                self.requirement_label.pack_forget()
+            except:
+                pass
+
+            self.requirement_label = tk.Label(
+                self.param_frame, 
+                fg='#FF0000',
+                text=f'Must provide {requirements_left} to proceed.'
+            )
+            self.requirement_label.pack(anchor='center')
+        else:
+            self.master.run_page.run(repo_name, repo_class)
 
     def _toggle_button_state(self, toggle_vars, btn):
         # Validate input
