@@ -1,13 +1,11 @@
 import itertools
 import json
 import os
-import pickle
 import queue
 import re
 import sys
 import time
 from abc import ABC, abstractmethod, abstractstaticmethod
-from collections import OrderedDict
 
 import pandas as pd
 import requests
@@ -19,7 +17,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 class AbstractScraper(ABC):
     """"
-    Contains basic functions that are relevant for all scrapers.
+    Contains basic functions that are relevant for all scraper objects.
 
     Parameters
     ----------
@@ -158,7 +156,7 @@ class AbstractScraper(ABC):
 
         Parameters
         ----------
-        results : DataFrame
+        results : pd.DataFrame
             If DataFrame, results will be stored in a csv format.
         filepath : str
             Location to store file in. Take note of output type as specified
@@ -174,7 +172,9 @@ class AbstractScraper(ABC):
         if isinstance(results, pd.DataFrame):
             results.to_json(filepath)
         else:
-            raise ValueError(f'Can only save DataFrame, not {type(results)}')
+            raise ValueError(
+                f'Input must be of type pd.DataFrame, not \'{type(results)}\'.'
+            )
 
 class AbstractWebScraper(AbstractScraper):
     """Base class for all repository web scrapers. 
@@ -231,6 +231,7 @@ class AbstractWebScraper(AbstractScraper):
         return BeautifulSoup(html, **kwargs)
 
     def _get_single_attribute_from_path(self, soup, path):
+        """Extract HTML given a CSS path."""
         return soup.select_one(path)
         
     def _get_single_attribute_from_tag_info(
@@ -273,7 +274,7 @@ class AbstractWebScraper(AbstractScraper):
 
         Returns
         -------
-        list
+        list of bs4.element.Tag or empty
 
         See Also
         --------
@@ -302,7 +303,7 @@ class AbstractWebScraper(AbstractScraper):
         
         Returns
         -------
-        list
+        list of bs4.element.Tag or empty
 
         See Also
         --------
@@ -353,7 +354,7 @@ class AbstractWebScraper(AbstractScraper):
 
         Returns
         -------
-        attr : bs4.element.Tag
+        attr : bs4.element.Tag or None
 
         Raises
         ------
@@ -404,7 +405,7 @@ class AbstractWebScraper(AbstractScraper):
 
         Returns
         -------
-        attrs : list
+        attrs : list of bs4.element.Tag or None
 
         Raises
         ------
@@ -456,59 +457,40 @@ class AbstractAPIScraper(AbstractScraper):
 
         # Load API credentials
         if credentials:
-            self.load_credentials(credentials=credentials)
+            self.load_credentials(credential_filepath=credentials)
 
-    def load_credentials(self, credentials='credentials.pkl', **kwargs):
+    def load_credentials(self, credential_filepath):
         """Load the credentials given filepath or token.
 
         Parameters
         ----------
-        credentials : str, optional (default=credentials.pkl)
-            API token or pkl filepath containing credentials in dict.
-            If pkl filepath, data in file must be formatted as a dictionary of 
-            the form data_dict['{REPO_NAME}_TOKEN']: MY_KEY, or as a string 
-            containing the key.
-        kwargs : dict, optional
-            Possible additional arguments include:
-            file_format : str
-                Choice of format for opening pkl file. Choices include the
-                'mode' parameters for the python open() function. If none is 
-                provided, files with attempt to open via 'rb'.
+        credential_filepath : str
         
         Raises
         ------
         ValueError
-            If "credentials" arg is not a str
-            If provided pkl file is not valid
+            If credential_filepath is not of type str.
         """
         
-        if not isinstance(credentials, str):
-            raise ValueError('Credential value must be of type str')
+        if not isinstance(credential_filepath, str):
+            raise TypeError(
+                (f'Credential value must be of type str, '
+                    f'not \'{type(credential_filepath)}\'')
+            )
 
         # Try to load credentials from file
-        if os.path.exists(credentials):
-            file_format = kwargs.get('file_format', 'rb')
+        if os.path.exists(credential_filepath):
+            with open(credential_filepath) as credential_file:
+                credential_data = json.load(credential_file)
+                
+                self.credentials = credential_data.get(self.repository_name)
 
-            with open(credentials, file_format) as credential_file:
-                credential_file_data = pickle.load(credential_file)
-
-                if isinstance(credential_file_data, (dict, OrderedDict)):
-                    try:
-                        token_name = f'{self.repository_name.upper()}_TOKEN'
-                        self.credentials = credential_file_data[token_name]
-                    except KeyError:
-                        self.queue.put(
-                            f'{token_name} not found. Attempting to run unverified...'
-                        )
-                        self.credentials = ''
-                elif isinstance(credential_file_data, str):
-                    self.credentials = credential_file_data
-                else:
-                    raise ValueError(f'Invalid credential data in pkl file')
-
-        # Set credentials from string value
+                if not self.credentials:
+                    self.queue.put(
+                        'No credential info found, attempting unauthorized run.'
+                    )
         else:
-            self.credentials = credentials
+            raise FileNotFoundError(f'{credential_filepath} does not exist.')
 
 
     def validate_metadata_parameters(self, object_paths):
@@ -516,25 +498,22 @@ class AbstractAPIScraper(AbstractScraper):
 
         Parameters
         ----------
-        object_paths : str/list-like
+        object_paths : str or list-like
 
         Returns
         -------
-        object_paths : str/list-like
+        object_paths : str or list-like
 
         Raises
         ------
-        ValueError
-            If no object paths are provided
+        TypeError
+            If no object paths are provided.
         """
 
-        # If a single object path is provided as a string, need to wrap as list
         if isinstance(object_paths, str):
             object_paths = [object_paths]
-
-        # Ensure input is not empty
-        if len(object_paths) == 0:
-            raise ValueError('Cannot perform search without object paths')
+        if not all([isinstance(path, str) for path in object_paths]):
+            raise TypeError('All object paths must be of type str.')
 
         return object_paths
 
@@ -583,6 +562,13 @@ class AbstractAPIScraper(AbstractScraper):
         r : response
         outpout : dict
             Json object from r(esponse).
+        
+        Raises
+        ------
+        RuntimeError
+            Occurs when a query results in an unparsable response. Outputs 
+            the parameters provided to the query along with the response
+            status code for further troubleshooting.
         """
 
         # If user has requested termination, handle cleanup instead of querying
@@ -597,6 +583,7 @@ class AbstractAPIScraper(AbstractScraper):
             # 429: Rate limiting (wait and then try the request again)
             if r.status_code == 429:
                 self.queue.put('Rate limit hit, waiting for request...')
+
                 # Wait until we can make another request
                 reset_time = int(r.headers['RateLimit-Reset'])
                 current_time = int(time.time())
@@ -608,8 +595,11 @@ class AbstractAPIScraper(AbstractScraper):
                     headers=headers
                 )
             else:
-                print(vars(r))
-                raise e
+                raise RuntimeError(
+                    (f'Query to {url} with {params} params and {headers}'
+                    f' headers fails unexpectedly with status'
+                    f' code {r.status_code} and full output {vars(r)}')
+                )
 
         return r, output
 
@@ -624,29 +614,61 @@ class AbstractAPIScraper(AbstractScraper):
     ):
         """Merges together search and metadata DataFrames by the given 'on' key.
 
+        For multiple DataFrames containing similar search references, combines
+        into one DataFrame. Search and Metadata DataFrames are merged across
+        their respective dictionaries via common keys. For Search DataFrames
+        with no matching Metadata, the Search DataFrame added as-is.
+
         Parameters
         ----------
-        search_dict : dict
+        search_dict : dict of pd.DataFrame
             Dictionary of search output results.
-        metadata_dict : dict
+        metadata_dict : dict of pd.DataFrame
             Dictionary of metadata results.
-        on : str/list-like, optional (default=None)
+        on : str or list-like, optional (default=None)
             Column name(s) to merge the two dicts on.
-        left_on : str/list-like, optional (default=None)
+        left_on : str or list-like, optional (default=None)
             Column name(s) to merge the left dict on.
-        right_on : str/list-like, optional (default=None)
+        right_on : str or list-like, optional (default=None)
             Column name(s) to merge the right dict on.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Placeholder argument to allow interitence overloading.
 
         Returns
         -------
-        df_dict : OrderedDict
-            OrderedDict containing all of the merged search/metadata dicts.
+        df_dict : dict of pd.DataFrame
+            Dict containing all of the merged search/metadata DataFrames 
+            or singleton search DataFrames.
+        
+        Raises
+        ------
+        TypeError
+            search_dict or metadata_dict are not instances of dict.
+        ValueError
+            search_dict or metadata_dict contain entries that are not of type
+            pd.DataFrame.
         """
 
-        # Merge the DataFrames
-        df_dict = OrderedDict()
+        if not isinstance(search_dict, dict):
+            raise TypeError(
+                f'search_dict must be of type dict, not \'{type(search_dict)}\'.'
+            )
+        if not isinstance(metadata_dict, dict):
+            raise TypeError(
+                ('metadata_dict must be of type dict, not'
+                f' \'{type(metadata_dict)}\'.')
+            )
+        
+        if not all([isinstance(df, pd.DataFrame) for df in search_dict]):
+            raise ValueError(
+                'All entries of search_dict must be of type pd.DataFrame.'
+            )
+        if not all([isinstance(df, pd.DataFrame) for df in metadata_dict]):
+            raise ValueError(
+                'All entries of metadata_dict must be of type pd.DataFrame.'
+            )
+
+        df_dict = dict()
         for query_key in search_dict.keys():
             search_df = search_dict[query_key]
 
@@ -704,28 +726,31 @@ class AbstractTermScraper(AbstractAPIScraper):
             self.set_search_terms(search_terms)
 
     def set_search_terms(self, search_terms):
+        """Update TermScraper search terms."""
         self.search_terms = search_terms
 
     def run(self, **kwargs):
         """Queries all data from the implemented API.
 
-        In the following order, this function calls:
-        - get_all_search_outputs
-        - get_all_metadata (if applicable)
-        - merge_search_and_metadata_dicts (if applicable)
-
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self attributes.
 
         Returns
         -------
-        merged_dict/search_dict : dict
+        merged_dict/search_dict : dict of pd.DataFrame
             Returns merged_dict if metadata is available. This is the output of
                 the merge_search_and_metadata_dicts function.
             Returns search_dict if metadata is not available. This is the 
                 output of get_all_search_outputs.
+
+        Notes
+        -----
+        In the following order, this function calls:
+            get_all_search_outputs
+            get_all_metadata (if applicable)
+            merge_search_and_metadata_dicts (if applicable)
         """
 
         self.queue.put(f'Running {self.get_repo_name()}...')
@@ -779,7 +804,7 @@ class AbstractTermScraper(AbstractAPIScraper):
 
         Returns
         -------
-        search_dict : OrderedDict of DataFrames
+        search_dict : dict of pd.DataFrame
             Stores the results of each call to get_individual_search_output in
             the form search_dict[{search_term}] = df.
         """
@@ -788,7 +813,7 @@ class AbstractTermScraper(AbstractAPIScraper):
         search_terms = kwargs.get('search_terms', self.search_terms)
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        search_dict = OrderedDict()
+        search_dict = dict()
 
         for search_term in search_terms:
             self.queue.put(f'Searching {search_term}.')
@@ -811,19 +836,19 @@ class AbstractTermScraper(AbstractAPIScraper):
         ----------
         object_path_dict : dict
             Dict of the form {query: object_paths} for list of object paths.
-        kwargs : dict, optional 
+        **kwargs : dict, optional 
             Can temporarily overwrite self flatten_output argument.
         
         Returns
         -------
-        metadata_dict : OrderedDict
-            OrderedDict of DataFrames with metadata for each query.
+        metadata_dict : dict of pd.DataFrame
+            dict of DataFrames with metadata for each query.
             Order matches the order of search_dict.
         """
         
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        metadata_dict = OrderedDict()
+        metadata_dict = dict()
 
         for query, object_paths in object_path_dict.items():
             self.queue.put(f'Querying {query} metadata.')
@@ -881,31 +906,36 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
             self.set_search_types(search_types)
 
     def set_search_terms(self, search_terms):
+        """Update TermTypeScraper search terms."""
         self.search_terms = search_terms
 
     def set_search_types(self, search_types):
+        """Update TermTypeScraper search types."""
         self.search_types = search_types
 
     def run(self, **kwargs):
         """Queries all data from the implemented API.
 
-        In the following order, this function calls:
-        - get_all_search_outputs
-        - get_all_metadata (if applicable)
-        - merge_search_and_metadata_dicts (if applicable)
-
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self attributes and accept save params.
 
         Returns
         -------
-        merged_dict/search_dict : dict
+        merged_dict/search_dict : dict of pd.DataFrame
             Returns merged_dict if metadata is available. This is the output of
                 the merge_search_and_metadata_dicts function.
             Returns search_dict if metadata is not available. This is the 
                 output of get_all_search_outputs.
+
+        Notes
+        -----
+
+        In the following order, this function calls:
+            get_all_search_outputs
+            get_all_metadata (if applicable)
+            merge_search_and_metadata_dicts (if applicable)
         """
 
         self.queue.put(f'Running {self.get_repo_name()}...')
@@ -953,13 +983,13 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self search_terms, search_types, and 
             flatten_output arguments.
 
         Returns
         -------
-        search_dict : OrderedDict of DataFrames
+        search_dict : dict of pd.DataFrame
             Stores the results of each call to get_individual_search_output in 
             the form search_dict[(search_term, search_type)] = df.
         """
@@ -969,7 +999,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         search_types = kwargs.get('search_types', self.search_types)
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        search_dict = OrderedDict()
+        search_dict = dict()
 
         for search_term, search_type in itertools.product(search_terms, search_types):
             self.queue.put(f'Searching {search_term} {search_type}.')
@@ -994,19 +1024,19 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         ----------
         object_path_dict : dict
             Dict of the form {query: object_paths} for list of object paths.
-        kwargs : dict, optional 
+        **kwargs : dict, optional 
             Can temporarily overwrite self flatten_output argument.
         
         Returns
         -------
-        metadata_dict : OrderedDict
-            OrderedDict of DataFrames with metadata for each query.
+        metadata_dict : dict of pd.DataFrame
+            dict of DataFrames with metadata for each query.
             Order matches the order of search_dict.
         """
         
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        metadata_dict = OrderedDict()
+        metadata_dict = dict()
 
         for query, object_paths in object_path_dict.items():
             search_term, search_type = query
@@ -1065,23 +1095,25 @@ class AbstractTypeScraper(AbstractAPIScraper):
     def run(self, **kwargs):
         """Queries all data from the implemented API.
 
-        In the following order, this function calls:
-        - get_all_search_outputs
-        - get_all_metadata (if applicable)
-        - merge_search_and_metadata_dicts (if applicable)
-
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self attributes.
 
         Returns
         -------
-        merged_dict/search_dict : dict
+        merged_dict/search_dict : dict of pd.DataFrame
             Returns merged_dict if metadata is available. This is the output of
                 the merge_search_and_metadata_dicts function.
             Returns search_dict if metadata is not available. This is the 
                 output of get_all_search_outputs.
+        
+        Notes
+        -----
+        In the following order, this function calls:
+            get_all_search_outputs
+            get_all_metadata (if applicable)
+            merge_search_and_metadata_dicts (if applicable)
         """
 
         self.queue.put(f'Running {self.get_repo_name()}...')
@@ -1114,7 +1146,6 @@ class AbstractTypeScraper(AbstractAPIScraper):
         except (AttributeError, TypeError) as e:
             # Attribute Error: Tries to call a function that does not exist
             # TypeError: Tries to call function with incorrect arguments
-            print(e)
             final_dict = search_dict
 
         if save_dir:
@@ -1130,13 +1161,13 @@ class AbstractTypeScraper(AbstractAPIScraper):
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self search_types and flatten_output 
             arguments.
 
         Returns
         -------
-        search_dict : OrderedDict of DataFrames
+        search_dict : dict of pd.DataFrame
             Stores the results of each call to get_individual_search_output in
             the form search_output_dict[{search_type}] = df.
         """
@@ -1145,7 +1176,7 @@ class AbstractTypeScraper(AbstractAPIScraper):
         search_types = kwargs.get('search_types', self.search_types)
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        search_dict = OrderedDict()
+        search_dict = dict()
 
         for search_type in search_types:
             self.queue.put(f'Searching {search_type}.')
