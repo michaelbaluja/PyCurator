@@ -6,8 +6,28 @@ documentation. Data curation is now as easy as ```$ python main.py```. Whether y
 some buttons and getting the data or the flexibility of modifying query format, PyCurator provides a simple
 UI for quickly retrieving data that is built on top of an extensible collection of Web and API scraper classes.
 
+## Supported Repositories
+PyCurator currently supports the following repositories in the capacities listed.
+
+| Repository           | API                | Web                |
+|----------------------|--------------------|--------------------|
+| Dataverse            | :white_check_mark: | :white_check_mark: |
+| Dryad                | :white_check_mark: | :white_check_mark: |
+| Figshare             | :white_check_mark: | :x:                |
+| Kaggle               | :white_check_mark: | :x:                |
+| OpenML               | :white_check_mark: | :white_check_mark: |
+| Papers With Code     | :white_check_mark: | :x:                |
+| UCI Machine Learning | :x:                | :white_check_mark: |
+| Zenodo               | :white_check_mark: | :x:                |
+
+If there's a repository that you would like to see added to the list, check out the [Contributions](#contributions) section.
+
 ## Installation and use
 ### Installation
+Required depencencies are listed below in the [Dependencies](#dependencies) section.
+It is recommended to create a virtual environment to ensure there is no conflict with the packages
+in your current work space.
+
 To run, simply paste the following commands into your terminal
 ```bash
 git clone https://github.com/michaelbaluja/PyCurator.git
@@ -37,6 +57,7 @@ These parameters are outlined as
 | Web Scrape     | Flag for querying additional data via web scraping that is not available through the API.  This is an optional parameter for repositories that are not predominately web-scraper based. |
 | Search Terms   | Search term(s) to query. Terms should be separated with a comma, and multi-word terms should be wrapped in quotes.                                                                      |
 | Search Types   | Type of objects to query.                                                                                                                                                               |
+After all required parameters are provided, the ```Run``` button is activated.
 
 #### Run Page
 ![Run Page](/images/run_page.png "Run Page")
