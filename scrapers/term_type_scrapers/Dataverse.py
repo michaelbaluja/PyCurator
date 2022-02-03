@@ -36,8 +36,6 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
 
-    search_type_options = ('dataset', 'file')
-
     def __init__(
         self,
         path_file=os.path.join('paths', 'dataverse_paths.json'),
@@ -77,6 +75,10 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
     def accept_user_credentials():
         return True
 
+    @classmethod
+    def get_search_type_options(cls):
+        return ('dataset', 'file')
+
     def load_credentials(self, credential_filepath):
         """Load the credentials given filepath or token.
 
@@ -108,12 +110,13 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
         search_url = f'{self.base_url}/search'
+        search_type_options = DataverseScraper.get_search_type_options()
 
         # Validate input
         if not isinstance(search_term, str):
             raise ValueError('Search term must be a string.')
-        if search_type not in DataverseScraper.search_type_options:
-            raise ValueError('Can only search dataset, file.')
+        if search_type not in search_type_options:
+            raise ValueError(f'Can only search {search_type_options}.')
 
         # Set search parameters
         start = 0

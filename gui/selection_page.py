@@ -180,10 +180,10 @@ class SelectionPage(Page):
 
             self.master.repo_params[repo_name]['search_types'] = {
                 search_type: tk.IntVar()
-                for search_type in repo_class.search_type_options
+                for search_type in repo_class.get_search_type_options()
             }
 
-            for search_type in repo_class.search_type_options:
+            for search_type in repo_class.get_search_type_options():
                 search_type_button = tk.Checkbutton(
                     search_type_inner_frame,
                     text=search_type.title(),

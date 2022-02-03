@@ -36,8 +36,6 @@ class KaggleScraper(AbstractTermTypeScraper):
     documentation on authentication at https://www.kaggle.com/docs/api.
     """
 
-    search_type_options = ('datasets', 'kernels')
-
     def __init__(
         self, 
         search_terms=None, 
@@ -60,6 +58,10 @@ class KaggleScraper(AbstractTermTypeScraper):
     def accept_user_credentials():
         return False
 
+    @classmethod
+    def get_search_type_options(cls):
+        return ('datasets', 'kernels')
+
     @AbstractScraper._pb_indeterminate
     def get_individual_search_output(self, search_term, search_type, **kwargs):
         """Calls the Kaggle API for the specified search term and type.
@@ -77,12 +79,13 @@ class KaggleScraper(AbstractTermTypeScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
+        search_type_options = KaggleScraper.get_search_type_options()
 
         # Validate input
         if not isinstance(search_term, str):
             raise ValueError('Search term must be a string.')
-        if search_type not in KaggleScraper.search_type_options:
-            raise ValueError('Can only search datasets, kernels.')
+        if search_type not in search_type_options:
+            raise ValueError(f'Can only search {search_type_options}.')
 
         # Use search type to get relevant API function
         list_queries = getattr(self.api, f'{search_type}_list')

@@ -26,14 +26,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
 
-    search_type_options = (
-        'conferences', 
-        'datasets', 
-        'evaluations', 
-        'papers', 
-        'tasks'
-    )
-
     def __init__(
         self,
         search_terms=None,
@@ -53,6 +45,10 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     @staticmethod
     def accept_user_credentials():
         return True
+    
+    @classmethod
+    def get_search_type_options(cls):
+        return ('conferences', 'datasets', 'evaluations', 'papers', 'tasks')
 
     @AbstractScraper._pb_indeterminate
     def _conduct_search_over_pages(
@@ -139,16 +135,14 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         pandas.DataFrame
         """
 
+        flatten_output = kwargs.get('flatten_output', self.flatten_output)
+        search_type_options = PapersWithCodeScraper.get_search_type_options()
+        search_url = f'{self.base_url}/{search_type}'
+
         if not isinstance(search_term, str):
             raise ValueError('Search term must be a string.')
-        if search_type not in PapersWithCodeScraper.search_type_options:
-            raise ValueError(
-                'Search type must be one of '
-                f'{PapersWithCodeScraper.search_type_options}'
-            )
-
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_url = f'{self.base_url}/{search_type}'
+        if search_type not in search_type_options:
+            raise ValueError(f'Can only search {search_type_options}.')
 
         search_params = {
             'q': search_term,

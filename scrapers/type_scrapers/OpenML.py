@@ -37,8 +37,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
     point to reflect this.
     """
 
-    search_type_options = ('datasets', 'runs', 'tasks', 'evaluations')
-
     def __init__(
         self,
         path_file=None,
@@ -78,6 +76,10 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
     @staticmethod
     def accept_user_credentials():
         return True
+    
+    @classmethod
+    def get_search_type_options(cls):
+        return ('datasets', 'runs', 'tasks', 'evaluations')
 
     def _get_value_attributes(self, obj):
         """
@@ -256,10 +258,11 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
+        search_type_options = OpenMLScraper.get_search_type_options()
 
         # Ensure parameters are valid
-        if search_type not in OpenMLScraper.search_type_options:
-            raise ValueError(f'"{search_type}" is not a valid object type')
+        if search_type not in search_type_options:
+            raise ValueError(f'Can only search {search_type_options}.')
 
         self.queue.put(f'Querying {search_type}...')
 

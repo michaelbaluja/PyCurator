@@ -5,7 +5,7 @@ import queue
 import re
 import sys
 import time
-from abc import ABC, abstractmethod, abstractstaticmethod
+from abc import ABC, abstractmethod
 
 import pandas as pd
 import requests
@@ -101,7 +101,8 @@ class AbstractScraper(ABC):
         """Return the name of the class without the 'Scraper' suffix."""
         return cls.__name__.replace('Scraper', '')
 
-    @abstractstaticmethod
+    @staticmethod
+    @abstractmethod
     def accept_user_credentials():
         pass
 
@@ -904,6 +905,12 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         """Update TermTypeScraper search types."""
         self.search_types = search_types
 
+    @classmethod
+    @abstractmethod
+    def get_search_type_options(cls):
+        """Return the valid search type options for a given repository."""
+        pass
+
     def run(self, **kwargs):
         """Queries all data from the implemented API.
 
@@ -1076,6 +1083,12 @@ class AbstractTypeScraper(AbstractAPIScraper):
 
         if search_types:
             self.set_search_types(search_types)
+
+    @classmethod
+    @abstractmethod
+    def get_search_type_options(cls):
+        """Return the valid search type options for a given repository."""
+        pass
 
     def set_search_types(self, search_types):
         self.search_types = search_types

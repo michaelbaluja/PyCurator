@@ -25,8 +25,6 @@ class FigshareScraper(AbstractTermTypeScraper):
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
 
-    search_type_options = ('articles', 'collections', 'projects')
-
     def __init__(
         self,
         search_terms=None,
@@ -51,6 +49,10 @@ class FigshareScraper(AbstractTermTypeScraper):
     @staticmethod
     def accept_user_credentials():
         return True
+    
+    @classmethod
+    def get_search_type_options(cls):
+        return ('articles', 'collections', 'projects')
 
     def load_credentials(self, credential_filepath):
         """Load the credentials given filepath or token.
@@ -82,12 +84,13 @@ class FigshareScraper(AbstractTermTypeScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
+        search_type_options = FigshareScraper.get_search_type_options()
 
         # Validate input
         if not isinstance(search_term, str):
             raise ValueError('Search term must be a string.')
-        if search_type not in FigshareScraper.search_type_options:
-            raise ValueError('Can only search articles, collections, projects.')
+        if search_type not in search_type_options:
+            raise ValueError(f'Can only search {search_type_options}.')
 
         # Set search variables
         start_page = 1
