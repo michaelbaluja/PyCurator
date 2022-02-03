@@ -22,11 +22,8 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     flatten_output : boolean, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
-    credentials : str, optional
-        API token or pkl filepath containing credentials in dict.
-        If filepath, data in file must be formatted as a dictionary of the form
-        data_dict['{REPO_NAME}_TOKEN']: MY_KEY, or as a string containing the 
-        key.
+    credentials : str, optional (default=None)
+        JSON filepath containing credentials in form {repository_name}: 'key'.
     """
 
     search_type_options = (

@@ -21,13 +21,8 @@ class FigshareScraper(AbstractTermTypeScraper):
     flatten_output : boolean, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
-    credentials : str, optional
-        API token or pkl filepath containing credentials in dict.
-        If filepath, data in file must be formatted as a dictionary of the form
-        data_dict['{REPO_NAME}_TOKEN']: MY_KEY, or as a string containing the 
-        key.
-        If mode needs to be specified, must be done via load_credentials 
-        function.
+    credentials : str, optional (default=None)
+        JSON filepath containing credentials in form {repository_name}: 'key'.
     """
 
     search_type_options = ('articles', 'collections', 'projects')
@@ -51,31 +46,23 @@ class FigshareScraper(AbstractTermTypeScraper):
         self.headers = dict()
 
         if credentials:
-            self.load_credentials(credentials=credentials)
+            self.load_credentials(credential_filepath=credentials)
 
     @staticmethod
     def accept_user_credentials():
         return True
 
-    def load_credentials(self, credentials='credentials.pkl', **kwargs):
+    def load_credentials(self, credential_filepath):
         """Load the credentials given filepath or token.
 
         Parameters
         ----------
-        credentials : str, optional (default=credentials.pkl)
-            API token or pkl filepath containing credentials in dict.
-            If pkl filepath, data in file must be formatted as a dictionary of 
-            the form data_dict['{REPO_NAME}_TOKEN']: MY_KEY, or as a string 
-            containing the key.
-        kwargs : dict, optional
-            Possible additional arguments include:
-            file_format : str
-                Choice of format for opening pkl file. Choices include the
-                'mode' parameters for the python open() function. If none is 
-                provided, files with attempt to open via 'rb'.
+        credential_filepath : str, optional (default=credentials.pkl)
+            JSON filepath containing credentials in form 
+            {repository_name}: 'key'.
         """
 
-        super().load_credentials(credentials=credentials, **kwargs)
+        super().load_credentials(credential_filepath)
         self.headers['Authorization'] = f'token {self.credentials}'
 
     @AbstractScraper._pb_indeterminate

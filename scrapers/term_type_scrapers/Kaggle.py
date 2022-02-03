@@ -25,13 +25,12 @@ class KaggleScraper(AbstractTermTypeScraper):
     flatten_output : boolean, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
-    credentials : str, optional
-        API token or pkl filepath containing credentials in dict.
-        If filepath, data in file must be formatted as a dictionary of the form
-        data_dict['{REPO_NAME}_TOKEN']: MY_KEY, or as a string containing the 
-        key.
+    credentials : str, optional (default=None)
+        JSON filepath containing credentials in form {repository_name}: 'key'.
 
-    Note: While the KaggleScraper has an option for inputting credentials, the
+    Notes
+    -----
+    While the KaggleScraper has an option for inputting credentials, the
     functionality is deprecated, and only serves to allow base class 
     compatability. For validating Kaggle requests, read the official 
     documentation on authentication at https://www.kaggle.com/docs/api.
@@ -39,8 +38,12 @@ class KaggleScraper(AbstractTermTypeScraper):
 
     search_type_options = ('datasets', 'kernels')
 
-    def __init__(self, search_terms=None, search_types=None,
-                 flatten_output=None, credentials=None):
+    def __init__(
+        self, 
+        search_terms=None, 
+        search_types=None, 
+        flatten_output=None
+    ):
 
         super().__init__(
             repository_name='kaggle', 

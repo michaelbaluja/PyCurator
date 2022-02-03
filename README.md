@@ -7,18 +7,19 @@ some buttons and getting the data or the flexibility of modifying query format, 
 UI for quickly retrieving data that is built on top of an extensible collection of Web and API scraper classes.
 
 ## Supported Repositories
-PyCurator currently supports the following repositories in the capacities listed.
+PyCurator currently supports the following repositories in the capacities listed. Authentication is only required for Kaggle,
+though may provide runtime benefits for Dryad as rate-limiting is relaxed.
 
-| Repository           | API                | Web                |
-|----------------------|--------------------|--------------------|
-| Dataverse            | :white_check_mark: | :white_check_mark: |
-| Dryad                | :white_check_mark: | :white_check_mark: |
-| Figshare             | :white_check_mark: | :x:                |
-| Kaggle               | :white_check_mark: | :x:                |
-| OpenML               | :white_check_mark: | :white_check_mark: |
-| Papers With Code     | :white_check_mark: | :x:                |
-| UCI Machine Learning | :x:                | :white_check_mark: |
-| Zenodo               | :white_check_mark: | :x:                |
+| Repository           | API                | Web                | Authentication                                                                               |
+|----------------------|--------------------|--------------------|----------------------------------------------------------------------------------------------|
+| Dataverse            | :white_check_mark: | :white_check_mark: |                                                                                              |
+| Dryad                | :white_check_mark: | :white_check_mark: | [Dryad](https://github.com/CDL-Dryad/dryad-app/blob/main/documentation/apis/api_accounts.md) |
+| Figshare             | :white_check_mark: | :x:                |                                                                                              |
+| Kaggle               | :white_check_mark: | :x:                | [Kaggle](https://www.kaggle.com/docs/api#authentication)                                     |
+| OpenML               | :white_check_mark: | :white_check_mark: |                                                                                              |
+| Papers With Code     | :white_check_mark: | :x:                |                                                                                              |
+| UCI Machine Learning | :x:                | :white_check_mark: |                                                                                              |
+| Zenodo               | :white_check_mark: | :x:                |                                                                                              |
 
 If there's a repository that you would like to see added to the list, check out the [Contributions](#contributions) section.
 

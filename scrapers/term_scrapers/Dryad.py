@@ -27,11 +27,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
     flatten_output : boolean, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
-    credentials : str, optional
-        API token or pkl filepath containing credentials in dict.
-        If filepath, data in file must be formatted as a dictionary of the form
-        data_dict['{REPO_NAME}_TOKEN']: MY_KEY, or as a string containing the 
-        key.
+    credentials : str, optional (default=None)
+        JSON filepath containing credentials in form {repository_name}: 'key'.
 
     Notes
     -----
@@ -78,7 +75,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
     @staticmethod
     def accept_user_credentials():
-        return False
+        return True
 
     @AbstractScraper._pb_indeterminate
     def _conduct_search_over_pages(
@@ -141,12 +138,12 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         Parameters
         ----------
         search_term : str
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
-        search_df : pandas.DataFrame
+        search_df : pd.DataFrame
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -189,12 +186,12 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         Parameters
         ----------
         object_paths : str/list-like
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
-        metadata_df : DataFrame
+        metadata_df : pd.DataFrame
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
