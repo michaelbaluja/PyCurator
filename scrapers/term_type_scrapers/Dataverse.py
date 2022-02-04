@@ -1,10 +1,8 @@
 import os
 import re
-from collections import OrderedDict
 
 import pandas as pd
 from flatten_json import flatten
-from tqdm import tqdm
 
 from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper, \
     AbstractWebScraper
@@ -16,20 +14,20 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
 
     Parameters
     ----------
-    path_file : str, optional 
+    path_file : str, optional
             (default=os.path.join('paths', 'dataverse_paths.json'))
         Json file for loading path dict.
         Must be of the form {search_type: {path_type: path_dict}}
     scrape : boolearn, optional (default=True)
         Flag for requesting web scraping as a method for additional metadata
-        collection. 
+        collection.
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed in
-        directly to search functions.
+        Terms to search over. Can be (re)set via set_search_terms() or passed
+        in directly to search functions.
     search_types : list-like, optional (default=None)
-        Data types to search over. Can be (re)set via set_search_types() or 
+        Data types to search over. Can be (re)set via set_search_types() or
         passed in directly to search functions to override set parameter.
-    flatten_output : boolean, optional (default=None)
+    flatten_output : bool, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
     credentials : str, optional (default=None)
@@ -50,9 +48,9 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
 
         AbstractTermTypeScraper.__init__(
             self,
-            repository_name='dataverse', 
+            repository_name='dataverse',
             search_terms=search_terms,
-            search_types=search_types, 
+            search_types=search_types,
             flatten_output=flatten_output
         )
 
@@ -63,9 +61,10 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
                 path_file=path_file,
             )
 
-        self.base_url = 'https://dataverse.harvard.edu/api'
-        self.file_url = 'https://dataverse.harvard.edu/file.xhtml?fileId='
-        self.data_url = 'https://dataverse.harvard.edu/dataset.xhtml?persistentId='
+        base_url = 'https://dataverse.harvard.edu'
+        self.api_url = f'{base_url}/api'
+        self.file_url = f'{base_url}/file.xhtml?fileId='
+        self.data_url = f'{base_url}/dataset.xhtml?persistentId='
         self.headers = dict()
 
         if credentials:
@@ -84,14 +83,14 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
 
         Parameters
         ----------
-        credential_filepath : str, 
-            JSON filepath containing credentials in form 
+        credential_filepath : str,
+            JSON filepath containing credentials in form
             {repository_name}: 'key'.
         """
 
         super().load_credentials(credential_filepath)
         self.headers['X-Dataverse-key'] = self.credentials
-    
+
     @AbstractScraper._pb_indeterminate
     def get_individual_search_output(self, search_term, search_type, **kwargs):
         """Scrapes Dataverse API for the specified search term and type.
@@ -100,21 +99,27 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         ----------
         search_term : str
         search_type : str
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
-        search_df : DataFrame
+        search_df : pandas.DataFrame
+
+        Raises
+        ------
+        TypeError
+            Incorrect search_term type.
+        ValueError
+            Invalid search_type provided.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_url = f'{self.base_url}/search'
-        search_type_options = DataverseScraper.get_search_type_options()
+        search_url = f'{self.api_url}/search'
+        search_type_options = self.get_search_type_options()
 
-        # Validate input
         if not isinstance(search_term, str):
-            raise ValueError('Search term must be a string.')
+            raise TypeError('Search term must be a string.')
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
@@ -149,13 +154,15 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             # Flatten results if necessary
             if flatten_output:
                 output = [flatten(result) for result in output]
-            
+
             output_df = pd.DataFrame(output)
             output_df['page'] = (
                 search_params['start'] // search_params['per_page'] + 1
             )
 
-            search_df = pd.concat([search_df, output_df]).reset_index(drop=True)
+            search_df = pd.concat(
+                [search_df, output_df]
+            ).reset_index(drop=True)
 
             # Increment result offset to perform another search
             search_params['start'] += search_params['per_page']
@@ -171,7 +178,7 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
                 page=page_idx
             )
             output = output['data']
-        
+
         if not search_df.empty:
             # Modify file link for metadata search
             if search_type == 'file':
@@ -185,31 +192,30 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         else:
             return None
 
-
     def _scrape_file_info(self):
         file_info_list = []
         soup = self._get_soup(features='html.parser')
         try:
             file_info = soup.find(
-                'script', 
+                'script',
                 {'type': r'application/ld+json'}
             ).contents[0]
 
             # Get the file info & remove unnecessary delimiters
             file_info = file_info.split(r'"distribution":')[1]
             file_info = file_info.replace('},{', '}{').strip('[]').split('}{')
-        except:
+        except IndexError:
             return file_info_list
-        
+
         # Remove unnecessary attributes
         file_info = [
-            re.sub(r'"@type":"(.*?)",', '', entry).strip('{}').replace('"', '') 
+            re.sub(r'"@type":"(.*?)",', '', entry).strip('{}').replace('"', '')
             for entry in file_info
         ]
-        
+
         # Transform each string into dict
         file_info = [entry.split(',', maxsplit=1) for entry in file_info]
-        
+
         for file_list in file_info:
             file_dict = {}
             for attr_str in file_list:
@@ -219,24 +225,24 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
                 except ValueError as e:
                     print(file_list)
                     raise e
-                
+
             # Convert file size from str to int
             if file_dict.get('contentSize'):
                 file_dict['contentSize'] = int(file_dict['contentSize'])
-                
+
             file_info_list.append(file_dict)
-        
+
         return file_info_list
 
     def _get_attribute_values(self, **kwargs):
-        """Returns attribute values for all relevant given attribute path dicts.
-        
+        """Return attribute values for all relevant given attribute path dicts.
+
         Parameters
         ----------
-        kwargs : dict, optional
-            Attribute dicts to parse through. Accepts landing page, metadata, 
+        **kwargs : dict, optional
+            Attribute dicts to parse through. Accepts landing page, metadata,
             and terms dicts.
-        
+
         Returns
         -------
         attribute_value_dict : dict
@@ -248,122 +254,106 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         landing_attribute_paths = kwargs.get('landing_attribute_paths')
         metadata_attribute_paths = kwargs.get('metadata_attribute_paths')
         terms_attribute_paths = kwargs.get('terms_attribute_paths')
-        
+
         if landing_attribute_paths:
-            # Retrieve html data and create parsable object
             soup = self._get_soup(features='html.parser')
-            
+
             landing_attribute_values = {
                 attribute: self._get_attribute_value(
                     self.get_single_attribute(soup=soup, path=path)
                 )
-                    for attribute, path in landing_attribute_paths.items()
+                for attribute, path in landing_attribute_paths.items()
             }
             attribute_value_dict = {
-                **attribute_value_dict, 
+                **attribute_value_dict,
                 **landing_attribute_values
             }
         if metadata_attribute_paths:
             self.driver.refresh()
             self.driver.find_element_by_link_text('Metadata').click()
-            
-            # Retrieve html data and create parsable object
             soup = self._get_soup(features='html.parser')
-            
+
             metadata_attribute_values = {
                 attribute: self._get_attribute_value(
-                    self.get_single_attribute(soup=soup, path=path) 
+                    self.get_single_attribute(soup=soup, path=path)
                 )
-                    for attribute, path in metadata_attribute_paths.items()
+                for attribute, path in metadata_attribute_paths.items()
             }
             attribute_value_dict = {
-                **attribute_value_dict, 
+                **attribute_value_dict,
                 **metadata_attribute_values
             }
 
         if terms_attribute_paths:
             self.driver.refresh()
             self.driver.find_element_by_link_text('Terms').click()
-
-            # Retrieve html data and create parsable object
             soup = self._get_soup(features='html.parser')
-            
+
             terms_attribute_values = {
                 attribute: self._get_attribute_value(
-                    self.get_single_attribute(soup=soup, path=path) 
+                    self.get_single_attribute(soup=soup, path=path)
                 )
-                    for attribute, path in terms_attribute_paths.items()
+                for attribute, path in terms_attribute_paths.items()
             }
             attribute_value_dict = {
-                **attribute_value_dict, 
+                **attribute_value_dict,
                 **terms_attribute_values
             }
-            
+
         return attribute_value_dict
 
     def _clean_results(self, results):
         """Cleans the results scraped from the page.
-        
+
         Parameters
         ----------
         results : dict
-        
+
         Returns
         -------
         results : dict
         """
-        
+
         num_downloads = results.get('num_downloads')
 
         if num_downloads:
             results['num_downloads'] = parse_numeric_string(num_downloads)
-            
-        return results   
+
+        return results
 
     def get_query_metadata(self, object_paths, **attribute_dicts):
         """
         Retrieves the metadata for the object/objects listed in object_paths.
-        
+
         Parameters
         ----------
-        object_paths : str/list-like
+        object_paths : str or list-like
             String or list of strings containing the paths for the objects.
         attribute_dicts : dict, optional
             Holds attribute paths for scraping metadata.
-        
+
         Returns
         -------
-        metadata_df : DataFrame
+        metadata_df : pandas.DataFrame
             DataFrame containing metadata for the requested objects.
         """
 
-        # Validate input
         object_paths = self.validate_metadata_parameters(object_paths)
-        
-        # Create empty pandas dataframe to put results in
+
         metadata_df = pd.DataFrame()
 
-        # Get details for each object
         for object_path in self._pb_determinate(object_paths):
             object_dict = dict()
 
-            # Retrieve webpage
             self.driver.get(object_path)
 
-            # Extract & clean attribute values
-            try:
-                object_dict = self._get_attribute_values(**attribute_dicts)
-            except:
-                print(object_path)
-                raise ValueError
-            
-            # Don't need to try scraping files for file objects
+            object_dict = self._get_attribute_values(**attribute_dicts)
+
             if 'dataset' in object_path:
                 object_dict['files'] = self._scrape_file_info()
 
             object_dict = self._clean_results(object_dict)
 
-            # Add results to DataFrame
             metadata_df = metadata_df.append(object_dict, ignore_index=True)
 
         # Remove any objects that did not return metadata (fully null rows)
@@ -373,22 +363,21 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
 
     def get_all_metadata(self, search_dict, **kwargs):
         """Retrieves all metadata that relates to the provided DataFrames.
-        
+
         Parameters
         ----------
         search_dict : dict
             Dictionary of DataFrames from get_all_search_outputs.
-        kwargs : dict, optional 
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
-        
+
         Returns
         -------
-        metadata_dict : OrderedDict
-            OrderedDict of DataFrames with metadata for each query.
-            Order matches the order of search_output_dict.
+        metadata_dict : dict
+            dict of DataFrames with metadata for each query.
         """
 
-        metadata_dict = OrderedDict()
+        metadata_dict = dict()
 
         if not self.scrape:
             return metadata_dict
@@ -406,12 +395,12 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
                     )
                 elif search_type == 'file':
                     object_paths = df['url']
-            
+
                 metadata_dict[query] = self.get_query_metadata(
-                    object_paths, 
+                    object_paths,
                     **self.path_dict[search_type]
                 )
-            
+
             self.queue.put(
                 f'{search_term} {search_type} metadata query complete.'
             )

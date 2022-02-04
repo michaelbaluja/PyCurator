@@ -12,17 +12,21 @@ class ZenodoScraper(AbstractTermScraper):
     Parameters
     ----------
     search_terms : list-like, optional
-        Terms to search over. Can be (re)set via set_search_terms() or passed in
-        directly to search functions.
-    flatten_output : boolean, optional (default=None)
+        Terms to search over. Can be (re)set via set_search_terms() or passed
+        in directly to search functions.
+    flatten_output : bool, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
 
-    def __init__(self, search_terms=None, flatten_output=None,
-                 credentials=None):
+    def __init__(
+        self,
+        search_terms=None,
+        flatten_output=None,
+        credentials=None
+    ):
         super().__init__('zenodo', search_terms, flatten_output, credentials)
         self.base_url = 'https://zenodo.org/api/records'
 
@@ -37,7 +41,7 @@ class ZenodoScraper(AbstractTermScraper):
         Parameters
         ----------
         search_term : str
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
@@ -73,21 +77,22 @@ class ZenodoScraper(AbstractTermScraper):
 
         # Handle any potential errors
         if response.status_code != 200:
-            warnings.warn(f'{response.status_code}: Returning without results.')
+            warnings.warn(
+                f'{response.status_code}: Returning without results.'
+            )
             self.continue_running = False
             self.terminate()
 
-        # Loop over search years
-        # searches until the current search year does not return any results
         while output.get('hits').get('total'):
-            # Loop over pages - searches until the current page is empty
-            while response.status_code == 200 and output.get('hits').get('hits'):
+            while (
+                response.status_code == 200 and
+                output.get('hits').get('hits')
+            ):
                 output = output['hits']['hits']
                 # Flatten output
                 if flatten_output:
                     output = [flatten(result) for result in output]
 
-                # Turn outputs into DataFrame & add to cumulative search df
                 output_df = pd.DataFrame(output)
                 output_df['page'] = search_params['page']
 
@@ -97,15 +102,16 @@ class ZenodoScraper(AbstractTermScraper):
 
                 # Increment page for next search
                 search_params['page'] += 1
-                
+
                 # Run search & extract output
-                response, output = self.get_request_output_and_update_query_ref(
-                    url=self.base_url,
-                    params=search_params,
-                    search_term=search_term,
-                    year=search_year,
-                    page=search_params['page']
-                )
+                response, output = \
+                    self.get_request_output_and_update_query_ref(
+                        url=self.base_url,
+                        params=search_params,
+                        search_term=search_term,
+                        year=search_year,
+                        page=search_params['page']
+                    )
 
             # Change search year, reset search page
             search_year -= 1

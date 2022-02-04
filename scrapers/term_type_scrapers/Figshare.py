@@ -1,8 +1,5 @@
-from collections import OrderedDict
-
 import pandas as pd
 from flatten_json import flatten
-from tqdm import tqdm
 
 from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
@@ -13,12 +10,12 @@ class FigshareScraper(AbstractTermTypeScraper):
     Parameters
     ----------
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed in
-        directly to search functions.
+        Terms to search over. Can be (re)set via set_search_terms() or passed
+        in directly to search functions.
     search_types : list-like, optional (default=None)
-        Data types to search over. Can be (re)set via set_search_types() or 
+        Data types to search over. Can be (re)set via set_search_types() or
         passed in directly to search functions to override set parameter.
-    flatten_output : boolean, optional (default=None)
+    flatten_output : bool, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
     credentials : str, optional (default=None)
@@ -33,10 +30,10 @@ class FigshareScraper(AbstractTermTypeScraper):
         credentials=None
     ):
         super().__init__(
-            repository_name='figshare', 
+            repository_name='figshare',
             search_terms=search_terms,
             search_types=search_types,
-            flatten_output=flatten_output, 
+            flatten_output=flatten_output,
             credentials=None
         )
         self.base_url = 'https://api.figshare.com/v2'
@@ -49,7 +46,7 @@ class FigshareScraper(AbstractTermTypeScraper):
     @staticmethod
     def accept_user_credentials():
         return True
-    
+
     @classmethod
     def get_search_type_options(cls):
         return ('articles', 'collections', 'projects')
@@ -60,7 +57,7 @@ class FigshareScraper(AbstractTermTypeScraper):
         Parameters
         ----------
         credential_filepath : str, optional (default=credentials.pkl)
-            JSON filepath containing credentials in form 
+            JSON filepath containing credentials in the form
             {repository_name}: 'key'.
         """
 
@@ -75,16 +72,16 @@ class FigshareScraper(AbstractTermTypeScraper):
         ----------
         search_term : str
         search_type : str
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
-        search_df : DataFrame
+        search_df : pandas.DataFrame
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_type_options = FigshareScraper.get_search_type_options()
+        search_type_options = self.get_search_type_options()
 
         # Validate input
         if not isinstance(search_term, str):
@@ -92,13 +89,13 @@ class FigshareScraper(AbstractTermTypeScraper):
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
-        # Set search variables
         start_page = 1
         page_size = 1000
         output = None
         search_df = pd.DataFrame()
         search_year = 1950
         search_date = f'{search_year}-01-01'
+        search_url = f'{self.base_url}/{search_type}'
 
         search_params = {
             'search_for': search_term,
@@ -107,8 +104,6 @@ class FigshareScraper(AbstractTermTypeScraper):
             'page': start_page,
             'page_size': page_size
         }
-
-        search_url = f'{self.base_url}/{search_type}'
 
         # Conduct initial search
         response, output = self.get_request_output_and_update_query_ref(
@@ -140,13 +135,14 @@ class FigshareScraper(AbstractTermTypeScraper):
                 search_params['page'] += 1
 
                 # Conduct search
-                response, output = self.get_request_output_and_update_query_ref(
-                    url=search_url,
-                    params=search_params,
-                    headers=self.headers,
-                    published_since=search_params['published_since'],
-                    page=search_params['page']
-                )
+                response, output = \
+                    self.get_request_output_and_update_query_ref(
+                        url=search_url,
+                        params=search_params,
+                        headers=self.headers,
+                        published_since=search_params['published_since'],
+                        page=search_params['page']
+                    )
             try:
                 # If we did not get a full page of results, search is complete
                 if output_df.shape[0] < search_params['page_size']:
@@ -154,7 +150,7 @@ class FigshareScraper(AbstractTermTypeScraper):
             # If there's no output_df (no search results), return None
             except UnboundLocalError:
                 return None
-            
+
             # Get new date to search
             search_date = search_df['published_date'].values[-1].split('T')[0]
             search_params['published_since'] = search_date
@@ -163,8 +159,8 @@ class FigshareScraper(AbstractTermTypeScraper):
             # Conduct search
             self._print_progress(search_params['page'])
             response, output = self.get_request_output(
-                url=search_url, 
-                params=search_params, 
+                url=search_url,
+                params=search_params,
                 headers=self.headers
             )
             response, output = self.get_request_output_and_update_query_ref(
@@ -180,77 +176,71 @@ class FigshareScraper(AbstractTermTypeScraper):
     def get_query_metadata(self, object_paths, **kwargs):
         """
         Retrieves the metadata for the object/objects listed in object_paths.
-        
+
         Parameters
         ----------
-        object_paths : str/list-like
+        object_paths : str or list-like
             string or list of strings containing the paths for the objects.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
-        
+
         Returns
         -------
-        metadata_df : DataFrame
+        metadata_df : pandas.DataFrame
             DataFrame containing metadata for the requested objects.
         """
-        
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        # Validate input
+        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         object_paths = self.validate_metadata_parameters(object_paths)
-        
+
         # Create empty pandas dataframe to put results in
         metadata_df = pd.DataFrame()
 
         # Get details for each object
         for object_path in self._pb_determinate(object_paths):
-            # Download the metadata
             _, json_data = self.get_request_output(
-                url=object_path, 
+                url=object_path,
                 headers=self.headers
             )
 
-            # Flatten ouput, if necessary
             if flatten_output:
                 json_data = flatten(json_data)
 
             metadata_df = metadata_df.append(json_data, ignore_index=True)
-            
+
         return metadata_df
 
     def get_all_metadata(self, search_dict, **kwargs):
         """Retrieves all metadata that relates to the provided DataFrames.
-        
+
         Parameters
         ----------
         search_dict : dict
             Dictionary of DataFrames from get_all_search_outputs.
-        kwargs : dict, optional 
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
-        
+
         Returns:
-        metadata_dict : OrderedDict
-            OrderedDict of DataFrames with metadata for each query.
-            Order matches the order of search_output_dict.
+        metadata_dict : dict
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        object_path_dict = OrderedDict()
+        object_path_dict = dict()
 
         for query, df in search_dict.items():
             if df is not None:
                 _, search_type = query
                 object_ids = df.id.convert_dtypes().tolist()
                 object_paths = [
-                    f'{self.base_url}/{search_type}/{object_id}' 
+                    f'{self.base_url}/{search_type}/{object_id}'
                     for object_id in object_ids
                 ]
-                
+
                 object_path_dict[query] = object_paths
-        
+
         metadata_dict = super().get_all_metadata(
-            object_path_dict, 
+            object_path_dict,
             flatten_output=flatten_output
         )
 

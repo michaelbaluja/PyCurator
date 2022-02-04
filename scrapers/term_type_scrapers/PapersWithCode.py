@@ -1,9 +1,5 @@
-from collections import OrderedDict
-
 import pandas as pd
-import requests
 from flatten_json import flatten
-from tqdm import tqdm
 
 from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
@@ -14,12 +10,12 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     Parameters
     ----------
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed in
-        directly to search functions to override set parameter.
+        Terms to search over. Can be (re)set via set_search_terms() or passed
+        in directly to search functions to override set parameter.
     search_types : list-like, optional
-        Types to search over. Can be (re)set via set_search_types() or passed in
-        directly to search functions.
-    flatten_output : boolean, optional (default=None)
+        Types to search over. Can be (re)set via set_search_types() or passed
+        in directly to search functions.
+    flatten_output : bool, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
     credentials : str, optional (default=None)
@@ -45,7 +41,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     @staticmethod
     def accept_user_credentials():
         return True
-    
+
     @classmethod
     def get_search_type_options(cls):
         return ('conferences', 'datasets', 'evaluations', 'papers', 'tasks')
@@ -60,33 +56,29 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     ):
         search_df = pd.DataFrame()
 
-        # Conduct a search, extract json results
         if print_progress:
             self._update_query_ref(page=search_params['page'])
         response, output = self.get_request_output(
-            url=search_url, 
+            url=search_url,
             params=search_params
         )
 
-        # Search over all valid pages
         while output.get('results'):
-            # Extract relevant results
             output = output['results']
 
             # Flatten nested json
             if flatten_output:
                 output = [flatten(result) for result in output]
 
-            # Add results to cumulative DataFrame
             output_df = pd.DataFrame(output)
             output_df['page'] = search_params['page']
 
-            search_df = pd.concat([search_df, output_df]).reset_index(drop=True)
+            search_df = pd.concat(
+                [search_df, output_df]
+            ).reset_index(drop=True)
 
-            # Increment page for search
             search_params['page'] += 1
 
-            # Conduct a search
             if print_progress:
                 self._update_query_ref(page=search_params['page'])
 
@@ -104,12 +96,11 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
                 )
                 search_params['page'] += 1
 
-                # Conduct a search
                 if print_progress:
                     self._update_query_ref(page=search_params['page'])
 
                 response, output = self.get_request_output(
-                    url=search_url, 
+                    url=search_url,
                     params=search_params
                 )
 
@@ -127,27 +118,34 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         search_type : str
             Must be one of:
             ('conferences', 'datasets', 'evaluations', 'papers', 'tasks')
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
         pandas.DataFrame
+
+        Raises
+        ------
+        TypeError
+            Incorrect search_term type.
+        ValueError
+            Invalid search_type provided.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_type_options = PapersWithCodeScraper.get_search_type_options()
+        search_type_options = self.get_search_type_options()
         search_url = f'{self.base_url}/{search_type}'
 
         if not isinstance(search_term, str):
-            raise ValueError('Search term must be a string.')
+            raise TypeError('Search term must be of type str.')
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
         search_params = {
             'q': search_term,
             'page': 1,
-            'items_per_page': 500  # Max size
+            'items_per_page': 500
         }
 
         return self._conduct_search_over_pages(
@@ -158,6 +156,11 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         )
 
     def _get_metadata_types(self, search_type):
+        if search_type not in self.get_search_type_options():
+            raise ValueError(
+                f'Incorrect search type "{search_type}" passed in'
+            )
+
         if search_type == 'conferences':
             return ['proceedings']
         elif search_type == 'datasets':
@@ -168,34 +171,29 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             return ['datasets', 'methods', 'repositories', 'results', 'tasks']
         elif search_type == 'tasks':
             return ['children', 'evaluations', 'papers', 'parents']
-        else:
-            raise ValueError(
-                f'Incorrect search type "{search_type}" passed in')
 
     def get_query_metadata(self, object_paths, search_type, **kwargs):
         """Retrieves the metadata for the papers listed in object_paths
 
         Parameters
         ----------
-        object_paths : str/list-like
+        object_paths : str or list-like
         search_type : str
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument
 
         Returns
         -------
         metadata_dict : dict
-            Results are stored in the format 
+            Results are stored in the format
             metadata_dict[metadata_type] = DataFrame
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-
-        # Ensure object paths are of the proper form
         object_paths = self.validate_metadata_parameters(object_paths)
 
         metadata_types = self._get_metadata_types(search_type)
-        metadata_dict = OrderedDict()
+        metadata_dict = dict()
 
         for metadata_type in metadata_types:
             search_df = pd.DataFrame()
@@ -212,12 +210,11 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
                     search_params,
                     flatten_output
                 )
-                
-                if object_df is not None:
+
+                if object_df:
                     object_df['id'] = object_path
                     object_df['page'] = search_params['page']
 
-                # Merge with the cumulative search DataFrame
                 search_df = pd.concat(
                     [search_df, object_df]
                 ).reset_index(drop=True)
@@ -234,17 +231,15 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         ----------
         search_dict : dict
             Dictionary of DataFrames from get_all_search_outputs.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
-        
+
         Returns
         -------
-        metadata_dict : OrderedDict
-            OrderedDict of dicts with metadata for each query.
-            Order matches the order of search_dict.
+        metadata_dict : dict
         """
 
-        metadata_dict = OrderedDict()
+        metadata_dict = dict()
 
         for query, df in search_dict.items():
             if df is not None:
@@ -252,7 +247,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
                 self.queue.put(
                     f'Querying {search_term} {search_type} metadata.'
                 )
-                
+
                 object_paths = df.id.values
 
                 metadata_dict[query] = self.get_query_metadata(
@@ -268,15 +263,15 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         return metadata_dict
 
     def merge_search_and_metadata_dicts(
-        self, 
-        search_dict, 
+        self,
+        search_dict,
         metadata_dict,
-        on=None, 
-        left_on=None, 
+        on=None,
+        left_on=None,
         right_on=None,
 
     ):
-        """Merges together search and metadata DataFrames by the given 'on' key.
+        """Merges together search and metadata DataFrames by 'on' value.
 
         Parameters
         ----------
@@ -284,22 +279,25 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             Dictionary of search output results.
         metadata_dict : dict
             Dictionary of metadata results.
-        on : str/list-like, optional (default=None)
+        on : str or list-like, optional (default=None)
             Column name(s) to merge the two dicts on.
-        left_on : str/list-like, optional (default=None)
+        left_on : str or list-like, optional (default=None)
             Column name(s) to merge the left dict on.
-        right_on : str/list-like, optional (default=None)
+        right_on : str or list-like, optional (default=None)
             Column name(s) to merge the right dict on.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Allow users to add save value.
 
         Returns
         -------
-        df_dict : OrderedDict
-            OrderedDict containing all of the merged search/metadata dicts.
+        merged_dict : dict
+
+        See Also
+        --------
+        pandas.merge
         """
 
-        df_dict = OrderedDict()
+        merged_dict = dict()
 
         for query_key, type_df_dict in metadata_dict.items():
             search_term, search_type = query_key
@@ -317,6 +315,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
                     suffixes=('_search', '_metadata')
                 )
 
-                df_dict[(search_term, _search_type)] = df_all
-        
-        return df_dict
+                merged_dict[(search_term, _search_type)] = df_all
+
+        return merged_dict

@@ -1,10 +1,8 @@
 import re
-from collections import OrderedDict
 
 import openml
 import pandas as pd
 from selenium.webdriver.remote.errorhandler import InvalidArgumentException
-from tqdm import tqdm
 
 from scrapers.base_scrapers import AbstractTypeScraper, AbstractWebScraper
 from utils import flatten_nested_df, parse_numeric_string
@@ -20,11 +18,11 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         Must be of the form {search_type: {path_type: path_dict}}
     scrape : boolearn, optional (default=True)
         Flag for requesting web scraping as a method for additional metadata
-        collection. 
+        collection.
     search_types : list-like, optional
-        Types to search over. Can be (re)set via set_search_types() or passed in
-        directly to search functions.
-    flatten_output : boolean, optional (default=None)
+        Types to search over. Can be (re)set via set_search_types() or passed
+        in directly to search functions.
+    flatten_output : bool, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
     credentials : str, optional (default=None)
@@ -32,9 +30,9 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
     Notes
     -----
-    The method of webscraping has changed for this class, rendering the presence
-    of a path_file unnecessary. The class initialization will change at a later
-    point to reflect this.
+    The method of webscraping has changed for this class, rendering the
+    presence of a path_file unnecessary. The class initialization will change
+    at a later point to reflect this.
     """
 
     def __init__(
@@ -48,7 +46,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         self.scrape = scrape
 
-        # Initialize parent classes
         AbstractTypeScraper.__init__(
             self,
             repository_name='openml',
@@ -76,28 +73,27 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
     @staticmethod
     def accept_user_credentials():
         return True
-    
+
     @classmethod
     def get_search_type_options(cls):
         return ('datasets', 'runs', 'tasks', 'evaluations')
 
     def _get_value_attributes(self, obj):
-        """
-        Given an object, returns a list of the object's value-based variables
+        """Returns a list of an object's value-based variables.
+
+        Given an object, returns the attributes that are not callable or
+        contain a leading underscore.
 
         Parameters
         ----------
-        obj : list-like 
-            object to be analyzed 
+        obj
 
         Returns
         -------
-        attributes : list
-            value-based variables for the object given
+        list
+            Value-based variables for the object given.
         """
 
-        # This code will pull all of the attributes of the provided class that
-        # are not callable or "private" for the class.
         return [
             attr for attr in dir(obj)
             if not hasattr(getattr(obj, attr), '__call__')
@@ -105,30 +101,26 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         ]
 
     def _get_evaluations_search_output(self, flatten_output):
-        # Get different evaluation measures we can search for
         evaluations_measures = openml.evaluations.list_evaluation_measures()
 
-        # Create DataFrame to store attributes
         evaluations_df = pd.DataFrame()
 
         # Get evaluation data for each available measure
-        for measure in tqdm(evaluations_measures):
-            # Query all data for a given evaluation measure
+        for measure in evaluations_measures:
             evaluations_dict = openml.evaluations.list_evaluations(measure)
 
             try:
                 # Grab one of the evaluations in order to extract attributes
                 sample_evaluation = next(iter(evaluations_dict.items()))[1]
-            # StopIteration will occur in the preceding code if an evaluation
-            # search returns no results for a given measure
             except StopIteration:
+                # Occurs if no results are available for a given measure
                 continue
 
             # Get list of attributes the evaluation offers
             evaluations_attributes = self._get_value_attributes(
-                sample_evaluation)
+                sample_evaluation
+            )
 
-            # Adds the queried data to the DataFrame
             for query in evaluations_dict.values():
                 attribute_dict = {
                     attribute: getattr(query, attribute)
@@ -148,11 +140,11 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         Parameters
         ----------
-        data_df : DataFrame
+        data_df : pandas.DataFrame
 
         Returns
         -------
-        data_df : DataFrame
+        data_df : pandas.DataFrame
             Original input with task and run information appended.
         """
 
@@ -162,31 +154,25 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         self.queue.put('Scraping dataset task/run information...')
 
-        for url in tqdm(urls):
+        for url in urls:
             self._update_query_ref(page=url)
 
-            # Create aggregate containers
             num_runs_list = []
             task_type_list = []
             task_id_list = []
             object_dict = dict()
 
-            # Get page
             try:
                 self.driver.get(url)
-            except InvalidArgumentException as e:
-                print(url)
-                raise e
+            except InvalidArgumentException:
+                self.queue.put(f'Invalid URL provided for scraping: {url}')
             soup = self._get_soup(features='html.parser')
 
-            # If the page doesn't exist anymore, skip to the next loop
             if err_msg in soup.text:
                 continue
 
-            # Add url to dict (after ensuring functionality) for merging back
             object_dict['openml_url'] = url
 
-            # Add download info to dict
             downloads = self.get_single_attribute(
                 soup=soup,
                 string=re.compile(self.attr_dict['downloads'])
@@ -195,7 +181,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             object_dict['num_downloads'], \
                 object_dict['num_unique_downloads'] = downloads
 
-            # Get number of tasks
             num_tasks = self._get_attribute_value(
                 self._get_parent_attribute(
                     soup=soup,
@@ -204,31 +189,26 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             )
             num_tasks = parse_numeric_string(num_tasks, cast=True)
 
-            # Get task info
             task_tags = self._get_pibling_attributes(
-                soup=soup, 
+                soup=soup,
                 string=re.compile(self.attr_dict['num_tasks']),
                 limit=num_tasks
             )
 
             for task in task_tags:
                 try:
-                    # Get task link
                     task_link = task.a
-                    
-                    # Extract task type
+
                     task_type = task_link.text.split(' on')[0]
                     task_type_list.append(task_type)
 
-                    # Extract task id
                     task_id = task_link.attrs['href'][2:]
                     task_id_list.append(task_id)
 
-                    # Extract num runs per task
                     num_runs = task.b.text
                     num_runs = parse_numeric_string(num_runs, cast=True)
                     num_runs_list.append(num_runs)
-                except:
+                except AttributeError:
                     pass
 
             # Add data to cumulative df
@@ -249,24 +229,27 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         Parameters
         ----------
         search_type : str
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
-        search_df : DataFrame
+        search_df : pandas.DataFrame
+
+        Raises
+        ------
+        ValueError
+            Incorrect search_type provided.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
         search_type_options = OpenMLScraper.get_search_type_options()
 
-        # Ensure parameters are valid
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
         self.queue.put(f'Querying {search_type}...')
 
-        # Handle special case for evaluations
         if search_type == 'evaluations':
             return self._get_evaluations_search_output(flatten_output)
 
@@ -274,36 +257,25 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         base_command = getattr(openml, search_type)
         list_queries = getattr(base_command, f'list_{search_type}')
 
-        # Get base info on every object listed on OpenML for the given query
-        # Since there's too many runs to get all at once, we need to search
-        # with offsets and rest periods so the server doesn't overload.
-
-        # Set search params
         index = 0
         size = 10000
         search_df = pd.DataFrame()
 
-        # Perform initial search
         self._update_query_ref(page=index)
         search_results = list_queries(offset=(index * size), size=size)
 
-        # Serach until all queries have been returned
         while search_results:
-            # Add results to cumulative output df
             output_df = pd.DataFrame(search_results).transpose()
             output_df['page'] = index + 1
             search_df = pd.concat(
                 [search_df, output_df]
             ).reset_index(drop=True)
 
-            # Increment search range
             index += 1
 
-            # Perform next search
             self._update_query_ref(page=index)
             search_results = list_queries(offset=(index * size), size=size)
 
-        # Flatten output (if necessary)
         if flatten_output:
             search_df = flatten_nested_df(search_df)
 
@@ -316,41 +288,44 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         Parameters
         ----------
-        object_paths : str/list-like
+        object_paths : str or list-like
         search_type : str
         **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument
+            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
-        metadata_df : DataFrame
+        metadata_df : pandas.DataFrame
+
+        Raises
+        ------
+        ValueError
+            Invalid search_type provided.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-
-        # Ensure object paths are of the proper form
         object_paths = self.validate_metadata_parameters(object_paths)
+
+        search_type_options = self.get_search_type_options()
+        if search_type not in search_type_options:
+            raise ValueError(f'Can only search {search_type_options}.')
 
         base_command = getattr(openml, search_type)
         get_query = getattr(base_command, f'get_{search_type[:-1:]}')
 
-        # Request each query
         queries = []
         error_queries = []
-        for object_path in tqdm(object_paths):
+        for object_path in object_paths:
             self._update_query_ref(object_name=object_path)
             try:
                 queries.append(get_query(object_path))
-            except:
+            except TypeError:
                 error_queries.append(object_path)
 
-        # Get list of metadata attributes the queries offer
         query_attributes = self._get_value_attributes(queries[0])
 
-        # Create DataFrame to store metadata attributes
         metadata_df = pd.DataFrame(columns=query_attributes)
 
-        # Append attributes of each dataset to the DataFrame
         for query in queries:
             attribute_dict = {
                 attribute: getattr(query, attribute)
@@ -358,7 +333,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             }
             metadata_df = metadata_df.append(attribute_dict, ignore_index=True)
 
-        # Flatten the nested DataFrame
         if flatten_output:
             metadata_df = flatten_nested_df(metadata_df)
 
@@ -382,12 +356,10 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         Returns
         -------
-        metadata_dict : OrderedDict
-            OrderedDict of DataFrames with metadata for each query.
-            Order matches the order of search_dict.
+        metadata_dict : dict
         """
 
-        metadata_dict = OrderedDict()
+        metadata_dict = dict()
 
         for query, df in search_dict.items():
             self.queue.put(f'Querying {query} metadata...')
@@ -398,7 +370,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             elif query == 'tasks':
                 id_name = 'tid'
 
-            # Grab the object paths as the id's from the DataFrame
             object_paths = df[id_name].values
 
             metadata_dict[query] = self.get_query_metadata(
@@ -406,7 +377,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
                 search_type=query,
                 **kwargs
             )
-        
+
         self.queue.put('Metadata query complete.')
 
         return metadata_dict

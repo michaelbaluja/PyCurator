@@ -1,12 +1,10 @@
 import json
 import os
-from collections import OrderedDict
 
 import pandas as pd
 from flatten_json import flatten
 from kaggle import KaggleApi
 from kaggle.rest import ApiException
-from tqdm import tqdm
 
 from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
@@ -17,12 +15,12 @@ class KaggleScraper(AbstractTermTypeScraper):
     Parameters
     ----------
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed in
-        directly to search functions.
+        Terms to search over. Can be (re)set via set_search_terms() or passed
+        in directly to search functions.
     search_types : list-like, optional (default=None)
-        Data types to search over. Can be (re)set via set_search_types() or 
+        Data types to search over. Can be (re)set via set_search_types() or
         passed in directly to search functions to override set parameter.
-    flatten_output : boolean, optional (default=None)
+    flatten_output : bool, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
     credentials : str, optional (default=None)
@@ -30,21 +28,19 @@ class KaggleScraper(AbstractTermTypeScraper):
 
     Notes
     -----
-    While the KaggleScraper has an option for inputting credentials, the
-    functionality is deprecated, and only serves to allow base class 
-    compatability. For validating Kaggle requests, read the official 
-    documentation on authentication at https://www.kaggle.com/docs/api.
+    For validating Kaggle requests, read the official documentation on
+    authentication at https://www.kaggle.com/docs/api.
     """
 
     def __init__(
-        self, 
-        search_terms=None, 
-        search_types=None, 
+        self,
+        search_terms=None,
+        search_types=None,
         flatten_output=None
     ):
 
         super().__init__(
-            repository_name='kaggle', 
+            repository_name='kaggle',
             search_terms=search_terms,
             search_types=search_types,
             flatten_output=flatten_output
@@ -53,7 +49,7 @@ class KaggleScraper(AbstractTermTypeScraper):
         self.api = KaggleApi()
         self.api.authenticate()
         self.merge_on = 'id'
-    
+
     @staticmethod
     def accept_user_credentials():
         return False
@@ -70,16 +66,16 @@ class KaggleScraper(AbstractTermTypeScraper):
         ----------
         search_term : str
         search_type : str
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
-        df : DataFrame
+        search_df : pandas.DataFrame
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_type_options = KaggleScraper.get_search_type_options()
+        search_type_options = self.get_search_type_options()
 
         # Validate input
         if not isinstance(search_term, str):
@@ -111,7 +107,9 @@ class KaggleScraper(AbstractTermTypeScraper):
             output_df = pd.DataFrame(output)
             output_df['page'] = page_idx
 
-            search_df = pd.concat([search_df, output_df]).reset_index(drop=True)
+            search_df = pd.concat(
+                [search_df, output_df]
+            ).reset_index(drop=True)
 
             # Increment page count for searching
             page_idx += 1
@@ -126,15 +124,13 @@ class KaggleScraper(AbstractTermTypeScraper):
             search_df = search_df.rename(
                 columns={'id': 'datasetId', 'ref': 'id'}
             )
-            
+
             if search_type == 'datasets':
                 search_df = search_df.drop(columns={'viewCount', 'voteCount'})
-            
+
             search_df = search_df.convert_dtypes()
 
-            return search_df
-        else:
-            return None
+        return search_df
 
     def _retrieve_object_json(self, object_path, **kwargs):
         """Queries Kaggle for metadata json file & returns as a dict.
@@ -144,8 +140,21 @@ class KaggleScraper(AbstractTermTypeScraper):
         object_path : str
         data_path : str, optional (default='data/')
             Location to save metadata to
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
+
+        Returns
+        -------
+        json_data : dict or None
+
+        Raises
+        ------
+        kaggle.rest.ApiException
+            A query was made that was unable to be fulfilled.
+
+        See Also
+        --------
+        kaggle
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -160,8 +169,8 @@ class KaggleScraper(AbstractTermTypeScraper):
         try:
             self.api.dataset_metadata(object_path, path=data_path)
         except (TypeError, ApiException) as e:
-            if (isinstance(e, ApiException) and e.status != 404 
-                and 'bigquery' not in e.headers['Turbolinks-Location']):
+            if (isinstance(e, ApiException) and e.status != 404
+                    and 'bigquery' not in e.headers['Turbolinks-Location']):
                 raise e
             else:
                 return None
@@ -185,33 +194,26 @@ class KaggleScraper(AbstractTermTypeScraper):
         Parameters
         ----------
         object_paths : str/list-like
-        kwargs : dict, optional
+        **kwargs : dict, optional
 
         Returns
         -------
-        metadata_df : DataFrame
+        metadata_df : pandas.DataFrame
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-
-        # Ensure object paths are of the proper form
         object_paths = self.validate_metadata_parameters(object_paths)
 
-        # Create hollow output DataFrame
         metadata_df = pd.DataFrame()
 
-        # Pulls meatadata information for each object
         for object_path in self._pb_determinate(object_paths):
-            # Download and load the metadata
             json_data = self._retrieve_object_json(
-                object_path, 
+                object_path,
                 flatten_output=flatten_output
             )
-            
-            # Store the metadata info in cumulative df
+
             metadata_df = metadata_df.append(json_data, ignore_index=True)
 
-        # Modify dtypes for uniformity
         metadata_df = metadata_df.convert_dtypes()
 
         return metadata_df
@@ -221,20 +223,20 @@ class KaggleScraper(AbstractTermTypeScraper):
 
         Parameters
         ----------
-        search_dict : Iterable of DataFrames
+        search_dict : Iterable of pandas.DataFrames
             Output from get_all_search_outputs function.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
-        
+
         Returns
         -------
-        metadata_dict : OrderedDict of DataFrames
-            Stores the results of each call to get_query_metadata in the form 
+        metadata_dict : dict of DataFrames
+            Stores the results of each call to get_query_metadata in the form
             metadata_dict[(search_term, search_type)] = df.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        object_path_dict = OrderedDict()
+        object_path_dict = dict()
 
         for query, df in search_dict.items():
             # Only want to get metadata for non-empty dataset DataFrames
@@ -244,8 +246,8 @@ class KaggleScraper(AbstractTermTypeScraper):
                 object_path_dict[query] = object_paths
 
         metadata_dict = super().get_all_metadata(
-            object_path_dict, 
+            object_path_dict,
             flatten_output=flatten_output
         )
-        
+
         return metadata_dict
