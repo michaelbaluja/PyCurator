@@ -3,7 +3,6 @@ import queue
 import sys
 import tkinter as tk
 import tkinter.ttk as ttk
-from tkinter.scrolledtext import ScrolledText
 
 from scrapers import AbstractScraper
 
@@ -22,7 +21,7 @@ class RunPage(Page):
         ----------
         repo_name : str
             Name of the repository to evaluate
-        
+
         Returns
         -------
         param_kwargs : dict
@@ -30,8 +29,8 @@ class RunPage(Page):
         """
 
         # Parse run options
-        ## Handle search_types, save_dir separately since they're not tkinter 
-        ## variables
+        # Handle search_types, save_dir separately since they're not tkinter
+        # variables
         try:
             search_types = self.master.repo_params[repo_name].pop(
                 'search_types'
@@ -110,11 +109,11 @@ class RunPage(Page):
 
     def show(self):
         """Display runtime status updates and navigation buttons.
-        
-        Organizes the elements of the RunPage display. The output contains a 
-        ScrolledText widget for displaying ThreadedRun scraper updates, a 
-        ProgressBar widget for updates on loop events, and Button widgets for 
-        paging back after completion, stopping the scraper object during a 
+
+        Organizes the elements of the RunPage display. The output contains a
+        ScrolledText widget for displaying ThreadedRun scraper updates, a
+        ProgressBar widget for updates on loop events, and Button widgets for
+        paging back after completion, stopping the scraper object during a
         run, and exiting the application upong scraper termination/completion.
 
         Notes
@@ -128,14 +127,14 @@ class RunPage(Page):
         the ScrolledText widget for every query made, as many of the APIs being
         querying may return hundreds to thousands of results to query. The
         indeterminate mode is used for repository queries performed in a while
-        loop (such as Dryad and Zenodo), while determinate mode is used for 
+        loop (such as Dryad and Zenodo), while determinate mode is used for
         repository queries over a fixed list of queries in a for loop
         (such as UCI searching over scraped pages).
 
-        The navigation Buttons are set up in order to provide different 
+        The navigation Buttons are set up in order to provide different
         functionality based on scraper status. During runtime, the back button
         is disabled, and then reactivated upon scraper completion. The end/exit
-        button is set to stop the scraper if pressed during runtime, and set to 
+        button is set to stop the scraper if pressed during runtime, and set to
         exit the program if pressed after scraper completion.
         """
 
@@ -189,7 +188,12 @@ class RunPage(Page):
         self.progress_label_placeholder.pack(side='left', anchor='w')
         self.progress_determinate_num.pack(side='left', anchor='w')
         self.progress_label.pack(side='left', fill='x')
-        self.progress_bar.pack(side='bottom', anchor='s', fill='x', expand=True)
+        self.progress_bar.pack(
+            side='bottom',
+            anchor='s',
+            fill='x',
+            expand=True
+        )
 
         self.back_button.pack(side='left', fill='both')
         self.stop_button.pack(side='left', fill='both')
@@ -198,7 +202,7 @@ class RunPage(Page):
         self.output_frame2.pack(side='bottom', fill='x')
         self.progress_text_frame.pack(side='bottom', fill='x')
         self.output_frame.pack(side='bottom')
-        
+
         self.run_frame.place(in_=self)
 
         # Start run
@@ -209,21 +213,17 @@ class RunPage(Page):
 
     def _update_progress_bar_indeterminate(self):
         self.progress_bar['mode'] = 'indeterminate'
-        if self.threaded_run.scraper.num_queries == True:
-            try:
-                self.progress_bar.start()
-            except:
-                pass
+        if self.threaded_run.scraper.num_queries:
+            self.progress_bar.start()
         else:
-            try:
-                self.progress_bar.stop()
-                self.progress_bar['value'] = 0
-            except:
-                pass
+            self.progress_bar.stop()
+            self.progress_bar['value'] = 0
 
     def _update_progress_bar_determinate(self):
         self.progress_bar.stop()
-        self.progress_determinate_num['text'] = f'({self.threaded_run.scraper.queries_completed}/{self.threaded_run.scraper.num_queries})'
+        self.progress_determinate_num['text'] = \
+            f'({self.threaded_run.scraper.queries_completed}/' \
+            f'{self.threaded_run.scraper.num_queries})'
         self.progress_bar['mode'] = 'determinate'
         self.progress_bar['value'] = \
             (self.threaded_run.scraper.queries_completed /
@@ -231,8 +231,9 @@ class RunPage(Page):
 
     def _update_progress_bar(self):
         """Update status of progress bar based on scraper status."""
-        self.progress_label['text'] = self.threaded_run.scraper.current_query_ref
-        
+        self.progress_label['text'] = \
+            self.threaded_run.scraper.current_query_ref
+
         if isinstance(self.threaded_run.scraper.num_queries, bool):
             self._update_progress_bar_indeterminate()
         else:
@@ -270,10 +271,10 @@ class RunPage(Page):
                 self.exit_button.pack(side='left')
 
                 return
-        # If the queue is empty, continually check 
+        # If the queue is empty, continually check
         except queue.Empty:
             self.master.after(100, self.process_updates)
-    
+
     def hide(self):
         """Remove frame from view and display the previous (selection) page."""
         self.run_frame.place_forget()

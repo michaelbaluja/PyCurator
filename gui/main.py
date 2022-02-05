@@ -3,12 +3,6 @@ from .landing_page import LandingPage
 from .selection_page import SelectionPage
 from .run_page import RunPage
 
-"""
-Implementation has been adopted from StackOverflow
-
-https://stackoverflow.com/questions/14817210/using-buttons-in-tkinter-to-navigate-to-different-pages-of-the-application
-"""
-
 
 class ScraperGUI(tk.Frame):
     def __init__(self, *args, **kwargs):

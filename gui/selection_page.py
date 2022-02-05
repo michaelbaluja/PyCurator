@@ -1,7 +1,6 @@
 import tkinter as tk
 
-from scrapers import (AbstractTermScraper, AbstractTermTypeScraper,
-                      AbstractTypeScraper, AbstractWebScraper)
+from scrapers import AbstractWebScraper
 from utils import button_label_frame, select_from_files
 
 from .bases import Page, idx_to_repo_selection_dict, repo_name_to_class_dict
@@ -30,8 +29,8 @@ class SelectionPage(Page):
             font='helvetica 14 bold'
         )
         selection_text.pack(
-            side='top', 
-            pady=(0, 10), 
+            side='top',
+            pady=(0, 10),
             anchor='w'
         )
 
@@ -72,7 +71,7 @@ class SelectionPage(Page):
             widget.destroy()
 
         label = tk.Label(
-            self.param_frame, 
+            self.param_frame,
             text='Parameter Selection:',
             font='helvetica 14 bold'
         )
@@ -142,7 +141,7 @@ class SelectionPage(Page):
                     variable=self.master.repo_params[repo_name]['scrape'],
                     state=tk.ACTIVE,
                     command=lambda: self._toggle_button_state(
-                        self.master.repo_params[repo_name]['scrape'], 
+                        self.master.repo_params[repo_name]['scrape'],
                         self.path_dict_btn
                     )
                 )
@@ -187,8 +186,8 @@ class SelectionPage(Page):
                 search_type_button = tk.Checkbutton(
                     search_type_inner_frame,
                     text=search_type.title(),
-                    variable=self.master.repo_params[repo_name] \
-                        ['search_types'][search_type]
+                    variable=self.master.repo_params[repo_name]
+                    ['search_types'][search_type]
                     )
                 search_type_button.pack(side='top', anchor='w')
 
@@ -218,19 +217,19 @@ class SelectionPage(Page):
 
         if search_terms and not search_terms.get():
             requirements_left.append('search term(s)')
-        if (search_types and 
-            not any([type_.get() for type_ in search_types.values()])):
+        if (search_types and
+                not any([type_.get() for type_ in search_types.values()])):
             requirements_left.append('search type(s)')
 
         # Remove any previous requirement label
         try:
             self.requirement_label.pack_forget()
-        except:
+        except AttributeError:
             pass
 
         if requirements_left:
             self.requirement_label = tk.Label(
-                self.param_frame, 
+                self.param_frame,
                 fg='#FF0000',
                 text=f'Must provide {requirements_left} to proceed.'
             )
@@ -243,7 +242,7 @@ class SelectionPage(Page):
         if not hasattr(toggle_vars, '__iter__'):
             toggle_vars = [toggle_vars]
         assert all([hasattr(var, 'get') for var in toggle_vars])
-        
+
         # Change button state if any of the passed variables are active
         if any([var.get() for var in toggle_vars]):
             btn.config(state=tk.NORMAL)
