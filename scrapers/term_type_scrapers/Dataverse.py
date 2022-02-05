@@ -98,7 +98,7 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         Parameters
         ----------
         search_term : str
-        search_type : str
+        search_type : {'dataset', 'file'}
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -119,7 +119,10 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         search_type_options = self.get_search_type_options()
 
         if not isinstance(search_term, str):
-            raise TypeError('Search term must be a string.')
+            raise TypeError(
+                'search_term must be of type str, not'
+                f' \'{type(search_term)}\'.'
+            )
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
@@ -147,11 +150,9 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         )
         output = output['data']
 
-        # Search until no more items are returned
         while output.get('items'):
             output = output['items']
 
-            # Flatten results if necessary
             if flatten_output:
                 output = [flatten(result) for result in output]
 
@@ -164,11 +165,9 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
                 [search_df, output_df]
             ).reset_index(drop=True)
 
-            # Increment result offset to perform another search
             search_params['start'] += search_params['per_page']
             page_idx += 1
 
-            # Perform next search and convert results to json
             _, output = self.get_request_output_and_update_query_ref(
                 url=search_url,
                 params=search_params,
@@ -188,11 +187,19 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
                     axis=1
                 )
 
-            return search_df
-        else:
-            return None
+        return search_df
 
     def _scrape_file_info(self):
+        """Scrapes the file info for the current dataset.
+
+        For a page in self.driver, scrapes any information available
+        about the listed files.
+
+        Returns
+        -------
+        file_info_list : list of dicts of {'file_attr': val} or empty
+        """
+
         file_info_list = []
         soup = self._get_soup(features='html.parser')
         try:
@@ -219,12 +226,8 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         for file_list in file_info:
             file_dict = {}
             for attr_str in file_list:
-                try:
-                    key, val = attr_str.split(':', maxsplit=1)
-                    file_dict[key] = val
-                except ValueError as e:
-                    print(file_list)
-                    raise e
+                key, val = attr_str.split(':', maxsplit=1)
+                file_dict[key] = val
 
             # Convert file size from str to int
             if file_dict.get('contentSize'):

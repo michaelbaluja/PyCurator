@@ -54,6 +54,42 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         flatten_output,
         print_progress=False
     ):
+        """Query paginated results from the Papers With Code API.
+
+        Parameters
+        ----------
+        search_url : str
+        search_params : dict
+            Contains parameters to pass to requests.get({params}). Most common
+            include search term 'q', and page index 'page'. For full details,
+            see below.
+        flatten_output : bool
+            If True, nested columns are flattened into individual columns.
+        print_progress : bool, optional (default=False)
+            If True, updates on query page progress is sent to object queue
+            to be displayed in UI window.
+
+        Returns
+        -------
+        search_df : pandas.DataFrame or None
+
+        Notes
+        -----
+        For querying base objects to list all results, the following parameters
+        are most common:
+        q : str, optional
+            Term to query for.
+        page : int, optional
+            Page number to request.
+        items_per_page : int, optional
+            Number of results to return.
+        ordering : str, optional
+            Which field to order results by.
+
+        For more detailed parameters, visit
+        https://paperswithcode.com/api/v1/docs/
+        """
+
         search_df = pd.DataFrame()
 
         if print_progress:
@@ -66,7 +102,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         while output.get('results'):
             output = output['results']
 
-            # Flatten nested json
             if flatten_output:
                 output = [flatten(result) for result in output]
 
@@ -115,9 +150,9 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         Parameters
         ----------
         search_term : str
-        search_type : str
-            Must be one of:
-            ('conferences', 'datasets', 'evaluations', 'papers', 'tasks')
+        search_type : {
+            'conferences', 'datasets', 'evaluations', 'papers', 'tasks'
+        }
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -138,7 +173,10 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         search_url = f'{self.base_url}/{search_type}'
 
         if not isinstance(search_term, str):
-            raise TypeError('Search term must be of type str.')
+            raise TypeError(
+                'Search term must be of type str, not'
+                f' \'{type(search_term)}\'.'
+            )
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
@@ -156,6 +194,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         )
 
     def _get_metadata_types(self, search_type):
+        """Return the possible metadata categories for a given search_type."""
         if search_type not in self.get_search_type_options():
             raise ValueError(
                 f'Incorrect search type "{search_type}" passed in'
@@ -177,8 +216,10 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         Parameters
         ----------
-        object_paths : str or list-like
-        search_type : str
+        object_paths : str or list-like or str
+        search_type : {
+            'conferences', 'datasets', 'evaluations', 'papers', 'tasks'
+        }
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument
 

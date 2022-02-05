@@ -127,8 +127,8 @@ class AbstractScraper(ABC):
         results : dict
         data_dir : str
 
-        Raise
-        -----
+        Raises
+        ------
         TypeError
             Results not of type dict or datadir not of type str.
         """
@@ -164,7 +164,7 @@ class AbstractScraper(ABC):
 
         Parameters
         ----------
-        results : pd.DataFrame
+        results : pandas.DataFrame
             If DataFrame, results will be stored in a csv format.
         filepath : str
             Location to store file in. Take note of output type as specified
@@ -181,7 +181,8 @@ class AbstractScraper(ABC):
             results.to_json(filepath)
         else:
             raise ValueError(
-                f'Input must be of type pd.DataFrame, not \'{type(results)}\'.'
+                f'Input must be of type pandas.DataFrame, not'
+                f' \'{type(results)}\'.'
             )
 
 
@@ -482,12 +483,14 @@ class AbstractAPIScraper(AbstractScraper):
         ------
         ValueError
             If credential_filepath is not of type str.
+        FileNotFoundError
+            Credentials file does not exist.
         """
 
         if not isinstance(credential_filepath, str):
             raise TypeError(
                 (f'Credential value must be of type str, '
-                    f'not \'{type(credential_filepath)}\'')
+                    f'not \'{type(credential_filepath)}\'.')
             )
 
         # Try to load credentials from file
@@ -657,7 +660,7 @@ class AbstractAPIScraper(AbstractScraper):
             search_dict or metadata_dict are not instances of dict.
         ValueError
             search_dict or metadata_dict contain entries that are not of type
-            pd.DataFrame.
+            pandas.DataFrame.
 
         See Also
         --------
@@ -677,11 +680,11 @@ class AbstractAPIScraper(AbstractScraper):
 
         if not all([isinstance(df, pd.DataFrame) for df in search_dict]):
             raise ValueError(
-                'All entries of search_dict must be of type pd.DataFrame.'
+                'All search_dict entries must be of type pandas.DataFrame.'
             )
         if not all([isinstance(df, pd.DataFrame) for df in metadata_dict]):
             raise ValueError(
-                'All entries of metadata_dict must be of type pd.DataFrame.'
+                'All metadata_dict entries must be of type pandas.DataFrame.'
             )
 
         df_dict = dict()
@@ -753,7 +756,7 @@ class AbstractTermScraper(AbstractAPIScraper):
 
         Returns
         -------
-        merged_dict/search_dict : dict of pd.DataFrame
+        merged_dict/search_dict : dict of pandas.DataFrame
             Returns merged_dict if metadata is available. This is the output of
                 the merge_search_and_metadata_dicts function.
             Returns search_dict if metadata is not available. This is the
@@ -856,8 +859,6 @@ class AbstractTermScraper(AbstractAPIScraper):
         Returns
         -------
         metadata_dict : dict of pandas.DataFrame
-            dict of DataFrames with metadata for each query.
-            Order matches the order of search_dict.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -939,7 +940,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
 
         Returns
         -------
-        merged_dict/search_dict : dict of pd.DataFrame
+        merged_dict/search_dict : dict of pandas.DataFrame
             Returns merged_dict if metadata is available. This is the output of
                 the merge_search_and_metadata_dicts function.
             Returns search_dict if metadata is not available. This is the
@@ -1048,8 +1049,6 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         Returns
         -------
         metadata_dict : dict of pandas.DataFrame
-            dict of DataFrames with metadata for each query.
-            Order matches the order of search_dict.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -1122,7 +1121,7 @@ class AbstractTypeScraper(AbstractAPIScraper):
 
         Returns
         -------
-        merged_dict/search_dict : dict of pd.DataFrame
+        merged_dict/search_dict : dict of pandas.DataFrame
             Returns merged_dict if metadata is available. This is the output of
                 the merge_search_and_metadata_dicts function.
             Returns search_dict if metadata is not available. This is the
@@ -1187,7 +1186,7 @@ class AbstractTypeScraper(AbstractAPIScraper):
 
         Returns
         -------
-        search_dict : dict of pd.DataFrame
+        search_dict : dict of pandas.DataFrame
             Stores the results of each call to get_individual_search_output in
             the form search_output_dict[{search_type}] = df.
         """

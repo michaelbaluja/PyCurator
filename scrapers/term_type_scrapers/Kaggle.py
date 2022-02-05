@@ -65,13 +65,20 @@ class KaggleScraper(AbstractTermTypeScraper):
         Parameters
         ----------
         search_term : str
-        search_type : str
+        search_type : {'datasets', 'kernels'}
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
         search_df : pandas.DataFrame
+
+        Raises
+        ------
+        TypeError
+            Incorrect search_term type.
+        ValueError
+            Invalid search_type provided.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -79,7 +86,10 @@ class KaggleScraper(AbstractTermTypeScraper):
 
         # Validate input
         if not isinstance(search_term, str):
-            raise ValueError('Search term must be a string.')
+            raise TypeError(
+                'search_term must be of type str, not'
+                f' \'{type(search_term)}\'.'
+            )
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
@@ -89,13 +99,10 @@ class KaggleScraper(AbstractTermTypeScraper):
         page_idx = 1
         search_df = pd.DataFrame()
 
-        # Pulls a single page of results for the given search term
         self._update_query_ref(page='page_idx')
         output = list_queries(search=search_term, page=page_idx)
 
-        # Search until we no longer recieve results
         while output:
-            # If user has requested termination, handle cleanup
             if not self.continue_running:
                 self.terminate()
 
@@ -111,16 +118,11 @@ class KaggleScraper(AbstractTermTypeScraper):
                 [search_df, output_df]
             ).reset_index(drop=True)
 
-            # Increment page count for searching
             page_idx += 1
-
-            # Pull next page of results
             self._update_query_ref(page=page_idx)
             output = list_queries(search=search_term, page=page_idx)
 
-        # Only modify if the DataFrame contains data
         if not search_df.empty:
-            # Modify columns for metadata merge
             search_df = search_df.rename(
                 columns={'id': 'datasetId', 'ref': 'id'}
             )
@@ -160,12 +162,9 @@ class KaggleScraper(AbstractTermTypeScraper):
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
         data_path = kwargs.get('data_path', f'data{os.sep}')
 
-        # If user has requested termination, handle cleanup instead of querying
-        # additional results
         if not self.continue_running:
             self.terminate()
 
-        # Download the metadata
         try:
             self.api.dataset_metadata(object_path, path=data_path)
         except (TypeError, ApiException) as e:
@@ -175,12 +174,10 @@ class KaggleScraper(AbstractTermTypeScraper):
             else:
                 return None
         else:
-            # Access the metadata and load it in as a a dictionary
             metadata_file_path = f'{data_path}dataset-metadata.json'
             with open(metadata_file_path) as f:
                 json_data = json.load(f)
 
-            # Delete metadata file (no longer needed)
             os.remove(metadata_file_path)
 
             if flatten_output:
@@ -193,7 +190,7 @@ class KaggleScraper(AbstractTermTypeScraper):
 
         Parameters
         ----------
-        object_paths : str/list-like
+        object_paths : str or list-like of str
         **kwargs : dict, optional
 
         Returns
@@ -223,7 +220,7 @@ class KaggleScraper(AbstractTermTypeScraper):
 
         Parameters
         ----------
-        search_dict : Iterable of pandas.DataFrames
+        search_dict : dict of pandas.DataFrames
             Output from get_all_search_outputs function.
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.

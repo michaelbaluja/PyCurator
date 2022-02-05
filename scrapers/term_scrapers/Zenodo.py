@@ -47,14 +47,26 @@ class ZenodoScraper(AbstractTermScraper):
         Returns
         -------
         search_df : pandas.DataFrame
+
+        Raises
+        ------
+        TypeError
+            Incorrect search_term type.
+
+        Warns
+        -----
+        RuntimeWarning
+            Unsuccessful query response from the API.
         """
 
-        # Make sure out input is valid
-        assert isinstance(search_term, str), 'Search term must be a string'
+        if not isinstance(search_term, str):
+            raise TypeError(
+                'search_term must be of type str, not'
+                f' \'{type(search_term)}\'.'
+            )
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        # Set search variables
         search_year = 2021
         search_df = pd.DataFrame()
         start_date = f'{search_year}-01-01'
@@ -66,7 +78,6 @@ class ZenodoScraper(AbstractTermScraper):
             'size': 1000
         }
 
-        # Run initial search & extract output
         response, output = self.get_request_output_and_update_query_ref(
             url=self.base_url,
             params=search_params,
@@ -78,7 +89,8 @@ class ZenodoScraper(AbstractTermScraper):
         # Handle any potential errors
         if response.status_code != 200:
             warnings.warn(
-                f'{response.status_code}: Returning without results.'
+                f'{response.status_code}: Returning without results.',
+                RuntimeWarning
             )
             self.continue_running = False
             self.terminate()
@@ -89,7 +101,7 @@ class ZenodoScraper(AbstractTermScraper):
                 output.get('hits').get('hits')
             ):
                 output = output['hits']['hits']
-                # Flatten output
+
                 if flatten_output:
                     output = [flatten(result) for result in output]
 
@@ -100,10 +112,7 @@ class ZenodoScraper(AbstractTermScraper):
                     [search_df, output_df]
                 ).reset_index(drop=True)
 
-                # Increment page for next search
                 search_params['page'] += 1
-
-                # Run search & extract output
                 response, output = \
                     self.get_request_output_and_update_query_ref(
                         url=self.base_url,
@@ -113,7 +122,6 @@ class ZenodoScraper(AbstractTermScraper):
                         page=search_params['page']
                     )
 
-            # Change search year, reset search page
             search_year -= 1
             start_date = f'{search_year}-01-01'
             end_date = f'{search_year}-12-31'
@@ -122,7 +130,6 @@ class ZenodoScraper(AbstractTermScraper):
                 f'{search_term} AND created:[{start_date} TO {end_date}]'
             search_params['page'] = 1
 
-            # Run search & extract output
             response, output = self.get_request_output_and_update_query_ref(
                 url=self.base_url,
                 params=search_params,

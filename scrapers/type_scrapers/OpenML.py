@@ -228,7 +228,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         Parameters
         ----------
-        search_type : str
+        search_type : {'datasets', 'runs', 'tasks', 'evaluations'}
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -289,7 +289,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         Parameters
         ----------
         object_paths : str or list-like
-        search_type : str
+        search_type : {'datasets', 'runs', 'tasks', 'evaluations'}
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 

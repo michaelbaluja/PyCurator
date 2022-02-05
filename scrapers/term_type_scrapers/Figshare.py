@@ -71,13 +71,20 @@ class FigshareScraper(AbstractTermTypeScraper):
         Parameters
         ----------
         search_term : str
-        search_type : str
+        search_type : {'articles', 'collections', 'projects'}
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
         search_df : pandas.DataFrame
+
+        Raises
+        ------
+        TypeError
+            Incorrect search_term type.
+        ValueError
+            Invalid search_type provided.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -85,7 +92,10 @@ class FigshareScraper(AbstractTermTypeScraper):
 
         # Validate input
         if not isinstance(search_term, str):
-            raise ValueError('Search term must be a string.')
+            raise TypeError(
+                'search_term must be of type str, not'
+                f' \'{type(search_term)}\'.'
+            )
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
@@ -105,7 +115,6 @@ class FigshareScraper(AbstractTermTypeScraper):
             'page_size': page_size
         }
 
-        # Conduct initial search
         response, output = self.get_request_output_and_update_query_ref(
             url=search_url,
             params=search_params,
@@ -114,27 +123,20 @@ class FigshareScraper(AbstractTermTypeScraper):
             page=start_page
         )
 
-        # Search as long as page is valid
         while response.status_code == 200:
             while response.status_code == 200 and output:
-                # Flatten output if needed
                 if flatten_output:
                     output = [flatten(result) for result in output]
 
-                # Convert output to df & add query info
                 output_df = pd.DataFrame(output)
                 output_df['search_page'] = search_params['page']
                 output_df['publish_query'] = search_params['published_since']
 
-                # Append modified output df to cumulative df
                 search_df = pd.concat(
                     [search_df, output_df]
                 ).reset_index(drop=True)
 
-                # Increment page number to query over
                 search_params['page'] += 1
-
-                # Conduct search
                 response, output = \
                     self.get_request_output_and_update_query_ref(
                         url=search_url,
@@ -193,10 +195,8 @@ class FigshareScraper(AbstractTermTypeScraper):
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
         object_paths = self.validate_metadata_parameters(object_paths)
 
-        # Create empty pandas dataframe to put results in
         metadata_df = pd.DataFrame()
 
-        # Get details for each object
         for object_path in self._pb_determinate(object_paths):
             _, json_data = self.get_request_output(
                 url=object_path,
@@ -220,7 +220,8 @@ class FigshareScraper(AbstractTermTypeScraper):
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
-        Returns:
+        Returns
+        -------
         metadata_dict : dict
         """
 

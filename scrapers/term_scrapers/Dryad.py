@@ -85,9 +85,57 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         print_progress=False,
         delim=None
     ):
+        """Query paginated results from the Dryad API for given parameters.
+
+        Parameters
+        ----------
+        search_url : str
+        search_params : dict
+            Contains parameters to pass to requests.get({params}). Most common
+            include search term 'q', and page index 'page'. For full details,
+            see below.
+        flatten_output : bool
+            If True, nested columns are flattened into individual columns.
+        print_progress : bool, optional (default=False)
+            If True, updates on query page progress is sent to object queue
+            to be displayed in UI window.
+        delim : bool, optional (default=None)
+            Key to grab results from query response JSON. If None, entire JSON
+            return is considered as the data results.
+
+        Returns
+        -------
+        search_df : pandas.df
+
+        Notes
+        -----
+        For searching over datasets, Dryad allows the following parameters:
+        page : int, optional
+            Page to search over.
+        per_page : int, optional
+            Number of results per page.
+        q : str, optional
+            Term to query for.
+        affiliation : str, optional
+            ROR identifier to require in a dataset's authors.
+        tenant : str, optional
+            Tenant organization in Dryad. Ignored if affiliation given.
+        modifiedSince : str, optional
+            An ISO 8601 UTC timestamp for limiting results.
+
+        When searching for the files of a dataset version, parameters include:
+        id : int
+            Version ID of the dataset.
+        page : int, optional
+            As above.
+        per_page : int, optional
+            As above.
+
+        When searching for file metadata, only id, as listed above, is allowed.
+        """
+
         search_df = pd.DataFrame()
 
-        # Perform initial search and convert results to json
         if print_progress:
             self._update_query_ref(
                 search_term=search_params['q'],
@@ -95,19 +143,15 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             )
         _, output = self.get_request_output(search_url, params=search_params)
 
-        # Queries next page as long as current page isn't empty
         while output.get('count'):
-            # Extract relevant output data
             output = output['_embedded']
 
             if delim:
                 output = output[delim]
 
-            # Flatten output if necessary
             if flatten_output:
                 output = [flatten(result) for result in output]
 
-            # Convert output to df, add to cumulative
             output_df = pd.DataFrame(output)
             output_df['page'] = search_params['page']
 
@@ -115,10 +159,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
                 search_df, output_df]
             ).reset_index(drop=True)
 
-            # Increment page to search over
             search_params['page'] += 1
-
-            # Perform next search and convert results to json
             if print_progress:
                 self._update_query_ref(
                     search_term=search_params['q'],
@@ -143,11 +184,21 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         Returns
         -------
         search_df : pandas.DataFrame
+
+        Raises
+        ------
+        TypeError
+            Incorrect search_term type.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        # Set search params
+        if not isinstance(search_term, str):
+            raise TypeError(
+                'search_term must be of type str, not'
+                f' \'{type(search_term)}\'.'
+            )
+
         search_url = f'{self.base_url}/search'
         search_params = {'q': search_term, 'page': 1, 'per_page': 100}
 
@@ -189,6 +240,11 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         Returns
         -------
         metadata_df : pandas.DataFrame
+
+        Raises
+        ------
+        TypeError
+            If no object paths are provided.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -197,12 +253,10 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         start_page = 1
         metadata_df = pd.DataFrame()
 
-        # Query the metadata for each object
         for object_path in self._pb_determinate(object_paths):
             search_url = f'{self.base_url}/versions/{object_path}/files'
             search_params = {'page': start_page}
 
-            # Conduct search
             object_df = self._conduct_search_over_pages(
                 search_url,
                 search_params,
@@ -211,7 +265,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
                 print_progress=False
             )
 
-            # Add relevant data to DataFrame and merge
             object_df['version'] = object_path
             object_df['page'] = search_params['page']
             metadata_df = pd.concat(
