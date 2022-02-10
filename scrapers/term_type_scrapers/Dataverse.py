@@ -18,7 +18,7 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             (default=os.path.join('paths', 'dataverse_paths.json'))
         Json file for loading path dict.
         Must be of the form {search_type: {path_type: path_dict}}
-    scrape : boolearn, optional (default=True)
+    scrape : bool, optional (default=True)
         Flag for requesting web scraping as a method for additional metadata
         collection.
     search_terms : list-like, optional (default=None)
@@ -262,8 +262,8 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
 
             landing_attribute_values = {
-                attribute: self._get_attribute_value(
-                    self.get_single_attribute(soup=soup, path=path)
+                attribute: self._get_tag_value(
+                    self.get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in landing_attribute_paths.items()
             }
@@ -277,8 +277,8 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
 
             metadata_attribute_values = {
-                attribute: self._get_attribute_value(
-                    self.get_single_attribute(soup=soup, path=path)
+                attribute: self._get_tag_value(
+                    self.get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in metadata_attribute_paths.items()
             }
@@ -293,8 +293,8 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
 
             terms_attribute_values = {
-                attribute: self._get_attribute_value(
-                    self.get_single_attribute(soup=soup, path=path)
+                attribute: self._get_tag_value(
+                    self.get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in terms_attribute_paths.items()
             }
@@ -346,8 +346,6 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         metadata_df = pd.DataFrame()
 
         for object_path in self._pb_determinate(object_paths):
-            object_dict = dict()
-
             self.driver.get(object_path)
 
             object_dict = self._get_attribute_values(**attribute_dicts)
@@ -377,7 +375,12 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         Returns
         -------
         metadata_dict : dict
-            dict of DataFrames with metadata for each query.
+            Dictionary of DataFrames with metadata for each query.
+
+        Raises
+        ------
+        ValueError
+            Invalid search_type in query.
         """
 
         metadata_dict = dict()
@@ -398,14 +401,16 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
                     )
                 elif search_type == 'file':
                     object_paths = df['url']
+                else:
+                    raise ValueError(f'Can only search {self.get_search_type_options()}.')
 
                 metadata_dict[query] = self.get_query_metadata(
                     object_paths,
                     **self.path_dict[search_type]
                 )
 
-            self.queue.put(
-                f'{search_term} {search_type} metadata query complete.'
-            )
+                self.queue.put(
+                    f'{search_term} {search_type} metadata query complete.'
+                )
 
         return metadata_dict

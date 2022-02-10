@@ -17,7 +17,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
     path_file : str, optional (default=None)
         Json file for loading path dict.
         Must be of the form {search_type: {path_type: path_dict}}
-    scrape : boolearn, optional (default=True)
+    scrape : bool, optional (default=True)
         Flag for requesting web scraping as a method for additional metadata
         collection.
     search_terms : list-like, optional
@@ -31,7 +31,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
     Notes
     -----
-    The method of webscraping has changed for this class, rendering the
+    The method of web scraping has changed for this class, rendering the
     presence of a path_file unnecessary. The class initialization will change
     at a later point to reflect this.
     """
@@ -273,7 +273,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         return metadata_df
 
-    def get_web_output(self, object_urls, **kwargs):
+    def get_web_output(self, object_urls):
         """Scrapes the attributes in path_dict for the provided object urls.
 
         Parameters
@@ -295,8 +295,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
             while (
                 'Request rejected due to rate limits.' in soup.text or
-                not self._get_attribute_value(
-                    self.get_single_attribute(
+                not self._get_tag_value(
+                    self.get_single_tag(
                         soup=soup,
                         string=re.compile(self.attr_dict['numViews'])
                     )
@@ -308,8 +308,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
                 soup = self._get_soup(features='html.parser')
 
             object_dict = {
-                var: self._get_attribute_value(
-                    self.get_single_attribute(
+                var: self._get_tag_value(
+                    self.get_single_tag(
                         soup=soup,
                         string=re.compile(attr)
                     )
@@ -323,8 +323,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
             # Add identifier for merging
             object_dict['identifier'] = '/'.join(url.split('/')[-2:])
-            object_dict['title'] = self._get_attribute_value(
-                self.get_single_attribute(
+            object_dict['title'] = self._get_tag_value(
+                self.get_single_tag(
                     soup=soup,
                     path='h1.o-heading__level1'
                 )

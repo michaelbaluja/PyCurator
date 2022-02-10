@@ -17,6 +17,7 @@ month_name_to_integer = {
     'Dec': '12'
 }
 
+
 def button_label_frame(root, label_text, button_text, button_command):
     from tkinter import Button, Frame, Label
 
@@ -29,13 +30,14 @@ def button_label_frame(root, label_text, button_text, button_command):
     _button = Button(_frame, text=button_text, command=button_command)
     _button.pack(side='right')
 
-    # Align frame widgets together 
+    # Align frame widgets together
     _frame.pack(anchor='w')
+
 
 def parse_numeric_string(entry, cast=False):
     """Given a string, returns all integer numeric substrings.
-    
-    Paremeters
+
+    Parameters
     ----------
     entry : str
     cast : bool, optional (default=False)
@@ -46,9 +48,9 @@ def parse_numeric_string(entry, cast=False):
     numeric_instances
         If none present, NoneType
         If one present, returns int
-        If multiple present, returns list of ints 
+        If multiple present, returns list of ints
     """
-    
+
     assert isinstance(entry, str)
     assert isinstance(cast, bool)
 
@@ -65,8 +67,9 @@ def parse_numeric_string(entry, cast=False):
 
     return numeric_instances
 
+
 def find_first_match(string, pattern):
-    """Finds the first occurance of a regex pattern in a given string.
+    """Finds the first occurrence of a regex pattern in a given string.
 
     Parameters
     ----------
@@ -79,7 +82,7 @@ def find_first_match(string, pattern):
 
     See Also
     --------
-    re.search, re.Match.group
+    re.search(), re.Match.group()
     """
 
     try:
@@ -88,9 +91,11 @@ def find_first_match(string, pattern):
         # Occurs if re.search returns None, as None has no attribute .group()
         return None
 
+
 def is_nested(col):
     """Given an iterable, returns True if any item is a dictionary or list."""
     return any([True for x in col if type(x) in (dict, list, OrderedDict)])
+
 
 def select_from_files(root, selection_type, repo_name=None, **kwargs):
     """Allows user to select local file/directory.
@@ -98,26 +103,33 @@ def select_from_files(root, selection_type, repo_name=None, **kwargs):
     Parameters
     ----------
     root : Tkinter.Frame
-        Derived Frame class that contains UI. 
-        
+        Derived Frame class that contains UI.
+
         If choosing file:
             Root must contain "files" dict attribute to hold the selected file.
     selection_type : str
-        Type of selection to be made. 
+        Type of selection to be made.
         Examples include "credentials", "directory", "css_paths" etc.
     repo_name : str, optional (default=None)
         Name of repository to associate selection with.
     kwargs : dict, optional
         Allows users to input filetype restrictions.
-    
-    If repo_name is passed, files are stored in the format 
+
+    Raises
+    ------
+    NotImplementedError
+        Occurs when called on a root that does not contain a files
+        attribute.
+
+    Notes
+    -----
+    If repo_name is passed, files are stored in the format
         root.files[repo_name][filetype] = filename
-    If repo_name is None, files are stored in the format 
+    If repo_name is None, files are stored in the format
         root.files[repo_name] = filename
     """
 
     from tkinter import filedialog as fd
-    from tkinter import Label
 
     if kwargs.get('filetypes'):
         filetypes = kwargs.get('filetypes')
@@ -138,26 +150,28 @@ def select_from_files(root, selection_type, repo_name=None, **kwargs):
             filetypes=filetypes
         )
 
-        try:
-            if repo_name:
-                root.repo_params[repo_name][selection_type] = selection
-            else:
-                root.files[selection_type] = selection
-        except AttributeError:
-            raise NotImplementedError(f'{root} must contain "files" attribute.')
+    try:
+        if repo_name:
+            root.repo_params[repo_name][selection_type] = selection
+        else:
+            root.files[selection_type] = selection
+    except AttributeError:
+        raise NotImplementedError(
+            f'{root} must contain "files" attribute.'
+        )
 
 
 def expand_series(series):
-    """Given a pandas Series of nested data, returns unnested data as DataFrame.
-    
+    """Given a Series of nested data, returns unnested data as DataFrame.
+
     Parameters
     ----------
-    series : pd.Series
-        Series of nested data.
-    
+    series : pandas.Series
+        Data to be unnested
+
     Returns
     -------
-    col_expand : pd.DataFrame
+    col_expand : pandas.DataFrame
         DataFrame of expanded data.
     """
 
@@ -165,30 +179,35 @@ def expand_series(series):
     try:
         assert isinstance(series, pd.Series)
     except AssertionError:
-        raise ValueError(f'series argument must be of type pd.Series, not {type(series)}')
-        
-    ## Expand column
+        raise ValueError(
+            f'series must be of type pandas.Series, not \'{type(series)}\'.'
+        )
+
+    # Expand column
     col_expand = series.apply(pd.Series).dropna(axis=1, how='all')
     col_name = series.name
 
-    ## Rename expanded columns to clarify source
-    #add source column name prefix to each new column to identify source
-    col_expand_names = [f'{col_name}_{nested_col}' for nested_col in col_expand.columns]
-    #rename columns
+    # Rename expanded columns to clarify source
+    # add source column name prefix to each new column to identify source
+    col_expand_names = [
+        f'{col_name}_{nested_col}' for nested_col in col_expand.columns
+    ]
+    # rename columns
     col_expand.columns = col_expand_names
 
     return col_expand
 
+
 def flatten_nested_df(df):
     """Takes in a DataFrame and flattens any nested columns.
-    
+
     Parameters
     ----------
-    df : pd.DataFrame
+    df : pandas.DataFrame
 
     Returns
     -------
-    pd.DataFrame
+    pandas.DataFrame
     """
     # If the df is empty, then we want to return
     if df.empty:
@@ -198,16 +217,16 @@ def flatten_nested_df(df):
         df = pd.DataFrame(df)
     # If there's only one column & it's not nested, return it
     if df.shape[1] == 1:
-        if not is_nested(df.iloc[:,0]):
+        if not is_nested(df.iloc[:, 0]):
             return df
-    
+
     # Slice the first column off of the DataFrame
     first_col, df = df.iloc[:, 0], df.iloc[:, 1:]
-    
+
     # If the first column is nested, unnest it
     if is_nested(first_col):
         first_col = expand_series(first_col)
-    
-    # Want to flatten the first column again (in case nested nested) and 
+
+    # Want to flatten the first column again (in case nested nested) and
     # combine with the rest of the flattened df
     return flatten_nested_df(first_col).join(flatten_nested_df(df))

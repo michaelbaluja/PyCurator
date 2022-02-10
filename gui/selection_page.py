@@ -10,17 +10,13 @@ class SelectionPage(Page):
     def __init__(self, *args, **kwargs):
         Page.__init__(self, *args, **kwargs)
 
-    def show(self):
-        """Display scraper selection widgets."""
-        # Create Frames to divide page into selection/param sections
-        # Frames are created as class vars so they can be updated from other
-        # functions, as is necessary for the param frame
         self.selection_page_frame = tk.Frame()
         self.selector_frame = tk.Frame(self.selection_page_frame)
         self.param_frame = tk.Frame(self.selection_page_frame)
         self.param_frame.files = dict()
 
-        # Create Selection Frame
+    def show(self):
+        """Display scraper selection widgets."""
         # Selection Label
         selection_text = tk.Label(
             self.selector_frame,
@@ -223,7 +219,7 @@ class SelectionPage(Page):
 
         # Remove any previous requirement label
         try:
-            self.requirement_label.pack_forget()
+            self. requirement_label.pack_forget()
         except AttributeError:
             pass
 

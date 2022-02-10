@@ -78,7 +78,7 @@ class AbstractScraper(ABC):
 
     @staticmethod
     def _pb_indeterminate(indeterminate_query_func):
-        """Progress bar wrapper for indeterminate-length querys."""
+        """Progress bar wrapper for indeterminate-length queries."""
 
         def update_pb(self, *args, **kwargs):
             self.num_queries = True
@@ -130,7 +130,7 @@ class AbstractScraper(ABC):
         Raises
         ------
         TypeError
-            Results not of type dict or datadir not of type str.
+            "results" not of type dict or "datadir" not of type str.
         """
 
         if not isinstance(results, dict):
@@ -197,8 +197,6 @@ class AbstractWebScraper(AbstractScraper):
         Name of the repository being scraped. Used for loading credentials and
         saving output results.
         Web scrapers do not require user credentials at all.
-    driver : WebDriver
-        Selenium webdriver that is used for querying webpages to be scraped.
     path_file : str
         Json file for loading path dict.
         Must be of the form {'path_dict': path_dict}
@@ -240,11 +238,11 @@ class AbstractWebScraper(AbstractScraper):
         html = self.driver.page_source
         return BeautifulSoup(html, **kwargs)
 
-    def _get_single_attribute_from_path(self, soup, path):
+    def _get_single_tag_from_path(self, soup, path):
         """Extract HTML given a CSS path."""
         return soup.select_one(path)
 
-    def _get_single_attribute_from_tag_info(
+    def _get_single_tag_from_tag_info(
         self,
         soup,
         class_type=re.compile(r''),
@@ -253,13 +251,13 @@ class AbstractWebScraper(AbstractScraper):
         """Find and return BeautifulSoup Tag from given specifications."""
         return soup.find(class_type, **kwargs)
 
-    def _get_parent_attribute(
+    def _get_parent_tag(
         self,
         soup,
         string,
     ):
         """Find BeautifulSoup Tag from given specifications, return parent."""
-        attr = self._get_single_attribute_from_tag_info(
+        attr = self._get_single_tag_from_tag_info(
             soup=soup,
             string=string
         )
@@ -270,7 +268,7 @@ class AbstractWebScraper(AbstractScraper):
 
         return parent_tag
 
-    def _get_sibling_attributes(self, soup, string, **kwargs):
+    def _get_sibling_tags(self, soup, string, **kwargs):
         """Return the sibling tags.
 
         Parameters
@@ -291,19 +289,19 @@ class AbstractWebScraper(AbstractScraper):
         bs4.element.Tag.find_next_siblings()
         """
 
-        tag = self._get_single_attribute_from_tag_info(
+        tag = self._get_single_tag_from_tag_info(
             soup=soup,
             string=string
         )
         return tag.find_next_siblings(**kwargs)
 
-    def _get_pibling_attributes(
+    def _get_parent_sibling_tags(
         self,
         soup,
         string,
         **kwargs
     ):
-        """Return the tag for the (p)arent tag's s(ibling) tags.
+        """Return the tag for the parent tag's sibling tags.
 
         Parameters
         ----------
@@ -323,17 +321,17 @@ class AbstractWebScraper(AbstractScraper):
         bs4.element.Tag.find_next_siblings()
         """
 
-        parent = self._get_parent_attribute(soup, string)
+        parent = self._get_parent_tag(soup, string)
         return parent.find_next_siblings(**kwargs)
 
-    def _get_attribute_value(self, tag, err_return=None, **kwargs):
+    def _get_tag_value(self, tag, err_return=None, **kwargs):
         """Return text for the provided Tag, queried with kwargs."""
         try:
             return tag.get_text(**kwargs)
         except AttributeError:
             return err_return
 
-    def get_single_attribute(
+    def get_single_tag(
         self,
         soup,
         path=None,
@@ -343,7 +341,7 @@ class AbstractWebScraper(AbstractScraper):
         """Retrieves the requested value from the soup object.
 
         For a page attribute with a single value
-        ('abstract', 'num_instances', etc), returns the value.
+        ('abstract', 'num_instances', etc.), returns the value.
 
         Either a full CSS Selector Path must be passed via 'path', or an HTML
         class and additional parameters must be passed via 'class_type' and
@@ -355,7 +353,7 @@ class AbstractWebScraper(AbstractScraper):
         Parameters
         ----------
         soup : BeautifulSoup
-            BeautifulSoup object containing the html to be parsed.
+            HTML to be parsed.
         path : str, optional (default=None)
             CSS Selector Path for attribute to scrape.
             If None:
@@ -376,15 +374,15 @@ class AbstractWebScraper(AbstractScraper):
 
         See Also
         --------
-        re.compile : Compile a regular expression pattern into a regular
+        re.compile() : Compile a regular expression pattern into a regular
             expression object, which can be used for matching using
             re.search().
         """
 
         if path:
-            attr = self._get_single_attribute_from_path(soup, path)
+            attr = self._get_single_tag_from_path(soup, path)
         elif find_kwargs:
-            attr = self._get_single_attribute_from_tag_info(
+            attr = self._get_single_tag_from_tag_info(
                 soup,
                 class_type,
                 **find_kwargs
@@ -394,7 +392,7 @@ class AbstractWebScraper(AbstractScraper):
 
         return attr
 
-    def get_variable_attribute(
+    def get_variable_tags(
         self,
         soup,
         path=None,
@@ -410,7 +408,7 @@ class AbstractWebScraper(AbstractScraper):
         Parameters
         ----------
         soup : BeautifulSoup
-            BeautifulSoup object containing the html to be parsed.
+            HTML to be parsed.
         path : str, optional (default=None)
             CSS Selector Path for attribute to scrape.
         class_type : str, optional (default=re.compile(r''))
@@ -574,8 +572,8 @@ class AbstractAPIScraper(AbstractScraper):
         Returns
         -------
         r : response
-        outpout : dict
-            Json object from r(esponse).
+        output : dict
+            Json object from r.
 
         Raises
         ------
@@ -646,12 +644,12 @@ class AbstractAPIScraper(AbstractScraper):
         right_on : str or list-like, optional (default=None)
             Column name(s) to merge the right dict on.
         **kwargs : dict, optional
-            Placeholder argument to allow interitence overloading.
+            Placeholder argument to allow inheritance overloading.
 
         Returns
         -------
         df_dict : dict of pandas.DataFrame
-            Dict containing all of the merged search/metadata DataFrames
+            Dict containing all the merged search/metadata DataFrames
             or singleton search DataFrames.
 
         Raises
@@ -678,7 +676,7 @@ class AbstractAPIScraper(AbstractScraper):
                  f' \'{type(metadata_dict)}\'.')
             )
 
-        if not all([isinstance(df, pd.DataFrame) for df in search_dict]):
+        if not all([isinstance(df, pd.DataFrame) or df is None for df in search_dict]):
             raise ValueError(
                 'All search_dict entries must be of type pandas.DataFrame.'
             )
@@ -713,7 +711,7 @@ class AbstractAPIScraper(AbstractScraper):
 
 
 class AbstractTermScraper(AbstractAPIScraper):
-    """Base Class for scraping repository API's based on search term.
+    """Base Class for scraping repository APIs based on search term.
 
     Parameters
     ----------
@@ -826,7 +824,7 @@ class AbstractTermScraper(AbstractAPIScraper):
             the form search_dict[{search_term}] = df.
         """
 
-        # Set method variables if different than default
+        # Set method variables if different than default values
         search_terms = kwargs.get('search_terms', self.search_terms)
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
@@ -852,7 +850,7 @@ class AbstractTermScraper(AbstractAPIScraper):
         Parameters
         ----------
         object_path_dict : dict
-            Dict of the form {query: object_paths} for list of object paths.
+            Dictionary of the form {query: object_paths} for list of object paths.
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -880,7 +878,7 @@ class AbstractTermScraper(AbstractAPIScraper):
 
 
 class AbstractTermTypeScraper(AbstractAPIScraper):
-    """Base Class for scraping repository API's based on search term and type.
+    """Base Class for scraping repository APIs based on search term and type.
 
     Parameters
     ----------
@@ -1011,7 +1009,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
             the form search_dict[(search_term, search_type)] = df.
         """
 
-        # Set method variables if different than default
+        # Set method variables if different than default values.
         search_terms = kwargs.get('search_terms', self.search_terms)
         search_types = kwargs.get('search_types', self.search_types)
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -1042,7 +1040,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         Parameters
         ----------
         object_path_dict : dict
-            Dict of the form {query: object_paths} for list of object paths.
+            Dictionary of the form {query: object_paths} for list of object paths.
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -1072,7 +1070,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
 
 
 class AbstractTypeScraper(AbstractAPIScraper):
-    """Base Class for scraping repository API's based on search type.
+    """Base Class for scraping repository APIs based on search type.
 
     Parameters
     ----------

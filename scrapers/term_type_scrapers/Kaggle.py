@@ -23,8 +23,6 @@ class KaggleScraper(AbstractTermTypeScraper):
     flatten_output : bool, optional (default=None)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
-    credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
 
     Notes
     -----

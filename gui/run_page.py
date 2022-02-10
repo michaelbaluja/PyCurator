@@ -2,6 +2,7 @@ import os
 import queue
 import sys
 import tkinter as tk
+from tkinter.scrolledtext import ScrolledText
 import tkinter.ttk as ttk
 
 from scrapers import AbstractScraper
@@ -25,7 +26,7 @@ class RunPage(Page):
         Returns
         -------
         param_kwargs : dict
-            Dict of evaluated parameters in format to pass to class init.
+            Dictionary of evaluated parameters in format to pass to class init.
         """
 
         # Parse run options
@@ -48,7 +49,7 @@ class RunPage(Page):
             # Add default directory if not is specified
             save_dir = os.path.join('data', repo_name)
             if not os.path.isdir(save_dir):
-                os.mkdir(save_dir)
+                os.makedirs(save_dir, exist_ok=True)
 
         param_kwargs = {
             param: val.get()
@@ -83,7 +84,7 @@ class RunPage(Page):
         self.repo_name = repo_name
         self.repo_class = repo_class
 
-        # Evaluate paremeter values
+        # Evaluate parameter values
         param_kwargs = self.evaluate_parameters(repo_name)
         save_dir = param_kwargs.pop('save_dir')
 
@@ -114,7 +115,7 @@ class RunPage(Page):
         ScrolledText widget for displaying ThreadedRun scraper updates, a
         ProgressBar widget for updates on loop events, and Button widgets for
         paging back after completion, stopping the scraper object during a
-        run, and exiting the application upong scraper termination/completion.
+        run, and exiting the application upon scraper termination/completion.
 
         Notes
         -----

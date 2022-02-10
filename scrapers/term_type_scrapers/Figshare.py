@@ -101,7 +101,6 @@ class FigshareScraper(AbstractTermTypeScraper):
 
         start_page = 1
         page_size = 1000
-        output = None
         search_df = pd.DataFrame()
         search_year = 1950
         search_date = f'{search_year}-01-01'
@@ -159,12 +158,6 @@ class FigshareScraper(AbstractTermTypeScraper):
             search_params['page'] = start_page
 
             # Conduct search
-            self._print_progress(search_params['page'])
-            response, output = self.get_request_output(
-                url=search_url,
-                params=search_params,
-                headers=self.headers
-            )
             response, output = self.get_request_output_and_update_query_ref(
                 url=search_url,
                 params=search_params,

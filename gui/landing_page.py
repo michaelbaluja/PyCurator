@@ -10,20 +10,20 @@ class LandingPage(Page):
     def show(self):
         # Landing page information
         label = tk.Label(
-            self, 
-            text='PyCurator', 
+            self,
+            text='PyCurator',
             font='helvetica 16 bold'
         )
 
         # Load landing page text
         with open('gui/landing_msg.txt') as f:
             message = tk.StringVar(value=f.read())
-        
+
         message_box = tk.Message(self, textvariable=message)
 
         continue_button = tk.Button(
-            self, 
-            text='Continue', 
+            self,
+            text='Continue',
             command=self.master.selection_page.show
         )
 

@@ -2,7 +2,7 @@ import os
 import re
 
 import pandas as pd
-import selenium.webdriver.support.expected_conditions as EC
+import selenium.webdriver.support.expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException
 from flatten_json import flatten
 from selenium.webdriver.support.select import By
@@ -28,7 +28,7 @@ class UCIScraper(AbstractWebScraper):
 
     Notes
     -----
-    The method of webscraping has changed for this class, rendering the
+    The method of web scraping has changed for this class, rendering the
     presence of a path_file unnecessary. The class initialization will change
     at a later point to reflect this.
     """
@@ -211,14 +211,14 @@ class UCIScraper(AbstractWebScraper):
 
         self.driver.get(dataset_list_url)
         WebDriverWait(self.driver, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, instance_path))
+            ec.presence_of_element_located((By.CSS_SELECTOR, instance_path))
         )
 
         soup = self._get_soup(features='html.parser')
 
         dataset_ids = [
             instance.attrs['href'].split('/')[-1]
-            for instance in self.get_variable_attribute(
+            for instance in self.get_variable_tags(
                 soup,
                 path=instance_path
             )
@@ -236,7 +236,7 @@ class UCIScraper(AbstractWebScraper):
     ):
         """Find Tag from provided specifications, return sibling."""
         try:
-            attr = self._get_single_attribute_from_tag_info(
+            attr = self._get_single_tag_from_tag_info(
                 soup=soup,
                 class_type=pattern,
                 string=string,
@@ -261,8 +261,8 @@ class UCIScraper(AbstractWebScraper):
         result_dict = dict()
 
         for var, attr in self.individual_attr_dict.items():
-            result_dict[var] = self._get_attribute_value(
-                self.get_single_attribute(
+            result_dict[var] = self._get_tag_value(
+                self.get_single_tag(
                     soup=soup,
                     class_type=re.compile(r''),
                     string=re.compile(attr)
@@ -271,8 +271,8 @@ class UCIScraper(AbstractWebScraper):
 
         for var, attr in self.parent_attr_dict.items():
             result_dict[var] = [
-                self._get_attribute_value(parent_subset)
-                for parent in self._get_parent_attribute(
+                self._get_tag_value(parent_subset)
+                for parent in self._get_parent_tag(
                     soup=soup,
                     string=re.compile(attr)
                 )
@@ -282,15 +282,15 @@ class UCIScraper(AbstractWebScraper):
             ]
 
         for var, attr in self.sibling_attr_dict.items():
-            result_dict[var] = self._get_attribute_value(
+            result_dict[var] = self._get_tag_value(
                 self._get_sibling_attribute(soup, attr)
             )
 
         for var, attr in self.uncle_attr_dict.items():
             tag_texts = [
-                self._get_attribute_value(
-                    pibling, separator='~').split('~')
-                for pibling in self._get_pibling_attributes(
+                self._get_tag_value(
+                    tag, separator='~').split('~')
+                for tag in self._get_parent_sibling_tags(
                     soup=soup,
                     string=attr
                 )
@@ -307,7 +307,6 @@ class UCIScraper(AbstractWebScraper):
         url,
         clean=True,
         flatten_output=False,
-        **kwargs
     ):
         """Returns all data from the requested page.
 
@@ -317,8 +316,6 @@ class UCIScraper(AbstractWebScraper):
         clean : bool, optional (default=True)
         flatten_output : bool, optional (default=False)
             Flag for specifying if nested output should be flattened.
-        **kwargs : dict, optional (default=None)
-            Contains attribute dicts to use.
 
         Returns
         -------
@@ -328,13 +325,13 @@ class UCIScraper(AbstractWebScraper):
         self.driver.get(url)
 
         soup = self._get_soup(features='html.parser')
-        tag = self._get_sibling_attributes(soup, re.compile(r'Abstract'))[0]
+        tag = self._get_sibling_tags(soup, re.compile(r'Abstract'))[0]
         tag_type = tag.name
         tag_path_classes = tag.attrs['class']
         wait_path = '.'.join([tag_type, *tag_path_classes])
 
         WebDriverWait(self.driver, 5).until_not(
-            EC.text_to_be_present_in_element_value(
+            ec.text_to_be_present_in_element_value(
                 (By.CSS_SELECTOR, wait_path),
                 'N/A'
             )
@@ -354,8 +351,8 @@ class UCIScraper(AbstractWebScraper):
 
                 soup = self._get_soup(features='html.parser')
                 result_dict['files'] = [
-                    self._get_attribute_value(child)
-                    for child in self.get_variable_attribute(
+                    self._get_tag_value(child)
+                    for child in self.get_variable_tags(
                         soup=soup,
                         path='li > a'
                     )

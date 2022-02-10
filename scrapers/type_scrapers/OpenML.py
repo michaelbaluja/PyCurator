@@ -16,7 +16,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
     path_file : str, optional (default=None)
         Json file for loading path dict.
         Must be of the form {search_type: {path_type: path_dict}}
-    scrape : boolearn, optional (default=True)
+    scrape : bool, optional (default=True)
         Flag for requesting web scraping as a method for additional metadata
         collection.
     search_types : list-like, optional
@@ -30,7 +30,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
     Notes
     -----
-    The method of webscraping has changed for this class, rendering the
+    The method of web scraping has changed for this class, rendering the
     presence of a path_file unnecessary. The class initialization will change
     at a later point to reflect this.
     """
@@ -131,7 +131,8 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
                     ignore_index=True
                 )
 
-            evaluations_df = flatten_nested_df(evaluations_df)
+            if flatten_output:
+                evaluations_df = flatten_nested_df(evaluations_df)
 
         return evaluations_df
 
@@ -140,7 +141,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         Parameters
         ----------
-        data_df : pandas.DataFrame
+        df : pandas.DataFrame
 
         Returns
         -------
@@ -173,7 +174,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
             object_dict['openml_url'] = url
 
-            downloads = self.get_single_attribute(
+            downloads = self.get_single_tag(
                 soup=soup,
                 string=re.compile(self.attr_dict['downloads'])
             )
@@ -181,15 +182,15 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             object_dict['num_downloads'], \
                 object_dict['num_unique_downloads'] = downloads
 
-            num_tasks = self._get_attribute_value(
-                self._get_parent_attribute(
+            num_tasks = self._get_tag_value(
+                self._get_parent_tag(
                     soup=soup,
                     string=re.compile(self.attr_dict['num_tasks'])
                 )
             )
             num_tasks = parse_numeric_string(num_tasks, cast=True)
 
-            task_tags = self._get_pibling_attributes(
+            task_tags = self._get_parent_sibling_tags(
                 soup=soup,
                 string=re.compile(self.attr_dict['num_tasks']),
                 limit=num_tasks
@@ -369,6 +370,8 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
                 id_name = 'run_id'
             elif query == 'tasks':
                 id_name = 'tid'
+            else:
+                raise ValueError(f'Query \'{query}\' is not a valid search_type.')
 
             object_paths = df[id_name].values
 

@@ -310,7 +310,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         on=None,
         left_on=None,
         right_on=None,
-
+        **kwargs
     ):
         """Merges together search and metadata DataFrames by 'on' value.
 
@@ -335,7 +335,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         See Also
         --------
-        pandas.merge
+        pandas.merge()
         """
 
         merged_dict = dict()
