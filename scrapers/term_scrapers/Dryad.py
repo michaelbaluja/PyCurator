@@ -14,9 +14,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
     Parameters
     ----------
-    path_file : str, optional (default=None)
-        Json file for loading path dict.
-        Must be of the form {search_type: {path_type: path_dict}}
     scrape : bool, optional (default=True)
         Flag for requesting web scraping as a method for additional metadata
         collection.
@@ -28,17 +25,10 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         in directly to functions to override set parameter.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form {repository_name}: 'key'.
-
-    Notes
-    -----
-    The method of web scraping has changed for this class, rendering the
-    presence of a path_file unnecessary. The class initialization will change
-    at a later point to reflect this.
     """
 
     def __init__(
         self,
-        path_file=None,
         scrape=True,
         search_terms=None,
         flatten_output=None,
@@ -58,7 +48,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             AbstractWebScraper.__init__(
                 self,
                 repository_name='dryad',
-                path_file=path_file,
             )
 
             self.scrape_url = 'https://datadryad.org/stash/dataset'

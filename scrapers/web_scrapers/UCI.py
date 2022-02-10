@@ -17,32 +17,21 @@ class UCIScraper(AbstractWebScraper):
 
     Parameters
     ----------
-    path_file : str, optional (default=None)
-        Json file for loading path dict.
-        Must be of the form {'path_dict': path_dict}
     flatten_output : bool, optional (default=False)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
     **kwargs : dict, optional
         Allows user to overwrite hardcoded data
-
-    Notes
-    -----
-    The method of web scraping has changed for this class, rendering the
-    presence of a path_file unnecessary. The class initialization will change
-    at a later point to reflect this.
     """
 
     def __init__(
         self,
-        path_file=None,
         flatten_output=False,
         **kwargs
     ):
 
         super().__init__(
             repository_name='uci',
-            path_file=path_file,
             flatten_output=flatten_output
         )
 
@@ -111,7 +100,7 @@ class UCIScraper(AbstractWebScraper):
         Returns
         -------
         dataset_df : pandas.DataFrame
-            DataFrame returned from get_all_page_data
+            Return from get_all_page_data(...).
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -141,6 +130,31 @@ class UCIScraper(AbstractWebScraper):
         return dataset_df
 
     def _clean_results(self, results):
+        """Applies parse functions to relevant entries of the input dictionary.
+
+        For the results of a scraped UCI dataset page, removes text from
+        donation or link date, num_citations, and num_views.
+
+        Parameters
+        ----------
+        results : dict
+
+        Returns
+        -------
+        results : dict
+
+        Examples
+        --------
+        >>> self._clean_results({
+        ...     'donation_date': 'Donated on 1988-07-01',
+        ...     'num_citations': '342 citations',
+        ...     'num_views': '29109 views'
+        ... })
+        {'donation_date': '1988-07-01',
+         'num_citations': '342',
+         'num_views': 29109}
+        """
+
         donation_date = results.get('donation_date')
         link_date = results.get('link_date')
         num_citations = results.get('num_citations')
@@ -228,7 +242,7 @@ class UCIScraper(AbstractWebScraper):
 
         return dataset_ids
 
-    def _get_sibling_attribute(
+    def _get_sibling_tag(
         self,
         soup,
         string,
@@ -283,7 +297,7 @@ class UCIScraper(AbstractWebScraper):
 
         for var, attr in self.sibling_attr_dict.items():
             result_dict[var] = self._get_tag_value(
-                self._get_sibling_attribute(soup, attr)
+                self._get_sibling_tag(soup, attr)
             )
 
         for var, attr in self.uncle_attr_dict.items():
@@ -406,15 +420,5 @@ class UCIScraper(AbstractWebScraper):
             dataset_df = dataset_df.append(results, ignore_index=True)
 
         self.queue.put('Scraping complete.')
-
-        # Remove unnecessary nested columns
-        #   Datasets that don't have nested data will force the DataFrame to
-        #   keep the nested column names
-        if flatten_output:
-            columns_to_drop = self.path_dict.get(
-                'variable_attribute_paths',
-                dict()
-            ).keys()
-            dataset_df = dataset_df.drop(columns=columns_to_drop)
 
         return dataset_df

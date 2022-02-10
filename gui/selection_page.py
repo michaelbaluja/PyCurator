@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from scrapers import AbstractWebScraper
+from scrapers import AbstractWebScraper, WebPathScraperMixin
 from utils import button_label_frame, select_from_files
 
 from .bases import Page, idx_to_repo_selection_dict, repo_name_to_class_dict
@@ -110,22 +110,25 @@ class SelectionPage(Page):
         # If repo utilizes web scraping, get path file
         if issubclass(repo_class, AbstractWebScraper):
             path_dict_frame = tk.Frame(self.param_frame)
-            path_dict_label = tk.Label(
-                path_dict_frame,
-                text='CSS Selector Path:'
-            )
-            path_dict_label.pack(side='left')
 
-            self.path_dict_btn = tk.Button(
-                path_dict_frame,
-                text='Choose File',
-                command=lambda: select_from_files(
-                    root=self.param_frame,
-                    selection_type='path_file',
-                    filetypes=[('JSON Files', '*.json')]
+            # Get optional CSS path file if necessary
+            if issubclass(repo_class, WebPathScraperMixin):
+                path_dict_label = tk.Label(
+                    path_dict_frame,
+                    text='CSS Selector Path:'
                 )
-            )
-            self.path_dict_btn.pack(side='right')
+                path_dict_label.pack(side='left')
+
+                self.path_dict_btn = tk.Button(
+                    path_dict_frame,
+                    text='Choose File',
+                    command=lambda: select_from_files(
+                        root=self.param_frame,
+                        selection_type='path_file',
+                        filetypes=[('JSON Files', '*.json')]
+                    )
+                )
+                self.path_dict_btn.pack(side='right')
 
             # If web scraping is not the primary method of collection, allow
             # user to decide to scrape

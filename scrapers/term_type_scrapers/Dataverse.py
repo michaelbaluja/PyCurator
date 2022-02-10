@@ -5,11 +5,15 @@ import pandas as pd
 from flatten_json import flatten
 
 from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper, \
-    AbstractWebScraper
+    AbstractWebScraper, WebPathScraperMixin
 from utils import parse_numeric_string
 
 
-class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
+class DataverseScraper(
+    WebPathScraperMixin,
+    AbstractTermTypeScraper,
+    AbstractWebScraper
+):
     """Scrapes Dataverse API for all data relating to the given search params.
 
     Parameters
@@ -55,10 +59,10 @@ class DataverseScraper(AbstractTermTypeScraper, AbstractWebScraper):
         )
 
         if self.scrape:
+            self.path_dict = path_file
             AbstractWebScraper.__init__(
                 self,
-                repository_name='dataverse',
-                path_file=path_file,
+                repository_name='dataverse'
             )
 
         base_url = 'https://dataverse.harvard.edu'

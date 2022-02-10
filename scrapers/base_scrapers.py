@@ -16,7 +16,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 class AbstractScraper(ABC):
-    """"
+    """
     Contains basic functions that are relevant for all scraper objects.
 
     Parameters
@@ -186,6 +186,21 @@ class AbstractScraper(ABC):
             )
 
 
+class WebPathScraperMixin:
+    @property
+    def path_dict(self):
+        return self.path_dict
+
+    @path_dict.setter
+    def path_dict(self, path_file):
+        if not os.path.exists(path_file):
+            raise FileNotFoundError(
+                f'Path file \'{path_file}\' does not exist.'
+            )
+        with open(path_file) as f:
+            self.path_dict = json.load(f)
+
+
 class AbstractWebScraper(AbstractScraper):
     """Base class for all repository web scrapers.
 
@@ -197,15 +212,12 @@ class AbstractWebScraper(AbstractScraper):
         Name of the repository being scraped. Used for loading credentials and
         saving output results.
         Web scrapers do not require user credentials at all.
-    path_file : str
-        Json file for loading path dict.
-        Must be of the form {'path_dict': path_dict}
     flatten_output : bool, optional (default=False)
         Flag for specifying if nested output should be flattened. Can be passed
         in directly to functions to override set parameter.
     """
 
-    def __init__(self, repository_name, path_file, flatten_output=False):
+    def __init__(self, repository_name, flatten_output=False):
         AbstractScraper.__init__(
             self,
             repository_name=repository_name,
@@ -222,11 +234,6 @@ class AbstractWebScraper(AbstractScraper):
             ChromeDriverManager(print_first_line=False).install(),
             options=chrome_options
         )
-
-        # Load CSS Selector Path file
-        if path_file:
-            with open(path_file) as f:
-                self.path_dict = json.load(f)
 
     def _get_soup(self, **kwargs):
         """Return a BeautifulSoup object for the object driver current page."""
