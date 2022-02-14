@@ -10,9 +10,9 @@ from utils import parse_numeric_string
 
 
 class DataverseScraper(
-    WebPathScraperMixin,
     AbstractTermTypeScraper,
-    AbstractWebScraper
+    AbstractWebScraper,
+    WebPathScraperMixin
 ):
     """Scrapes Dataverse API for all data relating to the given search params.
 
@@ -79,7 +79,8 @@ class DataverseScraper(
         return True
 
     @classmethod
-    def get_search_type_options(cls):
+    @property
+    def search_type_options(cls):
         return ('dataset', 'file')
 
     def load_credentials(self, credential_filepath):
@@ -120,7 +121,7 @@ class DataverseScraper(
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
         search_url = f'{self.api_url}/search'
-        search_type_options = self.get_search_type_options()
+        search_type_options = self.search_type_options
 
         if not isinstance(search_term, str):
             raise TypeError(
@@ -342,7 +343,7 @@ class DataverseScraper(
         Returns
         -------
         metadata_df : pandas.DataFrame
-            DataFrame containing metadata for the requested objects.
+            Metadata for the requested objects.
         """
 
         object_paths = self.validate_metadata_parameters(object_paths)
@@ -406,7 +407,9 @@ class DataverseScraper(
                 elif search_type == 'file':
                     object_paths = df['url']
                 else:
-                    raise ValueError(f'Can only search {self.get_search_type_options()}.')
+                    raise ValueError(
+                        f'Can only search {self.search_type_options}.'
+                    )
 
                 metadata_dict[query] = self.get_query_metadata(
                     object_paths,

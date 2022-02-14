@@ -43,7 +43,8 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         return True
 
     @classmethod
-    def get_search_type_options(cls):
+    @property
+    def search_type_options(cls):
         return ('conferences', 'datasets', 'evaluations', 'papers', 'tasks')
 
     @AbstractScraper._pb_indeterminate
@@ -94,7 +95,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         if print_progress:
             self._update_query_ref(page=search_params['page'])
-        response, output = self.get_request_output(
+        _, output = self.get_request_output(
             url=search_url,
             params=search_params
         )
@@ -169,7 +170,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_type_options = self.get_search_type_options()
+        search_type_options = self.search_type_options
         search_url = f'{self.base_url}/{search_type}'
 
         if not isinstance(search_term, str):
@@ -195,7 +196,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
     def _get_metadata_types(self, search_type):
         """Return the possible metadata categories for a given search_type."""
-        if search_type not in self.get_search_type_options():
+        if search_type not in self.search_type_options:
             raise ValueError(
                 f'Incorrect search type "{search_type}" passed in'
             )

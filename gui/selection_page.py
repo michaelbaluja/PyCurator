@@ -150,7 +150,7 @@ class SelectionPage(Page):
             path_dict_frame.pack(anchor='w')
 
         # Get search terms, if needed
-        if hasattr(repo_class, 'set_search_terms'):
+        if hasattr(repo_class, 'search_terms'):
             search_term_frame = tk.Frame(self.param_frame)
             self.master.repo_params[repo_name]['search_terms'] = tk.StringVar()
 
@@ -168,7 +168,8 @@ class SelectionPage(Page):
             search_term_frame.pack()
 
         # Get search types, if needed
-        if hasattr(repo_class, 'set_search_types'):
+        if hasattr(repo_class, 'search_types'):
+            search_type_options = repo_class.search_type_options
             search_type_outer_frame = tk.Frame(self.param_frame)
             search_type_inner_frame = tk.Frame(search_type_outer_frame)
             search_type_label = tk.Label(
@@ -178,10 +179,10 @@ class SelectionPage(Page):
 
             self.master.repo_params[repo_name]['search_types'] = {
                 search_type: tk.IntVar()
-                for search_type in repo_class.get_search_type_options()
+                for search_type in search_type_options
             }
 
-            for search_type in repo_class.get_search_type_options():
+            for search_type in search_type_options:
                 search_type_button = tk.Checkbutton(
                     search_type_inner_frame,
                     text=search_type.title(),

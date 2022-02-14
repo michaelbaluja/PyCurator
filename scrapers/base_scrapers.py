@@ -97,11 +97,6 @@ class AbstractScraper(ABC):
         self.queue.put('Requesting program termination.')
         sys.exit()
 
-    @classmethod
-    def get_repo_name(cls):
-        """Return the name of the class without the 'Scraper' suffix."""
-        return cls.__name__.replace('Scraper', '')
-
     @staticmethod
     @abstractmethod
     def accept_user_credentials():
@@ -189,7 +184,7 @@ class AbstractScraper(ABC):
 class WebPathScraperMixin:
     @property
     def path_dict(self):
-        return self.path_dict
+        return self._path_dict
 
     @path_dict.setter
     def path_dict(self, path_file):
@@ -198,7 +193,7 @@ class WebPathScraperMixin:
                 f'Path file \'{path_file}\' does not exist.'
             )
         with open(path_file) as f:
-            self.path_dict = json.load(f)
+            self._path_dict = json.load(f)
 
 
 class AbstractWebScraper(AbstractScraper):
@@ -744,12 +739,17 @@ class AbstractTermScraper(AbstractAPIScraper):
     ):
         super().__init__(repository_name, flatten_output, credentials)
 
-        if search_terms:
-            self.set_search_terms(search_terms)
-
-    def set_search_terms(self, search_terms):
-        """Update TermScraper search terms."""
         self.search_terms = search_terms
+
+    @property
+    def search_terms(self):
+        return self._search_terms
+
+    @search_terms.setter
+    def search_terms(self, search_terms):
+        if not all([isinstance(term, str) for term in search_terms]):
+            raise TypeError('All search terms must be of type str.')
+        self._search_terms = search_terms
 
     def run(self, **kwargs):
         """Queries all data from the implemented API.
@@ -775,7 +775,7 @@ class AbstractTermScraper(AbstractAPIScraper):
             merge_search_and_metadata_dicts (if applicable)
         """
 
-        self.queue.put(f'Running {self.get_repo_name()}...')
+        self.queue.put(f'Running {self.repository_name}...')
 
         # Get search_output
         search_dict = self.get_all_search_outputs(**kwargs)
@@ -812,7 +812,7 @@ class AbstractTermScraper(AbstractAPIScraper):
             self.save_dataframes(final_dict, save_dir)
             self.queue.put('Save complete.')
 
-        self.queue.put(f'{self.get_repo_name()} run complete.')
+        self.queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs):
@@ -915,25 +915,41 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
     ):
         super().__init__(repository_name, flatten_output, credentials)
 
-        if search_terms:
-            self.set_search_terms(search_terms)
-
-        if search_types:
-            self.set_search_types(search_types)
-
-    def set_search_terms(self, search_terms):
-        """Update TermTypeScraper search terms."""
         self.search_terms = search_terms
-
-    def set_search_types(self, search_types):
-        """Update TermTypeScraper search types."""
         self.search_types = search_types
+
+    @property
+    def search_terms(self):
+        return self._search_terms
+
+    @search_terms.setter
+    def search_terms(self, search_terms):
+        if not all([isinstance(term, str) for term in search_terms]):
+            raise TypeError('All search terms must be of type str.')
+        self._search_terms = search_terms
+
+    @property
+    def search_types(self):
+        return self._search_types
+
+    @search_types.setter
+    def search_types(self, search_types):
+        if not all(
+                [
+                    search_type in self.search_type_options
+                    for search_type in search_types
+                ]
+        ):
+            raise ValueError(
+                f'Only {self.search_type_options} search types are valid.'
+            )
+        self._search_types = search_types
 
     @classmethod
     @abstractmethod
-    def get_search_type_options(cls):
+    def search_type_options(cls):
         """Return the valid search type options for a given repository."""
-        pass
+        raise NotImplementedError
 
     def run(self, **kwargs):
         """Queries all data from the implemented API.
@@ -960,7 +976,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
             merge_search_and_metadata_dicts (if applicable)
         """
 
-        self.queue.put(f'Running {self.get_repo_name()}...')
+        self.queue.put(f'Running {self.repository_name}...')
 
         # Get search_output
         search_dict = self.get_all_search_outputs(**kwargs)
@@ -997,7 +1013,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
             self.save_dataframes(final_dict, save_dir)
             self.queue.put('Save complete.')
 
-        self.queue.put(f'{self.get_repo_name()} run complete.')
+        self.queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs):
@@ -1104,17 +1120,30 @@ class AbstractTypeScraper(AbstractAPIScraper):
     ):
         super().__init__(repository_name, flatten_output, credentials)
 
-        if search_types:
-            self.set_search_types(search_types)
+        self.search_types = search_types
+
+    @property
+    def search_types(self):
+        return self._search_types
+
+    @search_types.setter
+    def search_types(self, search_types):
+        if not all(
+            [
+                search_type in self.search_type_options
+                for search_type in search_types
+            ]
+        ):
+            raise ValueError(
+                f'Only {self.search_type_options} search types are valid.'
+            )
+        self._search_types = search_types
 
     @classmethod
     @abstractmethod
-    def get_search_type_options(cls):
+    def search_type_options(cls):
         """Return the valid search type options for a given repository."""
         pass
-
-    def set_search_types(self, search_types):
-        self.search_types = search_types
 
     def run(self, **kwargs):
         """Queries all data from the implemented API.
@@ -1140,7 +1169,7 @@ class AbstractTypeScraper(AbstractAPIScraper):
             merge_search_and_metadata_dicts (if applicable)
         """
 
-        self.queue.put(f'Running {self.get_repo_name()}...')
+        self.queue.put(f'Running {self.repository_name}...')
 
         # Get search_output
         search_dict = self.get_all_search_outputs(**kwargs)
@@ -1177,7 +1206,7 @@ class AbstractTypeScraper(AbstractAPIScraper):
             self.save_dataframes(final_dict, save_dir)
             self.queue.put('Save complete.')
 
-        self.queue.put(f'{self.get_repo_name()} run complete.')
+        self.queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs):

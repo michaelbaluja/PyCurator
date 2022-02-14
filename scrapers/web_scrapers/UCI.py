@@ -106,7 +106,7 @@ class UCIScraper(AbstractWebScraper):
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
         save_dir = kwargs.get('save_dir')
-        repo_name = self.get_repo_name()
+        repo_name = self.repository_name
 
         dataset_ids = self.get_dataset_ids(
             dataset_list_url=self.dataset_list_url,
@@ -124,7 +124,7 @@ class UCIScraper(AbstractWebScraper):
             self.save_results(dataset_df, output_filename)
             self.queue.put('Save complete.')
 
-        self.queue.put(f'{self.get_repo_name()} run complete.')
+        self.queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False
 
         return dataset_df

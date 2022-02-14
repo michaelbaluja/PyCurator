@@ -48,7 +48,8 @@ class FigshareScraper(AbstractTermTypeScraper):
         return True
 
     @classmethod
-    def get_search_type_options(cls):
+    @property
+    def search_type_options(cls):
         return ('articles', 'collections', 'projects')
 
     def load_credentials(self, credential_filepath):
@@ -88,7 +89,7 @@ class FigshareScraper(AbstractTermTypeScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_type_options = self.get_search_type_options()
+        search_type_options = self.search_type_options
 
         # Validate input
         if not isinstance(search_term, str):

@@ -64,7 +64,8 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         return True
 
     @classmethod
-    def get_search_type_options(cls):
+    @property
+    def search_type_options(cls):
         return ('datasets', 'runs', 'tasks', 'evaluations')
 
     def _get_value_attributes(self, obj):
@@ -233,7 +234,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_type_options = OpenMLScraper.get_search_type_options()
+        search_type_options = self.search_type_options
 
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
@@ -296,7 +297,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
         object_paths = self.validate_metadata_parameters(object_paths)
 
-        search_type_options = self.get_search_type_options()
+        search_type_options = self.search_type_options
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 

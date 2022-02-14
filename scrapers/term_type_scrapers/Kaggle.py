@@ -53,7 +53,8 @@ class KaggleScraper(AbstractTermTypeScraper):
         return False
 
     @classmethod
-    def get_search_type_options(cls):
+    @property
+    def search_type_options(cls):
         return ('datasets', 'kernels')
 
     @AbstractScraper._pb_indeterminate
@@ -80,7 +81,7 @@ class KaggleScraper(AbstractTermTypeScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        search_type_options = self.get_search_type_options()
+        search_type_options = self.search_type_options
 
         # Validate input
         if not isinstance(search_term, str):
