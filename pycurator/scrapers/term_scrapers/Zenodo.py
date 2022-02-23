@@ -3,7 +3,7 @@ import warnings
 import pandas as pd
 from flatten_json import flatten
 
-from scrapers.base_scrapers import AbstractScraper, AbstractTermScraper
+from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermScraper
 
 
 class ZenodoScraper(AbstractTermScraper):
@@ -31,7 +31,7 @@ class ZenodoScraper(AbstractTermScraper):
         self.base_url = 'https://zenodo.org/api/records'
 
     @staticmethod
-    def accept_user_credentials():
+    def accepts_user_credentials():
         return True
 
     @AbstractScraper._pb_indeterminate

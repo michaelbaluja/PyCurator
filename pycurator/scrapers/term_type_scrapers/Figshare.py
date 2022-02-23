@@ -1,7 +1,7 @@
 import pandas as pd
 from flatten_json import flatten
 
-from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
+from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
 
 class FigshareScraper(AbstractTermTypeScraper):
@@ -44,7 +44,7 @@ class FigshareScraper(AbstractTermTypeScraper):
             self.load_credentials(credential_filepath=credentials)
 
     @staticmethod
-    def accept_user_credentials():
+    def accepts_user_credentials():
         return True
 
     @classmethod

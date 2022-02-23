@@ -1,6 +1,5 @@
 import pandas as pd
 import re
-from collections import OrderedDict
 
 month_name_to_integer = {
     'Jan': '01',
@@ -21,17 +20,13 @@ month_name_to_integer = {
 def button_label_frame(root, label_text, button_text, button_command):
     from tkinter import Button, Frame, Label
 
-    # Create frame to hold label and button
     _frame = Frame(root)
-
     _label = Label(_frame, text=label_text)
-    _label.pack(side='left')
-
     _button = Button(_frame, text=button_text, command=button_command)
-    _button.pack(side='right')
 
-    # Align frame widgets together
-    _frame.pack(anchor='w')
+    _label.grid(row=0, column=0)
+    _button.grid(row=0, column=1)
+    _frame.grid(sticky='w', columnspan=2)
 
 
 def parse_numeric_string(entry, cast=False):
@@ -94,10 +89,10 @@ def find_first_match(string, pattern):
 
 def is_nested(col):
     """Given an iterable, returns True if any item is a dictionary or list."""
-    return any([True for x in col if type(x) in (dict, list, OrderedDict)])
+    return any([True for x in col if type(x) in (dict, list)])
 
 
-def select_from_files(root, selection_type, repo_name=None, **kwargs):
+def select_from_files(root, selection_type, **kwargs):
     """Allows user to select local file/directory.
 
     Parameters
@@ -110,8 +105,6 @@ def select_from_files(root, selection_type, repo_name=None, **kwargs):
     selection_type : str
         Type of selection to be made.
         Examples include "credentials", "directory", "css_paths" etc.
-    repo_name : str, optional (default=None)
-        Name of repository to associate selection with.
     kwargs : dict, optional
         Allows users to input filetype restrictions.
 
@@ -151,13 +144,10 @@ def select_from_files(root, selection_type, repo_name=None, **kwargs):
         )
 
     try:
-        if repo_name:
-            root.repo_params[repo_name][selection_type] = selection
-        else:
-            root.files[selection_type] = selection
+        root.add_run_parameter(selection_type, selection)
     except AttributeError:
         raise NotImplementedError(
-            f'{root} must contain "files" attribute.'
+            f'{root} must contain add_run_parameter() attribute.'
         )
 
 
@@ -167,12 +157,12 @@ def expand_series(series):
     Parameters
     ----------
     series : pandas.Series
-        Data to be unnested
+        Data to be unnested.
 
     Returns
     -------
     col_expand : pandas.DataFrame
-        DataFrame of expanded data.
+        Column expanded to DataFrame.
     """
 
     # Ensure variable is of proper type
@@ -227,6 +217,6 @@ def flatten_nested_df(df):
     if is_nested(first_col):
         first_col = expand_series(first_col)
 
-    # Want to flatten the first column again (in case nested nested) and
+    # Want to flatten the first column again (in case nested) and
     # combine with the rest of the flattened df
     return flatten_nested_df(first_col).join(flatten_nested_df(df))

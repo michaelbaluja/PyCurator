@@ -6,7 +6,7 @@ from flatten_json import flatten
 from kaggle import KaggleApi
 from kaggle.rest import ApiException
 
-from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
+from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
 
 class KaggleScraper(AbstractTermTypeScraper):
@@ -49,7 +49,7 @@ class KaggleScraper(AbstractTermTypeScraper):
         self.merge_on = 'id'
 
     @staticmethod
-    def accept_user_credentials():
+    def accepts_user_credentials():
         return False
 
     @classmethod

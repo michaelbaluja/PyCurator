@@ -4,8 +4,8 @@ import openml
 import pandas as pd
 from selenium.webdriver.remote.errorhandler import InvalidArgumentException
 
-from scrapers.base_scrapers import AbstractTypeScraper, AbstractWebScraper
-from utils import flatten_nested_df, parse_numeric_string
+from pycurator.scrapers.base_scrapers import AbstractTypeScraper, AbstractWebScraper
+from pycurator.utils import flatten_nested_df, parse_numeric_string
 
 
 class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
@@ -60,7 +60,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             openml.config.apikey = credentials
 
     @staticmethod
-    def accept_user_credentials():
+    def accepts_user_credentials():
         return True
 
     @classmethod
@@ -97,7 +97,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         # Get evaluation data for each available measure
         for measure in evaluations_measures:
-            evaluations_dict = openml.evaluations.list_evaluations(measure)
+            evaluations_dict = dict(openml.evaluations.list_evaluations(measure))
 
             try:
                 # Grab one of the evaluations in order to extract attributes

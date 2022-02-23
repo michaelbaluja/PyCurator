@@ -8,8 +8,8 @@ from flatten_json import flatten
 from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
 
-from scrapers.base_scrapers import AbstractScraper, AbstractWebScraper
-from utils import parse_numeric_string, find_first_match
+from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractWebScraper
+from pycurator.utils import parse_numeric_string, find_first_match
 
 
 class UCIScraper(AbstractWebScraper):
@@ -82,7 +82,7 @@ class UCIScraper(AbstractWebScraper):
         }
 
     @staticmethod
-    def accept_user_credentials():
+    def accepts_user_credentials():
         return False
 
     def run(self, **kwargs):

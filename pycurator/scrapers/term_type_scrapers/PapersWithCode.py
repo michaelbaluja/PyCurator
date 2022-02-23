@@ -1,7 +1,7 @@
 import pandas as pd
 from flatten_json import flatten
 
-from scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
+from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
 
 
 class PapersWithCodeScraper(AbstractTermTypeScraper):
@@ -39,7 +39,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         self.base_url = 'https://paperswithcode.com/api/v1'
 
     @staticmethod
-    def accept_user_credentials():
+    def accepts_user_credentials():
         return True
 
     @classmethod
@@ -336,7 +336,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         See Also
         --------
-        pandas.merge()
+        pandas.merge
         """
 
         merged_dict = dict()

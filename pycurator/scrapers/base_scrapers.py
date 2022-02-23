@@ -99,8 +99,10 @@ class AbstractScraper(ABC):
 
     @staticmethod
     @abstractmethod
-    def accept_user_credentials():
-        pass
+    def accepts_user_credentials():
+        raise NotImplementedError(
+            'Subclass must implement accepts_user_credentials'
+        )
 
     def _print_progress(self, page):
         """Update queue with current page being searched."""
@@ -288,7 +290,7 @@ class AbstractWebScraper(AbstractScraper):
 
         See Also
         --------
-        bs4.element.Tag.find_next_siblings()
+        bs4.element.Tag.find_next_siblings
         """
 
         tag = self._get_single_tag_from_tag_info(
@@ -320,7 +322,7 @@ class AbstractWebScraper(AbstractScraper):
 
         See Also
         --------
-        bs4.element.Tag.find_next_siblings()
+        bs4.element.Tag.find_next_siblings
         """
 
         parent = self._get_parent_tag(soup, string)
@@ -376,9 +378,9 @@ class AbstractWebScraper(AbstractScraper):
 
         See Also
         --------
-        re.compile() : Compile a regular expression pattern into a regular
+        re.compile : Compile a regular expression pattern into a regular
             expression object, which can be used for matching using
-            re.search().
+            re.search.
         """
 
         if path:
@@ -441,7 +443,7 @@ class AbstractWebScraper(AbstractScraper):
 class AbstractAPIScraper(AbstractScraper):
     """Base class for all repository API scrapers.
 
-    Contains basic functions that are relevant for all derived classes.
+    Contains basic functions that may be necessary for API scrapers.
 
     Parameters
     ----------
@@ -473,11 +475,11 @@ class AbstractAPIScraper(AbstractScraper):
             self.load_credentials(credential_filepath=credentials)
 
     def load_credentials(self, credential_filepath):
-        """Load the credentials given filepath or token.
+        """Load the credential file from the given filepath.
 
         Parameters
         ----------
-        credential_filepath : str
+        credential_filepath : str or path-like object
 
         Raises
         ------
@@ -485,6 +487,10 @@ class AbstractAPIScraper(AbstractScraper):
             If credential_filepath is not of type str.
         FileNotFoundError
             Credentials file does not exist.
+
+        See Also
+        --------
+        os.path : Module for functions on pathnames.
         """
 
         if not isinstance(credential_filepath, str):
@@ -553,8 +559,8 @@ class AbstractAPIScraper(AbstractScraper):
 
         See Also
         --------
-        self._update_query_ref()
-        self.get_request_output()
+        _update_query_ref
+        get_request_output
         """
 
         self._update_query_ref(**ref_kwargs)
@@ -566,16 +572,17 @@ class AbstractAPIScraper(AbstractScraper):
         Parameters
         ----------
         url : str
-        params : dict, optional (default=None)
-            Params to pass to requests.get().
+        params : dict or list of tuples or bytes, optional (default=None)
+            Dictionary, list of types or bytes to send in the query
+            string for the Request.
         headers : dict, optional (default=None)
-            Headers to pass to requests.get().
+            Dictionary of headers to send with the Request.
 
         Returns
         -------
-        r : response
+        r : requests.Response
         output : dict
-            Json object from r.
+            JSON-encoded content of a response.
 
         Raises
         ------
@@ -583,6 +590,14 @@ class AbstractAPIScraper(AbstractScraper):
             Occurs when a query results in an unparsable response. Outputs
             the parameters provided to the query along with the response
             status code for further troubleshooting.
+
+        See Also
+        --------
+        requests.get : Sends a GET request.
+
+        Examples
+        --------
+        >>> self.get_request_output('')
         """
 
         # If user has requested termination, handle cleanup instead of querying
@@ -664,7 +679,7 @@ class AbstractAPIScraper(AbstractScraper):
 
         See Also
         --------
-        pandas.merge()
+        pandas.merge
         """
 
         if not isinstance(search_dict, dict):
@@ -712,7 +727,21 @@ class AbstractAPIScraper(AbstractScraper):
         return df_dict
 
 
-class AbstractTermScraper(AbstractAPIScraper):
+class TermScraperMixin:
+    @property
+    def search_terms(self):
+        return self._search_terms
+
+    @search_terms.setter
+    def search_terms(self, search_terms):
+        if isinstance(search_terms, str):
+            search_terms = [search_terms]
+        if not all([isinstance(term, str) for term in search_terms]):
+            raise TypeError('All search terms must be of type str.')
+        self._search_terms = search_terms
+
+
+class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
     """Base Class for scraping repository APIs based on search term.
 
     Parameters
@@ -740,16 +769,6 @@ class AbstractTermScraper(AbstractAPIScraper):
         super().__init__(repository_name, flatten_output, credentials)
 
         self.search_terms = search_terms
-
-    @property
-    def search_terms(self):
-        return self._search_terms
-
-    @search_terms.setter
-    def search_terms(self, search_terms):
-        if not all([isinstance(term, str) for term in search_terms]):
-            raise TypeError('All search terms must be of type str.')
-        self._search_terms = search_terms
 
     def run(self, **kwargs):
         """Queries all data from the implemented API.
@@ -884,7 +903,32 @@ class AbstractTermScraper(AbstractAPIScraper):
         raise NotImplementedError
 
 
-class AbstractTermTypeScraper(AbstractAPIScraper):
+class TypeScraperMixin:
+    @property
+    def search_types(self):
+        return self._search_types
+
+    @search_types.setter
+    def search_types(self, search_types):
+        if not all(
+                [
+                    search_type in self.search_type_options
+                    for search_type in search_types
+                ]
+        ):
+            raise ValueError(
+                f'Only {self.search_type_options} search types are valid.'
+            )
+        self._search_types = search_types
+
+    @classmethod
+    @abstractmethod
+    def search_type_options(cls):
+        """Return the valid search type options for a given repository."""
+        raise NotImplementedError
+
+
+class AbstractTermTypeScraper(TermScraperMixin, TypeScraperMixin, AbstractAPIScraper):
     """Base Class for scraping repository APIs based on search term and type.
 
     Parameters
@@ -917,39 +961,6 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
 
         self.search_terms = search_terms
         self.search_types = search_types
-
-    @property
-    def search_terms(self):
-        return self._search_terms
-
-    @search_terms.setter
-    def search_terms(self, search_terms):
-        if not all([isinstance(term, str) for term in search_terms]):
-            raise TypeError('All search terms must be of type str.')
-        self._search_terms = search_terms
-
-    @property
-    def search_types(self):
-        return self._search_types
-
-    @search_types.setter
-    def search_types(self, search_types):
-        if not all(
-                [
-                    search_type in self.search_type_options
-                    for search_type in search_types
-                ]
-        ):
-            raise ValueError(
-                f'Only {self.search_type_options} search types are valid.'
-            )
-        self._search_types = search_types
-
-    @classmethod
-    @abstractmethod
-    def search_type_options(cls):
-        """Return the valid search type options for a given repository."""
-        raise NotImplementedError
 
     def run(self, **kwargs):
         """Queries all data from the implemented API.
@@ -1092,7 +1103,7 @@ class AbstractTermTypeScraper(AbstractAPIScraper):
         raise NotImplementedError
 
 
-class AbstractTypeScraper(AbstractAPIScraper):
+class AbstractTypeScraper(TypeScraperMixin, AbstractAPIScraper):
     """Base Class for scraping repository APIs based on search type.
 
     Parameters

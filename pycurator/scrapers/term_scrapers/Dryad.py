@@ -4,9 +4,9 @@ from time import sleep
 import pandas as pd
 from flatten_json import flatten
 
-from scrapers.base_scrapers import AbstractScraper, AbstractTermScraper, \
+from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermScraper, \
     AbstractWebScraper
-from utils import parse_numeric_string
+from pycurator.utils import parse_numeric_string
 
 
 class DryadScraper(AbstractTermScraper, AbstractWebScraper):
@@ -62,7 +62,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         self.merge_on = 'version'
 
     @staticmethod
-    def accept_user_credentials():
+    def accepts_user_credentials():
         return True
 
     @AbstractScraper._pb_indeterminate
