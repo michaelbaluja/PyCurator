@@ -1,5 +1,5 @@
 import os
-import tkinter as tk
+import tkinter.ttk as ttk
 from .bases import ThreadedRun
 from .landing_page import LandingPage
 from .selection_page import SelectionPage
@@ -11,7 +11,7 @@ from pycurator.scrapers import (
 )
 
 
-class CuratorView(tk.Frame):
+class CuratorView(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         self.pages = dict()

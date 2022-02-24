@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import tkinter.ttk as ttk
 
 month_name_to_integer = {
     'Jan': '01',
@@ -18,11 +19,9 @@ month_name_to_integer = {
 
 
 def button_label_frame(root, label_text, button_text, button_command):
-    from tkinter import Button, Frame, Label
-
-    _frame = Frame(root)
-    _label = Label(_frame, text=label_text)
-    _button = Button(_frame, text=button_text, command=button_command)
+    _frame = ttk.Frame(root)
+    _label = ttk.Label(_frame, text=label_text)
+    _button = ttk.Button(_frame, text=button_text, command=button_command)
 
     _label.grid(row=0, column=0)
     _button.grid(row=0, column=1)
@@ -144,7 +143,7 @@ def select_from_files(root, selection_type, **kwargs):
         )
 
     try:
-        root.add_run_parameter(selection_type, selection)
+        root.controller.add_run_parameter(selection_type, selection)
     except AttributeError:
         raise NotImplementedError(
             f'{root} must contain add_run_parameter() attribute.'

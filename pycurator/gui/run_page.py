@@ -15,7 +15,7 @@ class RunPage(ViewPage):
         self.prev_msg = None
 
         # Create global runtime frames/widgets
-        self.output_frame = tk.Frame(self)
+        self.output_frame = ttk.Frame(self)
         self.runtime_output = tk.scrolledtext.ScrolledText(
             self.output_frame,
         )
@@ -24,17 +24,17 @@ class RunPage(ViewPage):
             self.output_frame
         )
 
-        self.progress_text_frame = tk.Frame(self)
-        self.progress_label_placeholder = tk.Label(
+        self.progress_text_frame = ttk.Frame(self)
+        self.progress_label_placeholder = ttk.Label(
             self.progress_text_frame,
             text='Querying:'
         )
-        self.progress_determinate_num = tk.Label(
+        self.progress_determinate_num = ttk.Label(
             self.progress_text_frame
         )
-        self.progress_label = tk.Label(self.progress_text_frame)
+        self.progress_label = ttk.Label(self.progress_text_frame)
 
-        self.button_frame = tk.Frame(self)
+        self.button_frame = ttk.Frame(self)
         self.back_button = ttk.Button(
             self.button_frame,
             text='Back',

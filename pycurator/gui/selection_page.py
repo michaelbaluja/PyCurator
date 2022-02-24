@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.ttk as ttk
 
 from pycurator.scrapers import AbstractWebScraper, WebPathScraperMixin
 from pycurator.utils import button_label_frame, select_from_files
@@ -11,22 +12,22 @@ class SelectionPage(ViewPage):
         ViewPage.__init__(self, *args, **kwargs)
 
         # Create global selection frame/widgets
-        self.selector_frame = tk.Frame(self)
+        self.selector_frame = ttk.Frame(self)
         self.scraper_listbox = tk.Listbox(self.selector_frame)
 
-        self.param_frame = tk.Frame(self)
+        self.param_frame = ttk.Frame(self)
 
         self.req_var = tk.StringVar()
-        self.req_label = tk.Label(
+        self.req_label = ttk.Label(
             self.param_frame,
-            fg='#FF0000',
+            foreground='#FF0000',
             textvariable=self.req_var
         )
 
     @ViewPage.no_overwrite
     def show(self, *args):
         """Display scraper selection widgets."""
-        selection_text = tk.Label(
+        selection_text = ttk.Label(
             self.selector_frame,
             text='Select Repository:',
             anchor='center',
@@ -69,15 +70,15 @@ class SelectionPage(ViewPage):
 
         self._set_model()
 
-        label = tk.Label(
+        label = ttk.Label(
             self.param_frame,
             text='Parameter Selection:',
             font='helvetica 14 bold'
         )
         label.grid(sticky='nw')
 
-        # Initialize run button & bind Enter key
-        self.next_page_button = tk.Button(
+        # Initialize run button
+        self.next_page_button = ttk.Button(
             self.param_frame,
             text=f'Run {self.controller.model.scraper_name}',
             command=self.controller.parse_run_parameters
@@ -89,7 +90,7 @@ class SelectionPage(ViewPage):
             label_text='Save Directory:',
             button_text='Select Directory',
             button_command=lambda: select_from_files(
-                root=self.param_frame,
+                root=self,
                 selection_type='save_dir'
             )
         )
@@ -101,7 +102,7 @@ class SelectionPage(ViewPage):
                 label_text='Credentials:',
                 button_text='Select File',
                 button_command=lambda: select_from_files(
-                    root=self.param_frame,
+                    root=self,
                     selection_type='credentials',
                     filetypes=[('JSON Files', '*.json')]
                 )
@@ -109,7 +110,7 @@ class SelectionPage(ViewPage):
 
         # Get flatten_output value
         self.controller.add_run_parameter('flatten_output', tk.IntVar())
-        flatten_check = tk.Checkbutton(
+        flatten_check = ttk.Checkbutton(
             self.param_frame,
             text='Flatten Output',
             variable=self.controller.get_run_parameter('flatten_output')
@@ -118,32 +119,37 @@ class SelectionPage(ViewPage):
 
         # If repo utilizes web scraping, get path file
         if issubclass(self.controller.model.scraper_class, AbstractWebScraper):
-            path_dict_frame = tk.Frame(self.param_frame)
+            path_dict_frame = ttk.Frame(self.param_frame)
 
             # Get optional CSS path file if necessary
-            if issubclass(self.controller.model.scraper_class, WebPathScraperMixin):
-                path_dict_label = tk.Label(
+            if issubclass(
+                    self.controller.model.scraper_class,
+                    WebPathScraperMixin
+            ):
+                path_dict_label = ttk.Label(
                     path_dict_frame,
                     text='CSS Selector Path:'
                 )
                 path_dict_label.grid(row=0, column=0)
 
-                path_dict_btn = tk.Button(
+                path_dict_btn = ttk.Button(
                     path_dict_frame,
                     text='Select File',
                     command=lambda: select_from_files(
-                        root=self.param_frame,
+                        root=self,
                         selection_type='path_file',
                         filetypes=[('JSON Files', '*.json')]
                     )
                 )
                 path_dict_btn.grid(row=0, column=1)
+            else:
+                path_dict_btn = None
 
             # If web scraping is not the primary method of collection, allow
             # user to decide to scrape
             if len(self.controller.model.scraper_class.__bases__) > 1:
                 self.controller.add_run_parameter('scrape', tk.IntVar())
-                scrape_check_btn = tk.Checkbutton(
+                scrape_check_btn = ttk.Checkbutton(
                     self.param_frame,
                     text='Web Scrape',
                     variable=self.controller.get_run_parameter('scrape'),
@@ -154,20 +160,20 @@ class SelectionPage(ViewPage):
                     )
                 )
                 scrape_check_btn.grid(column=0, sticky='w')
-                scrape_check_btn.select()
+                scrape_check_btn.invoke()
 
             path_dict_frame.grid(column=0, sticky='w')
 
         # Get search terms, if needed
         if self.controller.model.requirements.get('search_terms'):
-            search_term_frame = tk.Frame(self.param_frame)
+            search_term_frame = ttk.Frame(self.param_frame)
             self.controller.add_run_parameter('search_terms', tk.StringVar())
 
-            search_term_label = tk.Label(
+            search_term_label = ttk.Label(
                 search_term_frame,
                 text='Search Terms:'
             )
-            search_term_entry = tk.Entry(
+            search_term_entry = ttk.Entry(
                 search_term_frame,
                 textvariable=self.controller.get_run_parameter('search_terms')
             )
@@ -179,9 +185,9 @@ class SelectionPage(ViewPage):
         # Get search types, if needed
         if self.controller.model.requirements.get('search_types'):
             search_type_options = self.controller.model.scraper_class.search_type_options
-            search_type_outer_frame = tk.Frame(self.param_frame)
-            search_type_inner_frame = tk.Frame(search_type_outer_frame)
-            search_type_label = tk.Label(
+            search_type_outer_frame = ttk.Frame(self.param_frame)
+            search_type_inner_frame = ttk.Frame(search_type_outer_frame)
+            search_type_label = ttk.Label(
                 search_type_outer_frame,
                 text='Search Types:'
             )
@@ -195,7 +201,7 @@ class SelectionPage(ViewPage):
             )
 
             for search_type in search_type_options:
-                search_type_button = tk.Checkbutton(
+                search_type_button = ttk.Checkbutton(
                     search_type_inner_frame,
                     text=search_type.title(),
                     variable=self.controller.get_run_parameter('search_types')[search_type]
@@ -219,6 +225,8 @@ class SelectionPage(ViewPage):
         self.req_label.grid(anchor='nsew')
 
     def _toggle_button_state(self, toggle_vars, btn):
+        if not btn:
+            return
         # Validate input
         if not hasattr(toggle_vars, '__iter__'):
             toggle_vars = [toggle_vars]

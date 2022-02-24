@@ -1,6 +1,7 @@
 import os
 
 import tkinter as tk
+import tkinter.ttk as ttk
 
 from .bases import ViewPage
 from .selection_page import SelectionPage
@@ -13,7 +14,7 @@ class LandingPage(ViewPage):
     @ViewPage.no_overwrite
     def show(self):
         # Landing page information
-        label = tk.Label(
+        label = ttk.Label(
             self,
             text='PyCurator',
             font='helvetica 16 bold'
@@ -27,7 +28,7 @@ class LandingPage(ViewPage):
         message_box = tk.Message(self, textvariable=message)
 
         # Create continue button & bind to Enter key
-        self.next_page_button = tk.Button(
+        self.next_page_button = ttk.Button(
             self,
             text='Continue',
             command=lambda: self.controller.show(SelectionPage)

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 import threading
-import tkinter as tk
+import tkinter.ttk as ttk
 from pycurator.scrapers import DataverseScraper, DryadScraper, FigshareScraper, \
     KaggleScraper, OpenMLScraper, PapersWithCodeScraper, UCIScraper, \
     ZenodoScraper
@@ -35,9 +35,9 @@ class ThreadedRun(threading.Thread):
         super().__init__(target=self.scraper.run, **kwargs)
 
 
-class ViewPage(tk.Frame):
+class ViewPage(ttk.Frame):
     def __init__(self, *args, **kwargs):
-        tk.Frame.__init__(self, *args, **kwargs)
+        ttk.Frame.__init__(self, *args, **kwargs)
 
         self.controller = None
         self.is_initialized = False
