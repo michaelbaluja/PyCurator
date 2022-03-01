@@ -1,54 +1,41 @@
+from __future__ import annotations
 from abc import abstractmethod
 import threading
 import tkinter.ttk as ttk
-from pycurator.scrapers import DataverseScraper, DryadScraper, FigshareScraper, \
-    KaggleScraper, OpenMLScraper, PapersWithCodeScraper, UCIScraper, \
-    ZenodoScraper
+from typing import Any, NoReturn
+from collections.abc import Callable
 
-# Variables for scraper selection
-idx_to_repo_selection_dict = {
-    0: 'Dataverse',
-    1: 'Dryad',
-    2: 'Figshare',
-    3: 'Kaggle',
-    4: 'OpenML',
-    5: 'Papers With Code',
-    6: 'UCI',
-    7: 'Zenodo'
-}
-
-repo_name_to_class_dict = {
-    'Dataverse': DataverseScraper,
-    'Dryad': DryadScraper,
-    'Figshare': FigshareScraper,
-    'Kaggle': KaggleScraper,
-    'OpenML': OpenMLScraper,
-    'Papers With Code': PapersWithCodeScraper,
-    'UCI': UCIScraper,
-    'Zenodo': ZenodoScraper
-}
+import pycurator.scrapers
+import pycurator.gui
 
 
 class ThreadedRun(threading.Thread):
-    def __init__(self, scraper, **kwargs):
+    def __init__(
+            self,
+            scraper: pycurator.scrapers.AbstractScraper,
+            **kwargs: Any
+    ) -> None:
         self.scraper = scraper
         super().__init__(target=self.scraper.run, **kwargs)
 
 
 class ViewPage(ttk.Frame):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         ttk.Frame.__init__(self, *args, **kwargs)
 
         self.controller = None
         self.is_initialized = False
         self.next_page_button = None
 
-    def set_controller(self, controller):
+    def set_controller(
+            self,
+            controller: pycurator.gui.MVC.CuratorController
+    ) -> None:
         self.controller = controller
 
     @staticmethod
-    def no_overwrite(show_func):
-        def display(self):
+    def no_overwrite(show_func: Callable[[Any], Any]) -> Callable[[Any], Any]:
+        def display(self) -> None:
             raised = self.attempt_raise()
             if not raised:
                 show_func(self)
@@ -57,10 +44,10 @@ class ViewPage(ttk.Frame):
         return display
 
     @abstractmethod
-    def reset_frame(self):
+    def reset_frame(self) -> NoReturn:
         raise NotImplementedError
 
-    def attempt_raise(self):
+    def attempt_raise(self) -> bool:
         if self.is_initialized:
             try:
                 self.reset_frame()

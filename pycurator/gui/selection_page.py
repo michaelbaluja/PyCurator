@@ -1,15 +1,18 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+from typing import Any
+from collections.abc import Iterable
 
+import pycurator.scrapers
 from pycurator.scrapers import AbstractWebScraper, WebPathScraperMixin
 from pycurator.utils import button_label_frame, select_from_files
 
-from .bases import ViewPage, idx_to_repo_selection_dict, repo_name_to_class_dict
+from .bases import ViewPage
 
 
 class SelectionPage(ViewPage):
-    def __init__(self, *args, **kwargs):
-        ViewPage.__init__(self, *args, **kwargs)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
 
         # Create global selection frame/widgets
         self.selector_frame = ttk.Frame(self)
@@ -25,7 +28,7 @@ class SelectionPage(ViewPage):
         )
 
     @ViewPage.no_overwrite
-    def show(self, *args):
+    def show(self, *args: Any) -> None:
         """Display scraper selection widgets."""
         selection_text = ttk.Label(
             self.selector_frame,
@@ -39,8 +42,8 @@ class SelectionPage(ViewPage):
             self.display_repo_params
         )
 
-        for idx, repo_name in idx_to_repo_selection_dict.items():
-            self.scraper_listbox.insert(idx, repo_name)
+        for repo_name in pycurator.scrapers.available_scrapers:
+            self.scraper_listbox.insert(tk.END, repo_name)
 
         # Align widgets
         selection_text.grid(
@@ -53,16 +56,16 @@ class SelectionPage(ViewPage):
         self.grid(row=0, column=0, sticky='nsew')
         self.tkraise()
 
-    def _set_model(self):
+    def _set_model(self) -> None:
         # Get repository to gather params for
-        repo_name = idx_to_repo_selection_dict[
+        repo_name = self.scraper_listbox.get(
             self.scraper_listbox.curselection()[0]
-        ]
-        repo_class = repo_name_to_class_dict[repo_name]
+        )
+        repo_class = pycurator.scrapers.available_scrapers[repo_name]
 
         self.controller.set_model(repo_class, repo_name)
 
-    def display_repo_params(self, *args):
+    def display_repo_params(self, *args: Any) -> None:
         """Create and display Frame with repo-specific query parameters."""
         # Clear frame
         for widget in self.param_frame.winfo_children():
@@ -215,7 +218,7 @@ class SelectionPage(ViewPage):
         # Run button
         self.next_page_button.grid()
 
-    def alert_missing_reqs(self, missing_requirements):
+    def alert_missing_reqs(self, missing_requirements: list[str]) -> None:
         try:
             self.req_label.pack_forget()
         except AttributeError:
@@ -224,13 +227,21 @@ class SelectionPage(ViewPage):
         self.req_var.set(f'Must provide {missing_requirements} to proceed.')
         self.req_label.grid(anchor='nsew')
 
-    def _toggle_button_state(self, toggle_vars, btn):
+    def _toggle_button_state(
+            self,
+            toggle_vars: Iterable[tk.Variable],
+            btn: tk.Button
+    ) -> None:
         if not btn:
             return
+
         # Validate input
-        if not hasattr(toggle_vars, '__iter__'):
+        if hasattr(toggle_vars, 'get') and not hasattr(toggle_vars, '__iter__'):
             toggle_vars = [toggle_vars]
-        assert all([hasattr(var, 'get') for var in toggle_vars])
+        if not all([hasattr(var, 'get') for var in toggle_vars]):
+            raise TypeError(
+                'All entries of toggle_vars must implement "get" method.'
+            )
 
         # Change button state if any of the passed variables are active
         if any([var.get() for var in toggle_vars]):

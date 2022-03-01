@@ -1,5 +1,5 @@
 import os
-
+from typing import Any
 import tkinter as tk
 import tkinter.ttk as ttk
 
@@ -8,11 +8,11 @@ from .selection_page import SelectionPage
 
 
 class LandingPage(ViewPage):
-    def __init__(self, *args, **kwargs):
-        ViewPage.__init__(self, *args, **kwargs)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
 
     @ViewPage.no_overwrite
-    def show(self):
+    def show(self) -> None:
         # Landing page information
         label = ttk.Label(
             self,

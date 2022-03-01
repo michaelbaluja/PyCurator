@@ -1,8 +1,8 @@
-import queue
 import sys
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import tkinter.ttk as ttk
+from typing import Any
 
 from .selection_page import SelectionPage
 
@@ -10,8 +10,8 @@ from .bases import ViewPage
 
 
 class RunPage(ViewPage):
-    def __init__(self, *args, **kwargs):
-        ViewPage.__init__(self, *args, **kwargs)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
         self.prev_msg = None
 
         # Create global runtime frames/widgets
@@ -52,19 +52,8 @@ class RunPage(ViewPage):
             command=sys.exit
         )
 
-    def _update_output(self, update, loc='end', newline=True):
-        if newline:
-            update = f'{update} \n'
-
-        # Add new output
-        self.runtime_output.config(state='normal')
-        self.runtime_output.insert(loc, update)
-        self.runtime_output.config(state='disabled')
-
-        self.tkraise()
-
     @ViewPage.no_overwrite
-    def show(self):
+    def show(self) -> None:
         """Display runtime status updates and navigation buttons.
 
         Organizes the elements of the RunPage display. The output contains a
@@ -118,77 +107,13 @@ class RunPage(ViewPage):
         self.grid(row=0, column=0, sticky='nsew')
         self.tkraise()
 
-        self.controller.run_scraper(self.process_updates)
+        self.controller.run_scraper()
 
-    def reset_frame(self):
+    def reset_frame(self) -> None:
         # Deactivate back button
         self.back_button.config(state='disabled')
 
         # Replace Exit button with Stop button
         self.exit_button.pack_forget()
         self.stop_button.pack(side='left')
-        self.controller.run_scraper(self.process_updates)
-
-    def _update_progress_bar_indeterminate(self):
-        self.progress_bar['mode'] = 'indeterminate'
-        if self.controller.model.threaded_run.scraper.num_queries:
-            self.progress_bar.start()
-        else:
-            self.progress_bar.stop()
-            self.progress_bar['value'] = 0
-
-    def _update_progress_bar_determinate(self):
-        self.progress_bar.stop()
-        self.progress_determinate_num['text'] = \
-            f'({self.controller.model.threaded_run.scraper.queries_completed}/' \
-            f'{self.controller.model.threaded_run.scraper.num_queries})'
-        self.progress_bar['mode'] = 'determinate'
-        self.progress_bar['value'] = \
-            (self.controller.model.threaded_run.scraper.queries_completed /
-                self.controller.model.threaded_run.scraper.num_queries * 100)
-
-    def _update_progress_bar(self):
-        """Update status of progress bar based on scraper status."""
-        self.progress_label['text'] = \
-            self.controller.model.threaded_run.scraper.current_query_ref
-
-        if isinstance(self.controller.model.threaded_run.scraper.num_queries, bool):
-            self._update_progress_bar_indeterminate()
-        else:
-            self._update_progress_bar_determinate()
-
-    def process_updates(self):
-        """Push status update from scraper queue to output."""
-        # Check for updates to progress bar
-        if self.controller.model.threaded_run.scraper.num_queries is not None:
-            self._update_progress_bar()
-
-        # Get next object in queue and push to output widget.
-        try:
-            msg = self.controller.model.threaded_run.scraper.queue.get_nowait()
-
-            self._update_output(msg)
-            self.prev_msg = msg
-
-            # Check if process still running
-            if self.controller.model.scraper.continue_running:
-                self.master.after(100, self.process_updates)
-            else:
-                # Empty queue
-                while not self.controller.model.threaded_run.scraper.queue.empty():
-                    self.process_updates()
-
-                # Stop progress bar
-                self.progress_bar.stop()
-
-                # Reactivate back button
-                self.back_button.config(state='normal')
-
-                # Replace Stop button with Exit button
-                self.stop_button.pack_forget()
-                self.exit_button.pack(side='left')
-
-                return
-        # If the queue is empty, continually check
-        except queue.Empty:
-            self.master.after(100, self.process_updates)
+        self.controller.run_scraper()
