@@ -10,8 +10,7 @@ from .selection_page import SelectionPage
 from .run_page import RunPage
 from pycurator.scrapers import (
     TermScraperMixin,
-    TypeScraperMixin,
-    WebPathScraperMixin
+    TypeScraperMixin
 )
 
 from typing import Type, TypeVar, ParamSpec
@@ -58,8 +57,7 @@ class ScraperModel:
 
         self.requirements = {
             'search_terms': issubclass(self.scraper_class, TermScraperMixin),
-            'search_types': issubclass(self.scraper_class, TypeScraperMixin),
-            'path_file': issubclass(self.scraper_class, WebPathScraperMixin)
+            'search_types': issubclass(self.scraper_class, TypeScraperMixin)
         }
 
     def initialize_scraper(self, param_val_kwargs: P.kwargs) -> None:
@@ -115,12 +113,8 @@ class CuratorController:
     def evaluate_parameter(self, param_name):
         param_var = self.get_run_parameter(param_name)
 
-        # Returned variable is list-like
-        if hasattr(param_var, '__iter__'):
-            return {
-                variable: self.evaluate_parameter(variable)
-                for variable in param_var
-            }
+        if isinstance(param_var, dict):
+            return [key for key, val in param_var.items() if val.get()]
 
         try:
             return param_var.get()
