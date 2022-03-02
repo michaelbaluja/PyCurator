@@ -1,1 +1,39 @@
-{"dataset": {"file_attribute_paths": {"file_count": "#datasetForm\\:tabView\\:filesTable\\:filesHeaderCount > span", "page_size_selection": "select.ui-paginator-rpp-options", "file_table": "#datasetForm\\:tabView\\:filesTable_data", "file_metadata": "td.col-file-metadata", "page_increase": "a.ui-paginator-next", "file_name": "div > a", "date_published": "div.dateCreatePublish-block", "num_downloads": "div.downloads-block", "unf": "div.unf-block"}, "metadata_attribute_paths": {"deposit_date": "#metadata_dateOfDeposit > td", "num_downloads": "#metrics-body > div", "language": "#metadata_language > td", "topic_class_value": "#metadata_topicClassification > td", "kind_of_data": "#metadata_kindOfData > td", "date_of_collection": "#metadata_dateOfCollection > td", "notes_text": "#metadata_notesText > td", "contributor": "#metadata_contributor > td", "grant_info": "#metadata_grantNumber > td", "publication_citation": "#datasetCitationActionSummaryBlock > div:nth-child(1) > div > div > div.citation.margin-bottom > span", "full_author_info": "#metadata_author > td", "global_id": "#metadata_persistentId > td"}, "terms_attribute_paths": {"terms_of_use": "#datasetForm\\:tabView\\:touFragment"}}, "file": {"landing_attribute_paths": {"deposit_date": "#fileDepositDateBlock > td", "num_downloads": "#metrics-body > div", "download_url": "#fileDownloadUrlBlock > td > code"}}}
+{
+  "dataset": {
+    "file_attribute_paths": {
+      "file_count": "#datasetForm\\:tabView\\:filesTable\\:filesHeaderCount > span",
+      "page_size_selection": "select.ui-paginator-rpp-options",
+      "file_table": "#datasetForm\\:tabView\\:filesTable_data",
+      "file_metadata": "td.col-file-metadata",
+      "page_increase": "a.ui-paginator-next",
+      "file_name": "div > a",
+      "date_published": "div.dateCreatePublish-block",
+      "num_downloads": "div.downloads-block",
+      "unf": "div.unf-block"
+    },
+    "metadata_attribute_paths": {
+      "deposit_date": "#metadata_dateOfDeposit > td",
+      "num_downloads": "#metrics-body > div",
+      "language": "#metadata_language > td",
+      "topic_class_value": "#metadata_topicClassification > td",
+      "kind_of_data": "#metadata_kindOfData > td",
+      "date_of_collection": "#metadata_dateOfCollection > td",
+      "notes_text": "#metadata_notesText > td",
+      "contributor": "#metadata_contributor > td",
+      "grant_info": "#metadata_grantNumber > td",
+      "publication_citation": "#datasetCitationActionSummaryBlock > div:nth-child(1) > div > div > div.citation.margin-bottom > span",
+      "full_author_info": "#metadata_author > td",
+      "global_id": "#metadata_persistentId > td"
+    },
+    "terms_attribute_paths": {
+      "terms_of_use": "#datasetForm\\:tabView\\:touFragment"
+    }
+  },
+  "file": {
+    "landing_attribute_paths": {
+      "deposit_date": "#fileDepositDateBlock > td",
+      "num_downloads": "#metrics-body > div",
+      "download_url": "#fileDownloadUrlBlock > td > code"
+    }
+  }
+}

@@ -394,7 +394,7 @@ class DataverseScraper(
             return metadata_dict
 
         for query, df in search_dict.items():
-            if df is not None:
+            if df is not None and not df.empty():
                 search_term, search_type = query
                 self.queue.put(
                     f'Querying {search_term} {search_type} metadata.'
