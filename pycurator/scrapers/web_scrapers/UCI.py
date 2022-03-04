@@ -1,15 +1,29 @@
 import os
 import re
+from collections.abc import Collection
+from typing import Any, Union
 
+import bs4
 import pandas as pd
 import selenium.webdriver.support.expected_conditions as ec
-from selenium.common.exceptions import NoSuchElementException
 from flatten_json import flatten
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
 
-from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractWebScraper
-from pycurator.utils import parse_numeric_string, find_first_match
+from pycurator.scrapers.base_scrapers import (
+    AbstractScraper,
+    AbstractWebScraper
+)
+from pycurator.utils import (
+    parse_numeric_string,
+    find_first_match,
+    save_results,
+    web_utils
+)
+from pycurator.utils.typing import (
+    AttributeDict
+)
 
 
 class UCIScraper(AbstractWebScraper):
@@ -26,9 +40,9 @@ class UCIScraper(AbstractWebScraper):
 
     def __init__(
         self,
-        flatten_output=False,
-        **kwargs
-    ):
+        flatten_output: bool = False,
+        **kwargs: Any
+    ) -> None:
 
         super().__init__(
             repository_name='uci',
@@ -51,7 +65,7 @@ class UCIScraper(AbstractWebScraper):
             'associated_tasks': r'Associated Tasks',
             'num_instances': r'# of Instances',
             'subject_area': r'Subject Area',
-            'doi': r'doi',
+            'doi': r'DOI',
             'creation_purpose': r'For what purpose was the dataset created?',
             'funders': r'Who funded the creation of the dataset?',
             'instances_represent': r'What do the instances that comprise the '
@@ -81,11 +95,21 @@ class UCIScraper(AbstractWebScraper):
             'num_citations': r'\d+ citations'
         }
 
+        self.wait_path_strings = {
+            'keywords': self.parent_attr_dict['keywords'],
+            'license': self.parent_attr_dict['license'],
+            'general': self.sibling_attr_dict['abstract'],
+            'descriptive': self.sibling_attr_dict['creation_purpose'],
+            'tabular': self.sibling_attr_dict['missing_values'],
+            'creators': self.uncle_attr_dict['creators'],
+            'headers': self.individual_attr_dict['donation_date']
+        }
+
     @staticmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> bool:
         return False
 
-    def run(self, **kwargs):
+    def run(self, **kwargs: Any) -> None:
         """Queries all data from the repository.
 
         In the following order, this function calls:
@@ -96,11 +120,6 @@ class UCIScraper(AbstractWebScraper):
         ----------
         **kwargs : dict, optional
             Can temporarily overwrite self attributes.
-
-        Returns
-        -------
-        dataset_df : pandas.DataFrame
-            Return from get_all_page_data(...).
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -121,15 +140,16 @@ class UCIScraper(AbstractWebScraper):
         if save_dir:
             output_filename = os.path.join(save_dir, f'{repo_name}.json')
             self.queue.put(f'Saving output to "{output_filename}.')
-            self.save_results(dataset_df, output_filename)
+            save_results(dataset_df, output_filename)
             self.queue.put('Save complete.')
 
         self.queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False
 
-        return dataset_df
-
-    def _clean_results(self, results):
+    def _clean_results(
+            self,
+            results: AttributeDict
+    ) -> AttributeDict:
         """Applies parse functions to relevant entries of the input dictionary.
 
         For the results of a scraped UCI dataset page, removes text from
@@ -163,12 +183,12 @@ class UCIScraper(AbstractWebScraper):
         if donation_date:
             results['donation_date'] = find_first_match(
                 string=donation_date,
-                pattern=r'\d+-\d+-\d+'
+                pattern=re.compile(r'\d+-\d+-\d+')
             )
         if link_date:
             results['link_date'] = find_first_match(
                 string=link_date,
-                pattern=r'\d+-\d+-\d+'
+                pattern=re.compile(r'\d+-\d+-\d+')
             )
         if num_citations:
             results['num_citations'] = parse_numeric_string(num_citations)
@@ -177,21 +197,7 @@ class UCIScraper(AbstractWebScraper):
 
         return results
 
-    def is_tabular(self, soup):
-        """Returns if the dataset related to the given soup page is tabular.
-
-        Parameters
-        ----------
-        soup : BeautifulSoup
-
-        Returns
-        -------
-        bool
-        """
-
-        return 'Tabular Data Properties' in soup.text
-
-    def is_external(self, soup):
+    def is_external(self, soup: bs4.BeautifulSoup) -> bool:
         """Returns if the dataset is externally-hosted.
 
         Parameters
@@ -203,10 +209,14 @@ class UCIScraper(AbstractWebScraper):
         bool
         """
 
-        return soup.find('span', string='EXTERNAL')
+        return bool(soup.find('span', string='EXTERNAL'))
 
     @AbstractScraper._pb_indeterminate
-    def get_dataset_ids(self, dataset_list_url, instance_path):
+    def get_dataset_ids(
+            self,
+            dataset_list_url: str,
+            instance_path: str
+    ) -> list[str]:
         """Returns the dataset ids for all datasets on the given page.
 
         Parameters
@@ -218,7 +228,7 @@ class UCIScraper(AbstractWebScraper):
 
         Returns
         -------
-        dataset_ids : list
+        dataset_ids : list[str]
         """
 
         self.queue.put('Scraping dataset ids...')
@@ -232,7 +242,7 @@ class UCIScraper(AbstractWebScraper):
 
         dataset_ids = [
             instance.attrs['href'].split('/')[-1]
-            for instance in self.get_variable_tags(
+            for instance in web_utils.get_variable_tags(
                 soup,
                 path=instance_path
             )
@@ -242,25 +252,10 @@ class UCIScraper(AbstractWebScraper):
 
         return dataset_ids
 
-    def _get_sibling_tag(
-        self,
-        soup,
-        string,
-        pattern=re.compile(r'')
-    ):
-        """Find Tag from provided specifications, return sibling."""
-        try:
-            attr = self._get_single_tag_from_tag_info(
-                soup=soup,
-                class_type=pattern,
-                string=string,
-            ).next_sibling
-        except AttributeError:
-            attr = None
-
-        return attr
-
-    def _get_attribute_values(self, soup):
+    def _get_attribute_values(
+            self,
+            soup: bs4.BeautifulSoup
+    ) -> AttributeDict:
         """Scrapes the possible attributes provided in the repository
 
         Parameters
@@ -275,8 +270,8 @@ class UCIScraper(AbstractWebScraper):
         result_dict = dict()
 
         for var, attr in self.individual_attr_dict.items():
-            result_dict[var] = self._get_tag_value(
-                self.get_single_tag(
+            result_dict[var] = web_utils.get_tag_value(
+                web_utils.get_single_tag(
                     soup=soup,
                     class_type=re.compile(r''),
                     string=re.compile(attr)
@@ -285,8 +280,8 @@ class UCIScraper(AbstractWebScraper):
 
         for var, attr in self.parent_attr_dict.items():
             result_dict[var] = [
-                self._get_tag_value(parent_subset)
-                for parent in self._get_parent_tag(
+                web_utils.get_tag_value(parent_subset)
+                for parent in web_utils.get_parent_tag(
                     soup=soup,
                     string=re.compile(attr)
                 )
@@ -296,15 +291,15 @@ class UCIScraper(AbstractWebScraper):
             ]
 
         for var, attr in self.sibling_attr_dict.items():
-            result_dict[var] = self._get_tag_value(
-                self._get_sibling_tag(soup, attr)
+            result_dict[var] = web_utils.get_tag_value(
+                web_utils.get_sibling_tag(soup, attr)
             )
 
         for var, attr in self.uncle_attr_dict.items():
             tag_texts = [
-                self._get_tag_value(
+                web_utils.get_tag_value(
                     tag, separator='~').split('~')
-                for tag in self._get_parent_sibling_tags(
+                for tag in web_utils.get_parent_sibling_tags(
                     soup=soup,
                     string=attr
                 )
@@ -316,12 +311,22 @@ class UCIScraper(AbstractWebScraper):
 
         return result_dict
 
+    def _tag_wait_path(
+            self,
+            soup: bs4.BeautifulSoup,
+            tag_str: Union[str, re.Pattern[str]]
+    ) -> str:
+        tag = web_utils.get_sibling_tag(soup, tag_str)
+        tag_type = tag.name
+        tag_path_classes = tag.attrs['class']
+        return '.'.join([tag_type, *tag_path_classes])
+
     def get_individual_page_data(
         self,
-        url,
-        clean=True,
-        flatten_output=False,
-    ):
+        url: str,
+        clean: bool = True,
+        flatten_output: bool = False,
+    ) -> AttributeDict:
         """Returns all data from the requested page.
 
         Parameters
@@ -337,19 +342,38 @@ class UCIScraper(AbstractWebScraper):
         """
 
         self.driver.get(url)
+        soup = self._get_soup(features='html.parser')
+
+        # Wait for sections to load
+        for section, wait_path_str in self.wait_path_strings.items():
+            wait_path = self._tag_wait_path(
+                soup,
+                re.compile(wait_path_str)
+            )
+            # Wait for element to load
+            try:
+                WebDriverWait(self.driver, 10).until(
+                    ec.visibility_of_element_located(
+                        (By.CSS_SELECTOR, wait_path)
+                    )
+                )
+            except TimeoutError:
+                self.queue.put(
+                    f'Unable to locate \'{wait_path_str}\' '
+                    f'on \'{url}\'.'
+                )
+            # Wait for text to be present in element
+            try:
+                WebDriverWait(self.driver, 5).until_not(
+                    ec.text_to_be_present_in_element(
+                        (By.CSS_SELECTOR, wait_path),
+                        'N/A'
+                    )
+                )
+            except TimeoutError:
+                pass
 
         soup = self._get_soup(features='html.parser')
-        tag = self._get_sibling_tags(soup, re.compile(r'Abstract'))[0]
-        tag_type = tag.name
-        tag_path_classes = tag.attrs['class']
-        wait_path = '.'.join([tag_type, *tag_path_classes])
-
-        WebDriverWait(self.driver, 5).until_not(
-            ec.text_to_be_present_in_element_value(
-                (By.CSS_SELECTOR, wait_path),
-                'N/A'
-            )
-        )
 
         result_dict = self._get_attribute_values(soup)
         result_dict['url'] = self.driver.current_url
@@ -365,8 +389,8 @@ class UCIScraper(AbstractWebScraper):
 
                 soup = self._get_soup(features='html.parser')
                 result_dict['files'] = [
-                    self._get_tag_value(child)
-                    for child in self.get_variable_tags(
+                    web_utils.get_tag_value(child)
+                    for child in web_utils.get_variable_tags(
                         soup=soup,
                         path='li > a'
                     )
@@ -386,10 +410,10 @@ class UCIScraper(AbstractWebScraper):
 
     def get_all_page_data(
         self,
-        page_ids,
-        clean=True,
-        flatten_output=False
-    ):
+        page_ids: Collection[str],
+        clean: bool = True,
+        flatten_output: bool = False
+    ) -> pd.DataFrame:
         """Returns data for all pages for the requested base url.
 
         Parameters
@@ -409,7 +433,7 @@ class UCIScraper(AbstractWebScraper):
 
         dataset_df = pd.DataFrame()
 
-        for page_id in self._pb_determinate(page_ids):
+        for page_id in self._pb_determinate(page_ids[:10]):
             url = f'{self.base_url}/{page_id}'
 
             results = self.get_individual_page_data(

@@ -1,6 +1,12 @@
+from __future__ import annotations
 import pandas as pd
 import re
+import tkinter as tk
 import tkinter.ttk as ttk
+from typing import Any, AnyStr, Iterable, TypeVar
+import os
+import pycurator.gui.bases
+T = TypeVar('T')
 
 month_name_to_integer = {
     'Jan': '01',
@@ -18,7 +24,85 @@ month_name_to_integer = {
 }
 
 
-def button_label_frame(root, label_text, button_text, button_command):
+def _validate_save_filename(filename: str) -> str:
+    """Remove quotations from filename, replace spaces with underscore."""
+    return filename.replace('"', '').replace("'", '').replace(' ', '_')
+
+
+def save_dataframes(results: dict, data_dir: str) -> None:
+    """Export DataFrame objects to json file in specified directory.
+
+    Parameters
+    ----------
+    results : dict
+    data_dir : str
+
+    Raises
+    ------
+    TypeError
+        "results" not of type dict or "datadir" not of type str.
+    """
+
+    if not isinstance(results, dict):
+        raise TypeError(
+            f'results must be of type dict, not \'{type(results)}\'.'
+        )
+    if not isinstance(data_dir, str):
+        raise TypeError(
+            f'data_dir must of type str, not \'{type(data_dir)}\'.'
+        )
+
+    if not os.path.isdir(data_dir):
+        os.makedirs(data_dir)
+
+    for query, df in results.items():
+        if isinstance(query, str):
+            output_filename = f'{query}.json'
+        else:
+            search_term, search_type = query
+            output_filename = f'{search_term}_{search_type}.json'
+
+        output_filename = _validate_save_filename(output_filename)
+
+        save_results(
+            results=df,
+            filepath=os.path.join(data_dir, output_filename)
+        )
+
+
+def save_results(results: pd.DataFrame, filepath: str) -> None:
+    """Saves the specified results to the file provided.
+
+    Parameters
+    ----------
+    results : pandas.DataFrame
+        If DataFrame, results will be stored in a csv format.
+    filepath : str
+        Location to store file in. Take note of output type as specified
+        above, as appending the incorrect filetype may result in the file
+        being unreadable.
+
+    Raises
+    ------
+    ValueError
+        If a non-dataframe object is passed.
+    """
+
+    if isinstance(results, pd.DataFrame):
+        results.to_json(filepath)
+    else:
+        raise ValueError(
+            f'Input must be of type pandas.DataFrame, not'
+            f' \'{type(results)}\'.'
+        )
+
+
+def button_label_frame(
+        root: tk.Misc,
+        label_text: float | str,
+        button_text: float | str,
+        button_command: Any
+) -> None:
     _frame = ttk.Frame(root)
     _label = ttk.Label(_frame, text=label_text)
     _button = ttk.Button(_frame, text=button_text, command=button_command)
@@ -28,7 +112,10 @@ def button_label_frame(root, label_text, button_text, button_command):
     _frame.grid(sticky='w', columnspan=2)
 
 
-def parse_numeric_string(entry, cast=False):
+def parse_numeric_string(
+        entry: AnyStr,
+        cast: bool = False
+) -> list[str | int] | str | int | None:
     """Given a string, returns all integer numeric substrings.
 
     Parameters
@@ -62,7 +149,10 @@ def parse_numeric_string(entry, cast=False):
     return numeric_instances
 
 
-def find_first_match(string, pattern):
+def find_first_match(
+        string: AnyStr,
+        pattern: re.Pattern[AnyStr]
+) -> AnyStr | None:
     """Finds the first occurrence of a regex pattern in a given string.
 
     Parameters
@@ -86,12 +176,16 @@ def find_first_match(string, pattern):
         return None
 
 
-def is_nested(col):
+def is_nested(col: Iterable[T]) -> bool:
     """Given an iterable, returns True if any item is a dictionary or list."""
-    return any([True for x in col if type(x) in (dict, list)])
+    return any([True for x in col if isinstance(x, (dict, list))])
 
 
-def select_from_files(root, selection_type, **kwargs):
+def select_from_files(
+        root: pycurator.gui.bases.ViewPage,
+        selection_type: str,
+        filetypes: tuple[tuple[str, str]] = (('All File Types', '*.*'),)
+) -> None:
     """Allows user to select local file/directory.
 
     Parameters
@@ -104,8 +198,11 @@ def select_from_files(root, selection_type, **kwargs):
     selection_type : str
         Type of selection to be made.
         Examples include "credentials", "directory", "css_paths" etc.
-    kwargs : dict, optional
+    filetypes : list of two-tuples of str,
+            optional (default = [('All File Types', '*.*')])
         Allows users to input filetype restrictions.
+        Each tuple should be of the form:
+            ('File Type', '{file_name}.{file_format}')
 
     Raises
     ------
@@ -122,13 +219,6 @@ def select_from_files(root, selection_type, **kwargs):
     """
 
     from tkinter import filedialog as fd
-
-    if kwargs.get('filetypes'):
-        filetypes = kwargs.get('filetypes')
-    else:
-        filetypes = [
-            ('All File Types', '*.*')
-        ]
 
     if 'dir' in selection_type:
         selection = fd.askdirectory(
@@ -150,7 +240,7 @@ def select_from_files(root, selection_type, **kwargs):
         )
 
 
-def expand_series(series):
+def expand_series(series: pd.Series) -> pd.DataFrame:
     """Given a Series of nested data, returns unnested data as DataFrame.
 
     Parameters
@@ -187,7 +277,7 @@ def expand_series(series):
     return col_expand
 
 
-def flatten_nested_df(df):
+def flatten_nested_df(df: pd.DataFrame) -> pd.DataFrame:
     """Takes in a DataFrame and flattens any nested columns.
 
     Parameters

@@ -1,12 +1,25 @@
 import os
 import re
+from collections.abc import Collection
+from typing import Any, Optional, Union
 
+import bs4
 import pandas as pd
 from flatten_json import flatten
 
-from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper, \
-    AbstractWebScraper, WebPathScraperMixin
-from pycurator.utils import parse_numeric_string
+from pycurator.scrapers.base_scrapers import (
+    AbstractScraper,
+    AbstractTermTypeScraper,
+    AbstractWebScraper,
+    WebPathScraperMixin
+)
+from pycurator.utils import parse_numeric_string, web_utils
+from pycurator.utils.typing import (
+    AttributeDict,
+    SearchTerm,
+    SearchType,
+    TermTypeResultDict
+)
 
 
 class DataverseScraper(
@@ -40,13 +53,13 @@ class DataverseScraper(
 
     def __init__(
         self,
-        path_file=os.path.join('paths', 'dataverse_paths.json'),
-        scrape=True,
-        search_terms=None,
-        search_types=None,
-        flatten_output=None,
-        credentials=None,
-    ):
+        path_file: str = os.path.join('paths', 'dataverse_paths.json'),
+        scrape: bool = True,
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        search_types: Optional[Collection[SearchType]] = None,
+        flatten_output: Optional[bool] = None,
+        credentials: Optional[str] = None,
+    ) -> None:
 
         self.scrape = scrape
 
@@ -75,15 +88,15 @@ class DataverseScraper(
             self.load_credentials(credential_filepath=credentials)
 
     @staticmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> bool:
         return True
 
     @classmethod
     @property
-    def search_type_options(cls):
+    def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('dataset', 'file')
 
-    def load_credentials(self, credential_filepath):
+    def load_credentials(self, credential_filepath: str) -> None:
         """Load the credentials given filepath or token.
 
         Parameters
@@ -97,7 +110,12 @@ class DataverseScraper(
         self.headers['X-Dataverse-key'] = self.credentials
 
     @AbstractScraper._pb_indeterminate
-    def get_individual_search_output(self, search_term, search_type, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_term: SearchTerm,
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Scrapes Dataverse API for the specified search term and type.
 
         Parameters
@@ -187,14 +205,14 @@ class DataverseScraper(
             # Modify file link for metadata search
             if search_type == 'file':
                 search_df['download_url'] = search_df['url']
-                search_df['url'] = search_df.apply(
+                search_df.loc[:, 'url'] = search_df.apply(
                     lambda row: f'{self.file_url}{row.file_id}',
                     axis=1
                 )
 
         return search_df
 
-    def _scrape_file_info(self):
+    def _scrape_file_info(self) -> Collection[Union[AttributeDict, None]]:
         """Scrapes the file info for the current dataset.
 
         For a page in self.driver, scrapes any information available
@@ -208,14 +226,18 @@ class DataverseScraper(
         file_info_list = []
         soup = self._get_soup(features='html.parser')
         try:
-            file_info = soup.find(
+            file_info = web_utils.get_single_tag_from_tag_info(
+                soup,
                 'script',
-                {'type': r'application/ld+json'}
-            ).contents[0]
+                attrs={'type': r'application/ld+json'}
+            )
+            file_info = file_info.contents[0]
 
-            # Get the file info & remove unnecessary delimiters
-            file_info = file_info.split(r'"distribution":')[1]
-            file_info = file_info.replace('},{', '}{').strip('[]').split('}{')
+            if isinstance(file_info, bs4.element.Tag):
+                # Get the file info & remove unnecessary delimiters
+                file_info = file_info.split(r'"distribution":')[1]
+                file_info = file_info.replace('},{', '}{') \
+                    .strip('[]').split('}{')
         except IndexError:
             return file_info_list
 
@@ -242,7 +264,10 @@ class DataverseScraper(
 
         return file_info_list
 
-    def _get_attribute_values(self, **kwargs):
+    def _get_attribute_values(
+            self,
+            **kwargs: Optional[Union[AttributeDict, Collection[AttributeDict]]]
+    ) -> AttributeDict:
         """Return attribute values for all relevant given attribute path dicts.
 
         Parameters
@@ -267,8 +292,8 @@ class DataverseScraper(
             soup = self._get_soup(features='html.parser')
 
             landing_attribute_values = {
-                attribute: self._get_tag_value(
-                    self.get_single_tag(soup=soup, path=path)
+                attribute: web_utils.get_tag_value(
+                    web_utils.get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in landing_attribute_paths.items()
             }
@@ -282,8 +307,8 @@ class DataverseScraper(
             soup = self._get_soup(features='html.parser')
 
             metadata_attribute_values = {
-                attribute: self._get_tag_value(
-                    self.get_single_tag(soup=soup, path=path)
+                attribute: web_utils.get_tag_value(
+                    web_utils.get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in metadata_attribute_paths.items()
             }
@@ -298,8 +323,8 @@ class DataverseScraper(
             soup = self._get_soup(features='html.parser')
 
             terms_attribute_values = {
-                attribute: self._get_tag_value(
-                    self.get_single_tag(soup=soup, path=path)
+                attribute: web_utils.get_tag_value(
+                    web_utils.get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in terms_attribute_paths.items()
             }
@@ -310,7 +335,7 @@ class DataverseScraper(
 
         return attribute_value_dict
 
-    def _clean_results(self, results):
+    def _clean_results(self, results: AttributeDict) -> AttributeDict:
         """Cleans the results scraped from the page.
 
         Parameters
@@ -329,7 +354,11 @@ class DataverseScraper(
 
         return results
 
-    def get_query_metadata(self, object_paths, **attribute_dicts):
+    def get_query_metadata(
+            self,
+            object_paths: Collection[str],
+            **attribute_dicts: dict[str, AttributeDict]
+    ) -> pd.DataFrame:
         """
         Retrieves the metadata for the object/objects listed in object_paths.
 
@@ -337,7 +366,7 @@ class DataverseScraper(
         ----------
         object_paths : str or list-like
             String or list of strings containing the paths for the objects.
-        attribute_dicts : dict, optional
+        **attribute_dicts : dict, optional
             Holds attribute paths for scraping metadata.
 
         Returns
@@ -367,7 +396,11 @@ class DataverseScraper(
 
         return metadata_df
 
-    def get_all_metadata(self, search_dict, **kwargs):
+    def get_all_metadata(
+            self,
+            search_dict: TermTypeResultDict,
+            **kwargs: Any
+    ) -> TermTypeResultDict:
         """Retrieves all metadata that relates to the provided DataFrames.
 
         Parameters
@@ -394,7 +427,7 @@ class DataverseScraper(
             return metadata_dict
 
         for query, df in search_dict.items():
-            if df is not None and not df.empty():
+            if df is not None and not df.empty:
                 search_term, search_type = query
                 self.queue.put(
                     f'Querying {search_term} {search_type} metadata.'

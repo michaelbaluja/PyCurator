@@ -1,12 +1,18 @@
 import re
+from collections.abc import Collection
 from time import sleep
+from typing import Optional
 
 import pandas as pd
 from flatten_json import flatten
 
-from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermScraper, \
+from pycurator.scrapers.base_scrapers import (
+    AbstractScraper,
+    AbstractTermScraper,
     AbstractWebScraper
-from pycurator.utils import parse_numeric_string
+)
+from pycurator.utils import parse_numeric_string, web_utils
+from pycurator.utils.typing import *
 
 
 class DryadScraper(AbstractTermScraper, AbstractWebScraper):
@@ -29,11 +35,11 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
     def __init__(
         self,
-        scrape=True,
-        search_terms=None,
-        flatten_output=None,
-        credentials=None,
-    ):
+        scrape: bool = True,
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        flatten_output: Optional[bool] = None,
+        credentials: Optional[bool] = None,
+    ) -> None:
         self.scrape = scrape
 
         AbstractTermScraper.__init__(
@@ -62,18 +68,18 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         self.merge_on = 'version'
 
     @staticmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> bool:
         return True
 
     @AbstractScraper._pb_indeterminate
     def _conduct_search_over_pages(
         self,
-        search_url,
-        search_params,
-        flatten_output,
-        print_progress=False,
-        delim=None
-    ):
+        search_url: str,
+        search_params: Any,
+        flatten_output: bool,
+        print_progress: bool = False,
+        delim: Optional[str] = None
+    ) -> pd.DataFrame:
         """Query paginated results from the Dryad API for given parameters.
 
         Parameters
@@ -94,7 +100,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         Returns
         -------
-        search_df : pandas.df
+        search_df : pandas.DataFrame
 
         Notes
         -----
@@ -161,7 +167,11 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         return search_df
 
-    def get_individual_search_output(self, search_term, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_term: SearchTerm,
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Returns information about all datasets from Data Dryad.
 
         Parameters
@@ -217,12 +227,16 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         return search_df
 
-    def get_query_metadata(self, object_paths, **kwargs):
+    def get_query_metadata(
+            self,
+            object_paths: Union[str, Collection[str]],
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Retrieves the metadata for the file/files listed in object_paths.
 
         Parameters
         ----------
-        object_paths : str/list-like
+        object_paths : str or collection of str
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -255,19 +269,19 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             )
 
             object_df['version'] = object_path
-            object_df['page'] = search_params['page']
+            object_df.loc[:, 'page'] = search_params['page']
             metadata_df = pd.concat(
                 [metadata_df, object_df]
             ).reset_index(drop=True)
 
         return metadata_df
 
-    def get_web_output(self, object_urls):
+    def get_web_output(self, object_urls: Collection[str]) -> pd.DataFrame:
         """Scrapes the attributes in path_dict for the provided object urls.
 
         Parameters
         ----------
-        object_urls : iterable
+        object_urls : collection of str
 
         Returns
         -------
@@ -284,8 +298,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
             while (
                 'Request rejected due to rate limits.' in soup.text or
-                not self._get_tag_value(
-                    self.get_single_tag(
+                not web_utils.get_tag_value(
+                    web_utils.get_single_tag(
                         soup=soup,
                         string=re.compile(self.attr_dict['numViews'])
                     )
@@ -297,8 +311,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
                 soup = self._get_soup(features='html.parser')
 
             object_dict = {
-                var: self._get_tag_value(
-                    self.get_single_tag(
+                var: web_utils.get_tag_value(
+                    web_utils.get_single_tag(
                         soup=soup,
                         string=re.compile(attr)
                     )
@@ -312,8 +326,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
             # Add identifier for merging
             object_dict['identifier'] = '/'.join(url.split('/')[-2:])
-            object_dict['title'] = self._get_tag_value(
-                self.get_single_tag(
+            object_dict['title'] = web_utils.get_tag_value(
+                web_utils.get_single_tag(
                     soup=soup,
                     path='h1.o-heading__level1'
                 )
@@ -325,7 +339,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         return search_df
 
-    def _extract_version_ids(self, df):
+    def _extract_version_ids(self, df: pd.DataFrame) -> pd.DataFrame:
         if self.flatten_output:
             return df['_links_stash:versions_href'].apply(
                 lambda row: row.split('/')[-1]
@@ -335,7 +349,11 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
                 lambda row: row['stash:version']['href'].split('/')[-1]
             )
 
-    def get_all_metadata(self, search_dict, **kwargs):
+    def get_all_metadata(
+            self,
+            search_dict: TermResultDict,
+            **kwargs: Any
+    ) -> TermResultDict:
         """Retrieves all metadata that relates to the provided DataFrames.
 
         Parameters
