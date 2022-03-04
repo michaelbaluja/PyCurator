@@ -13,6 +13,7 @@ from pycurator.scrapers.base_scrapers import (
     AbstractWebScraper
 )
 from pycurator.utils import flatten_nested_df, parse_numeric_string, web_utils
+from pycurator.utils.parsing import validate_metadata_parameters
 from pycurator.utils.typing import (
     SearchType,
     TypeResultDict
@@ -300,7 +301,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        object_paths = self.validate_metadata_parameters(object_paths)
+        object_paths = validate_metadata_parameters(object_paths)
 
         search_type_options = self.search_type_options
         if search_type not in search_type_options:

@@ -1,7 +1,22 @@
+from collections.abc import Collection
+from typing import Any, Optional, Union
+
 import pandas as pd
 from flatten_json import flatten
 
-from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
+from pycurator.scrapers.base_scrapers import (
+    AbstractScraper,
+    AbstractTermTypeScraper
+)
+from pycurator.utils.parsing import validate_metadata_parameters
+from pycurator.utils.typing import (
+    SearchTerm,
+    SearchType,
+    SearchQuery,
+    TermResultDict,
+    TermTypeResultDict,
+    TypeResultDict
+)
 
 
 class PapersWithCodeScraper(AbstractTermTypeScraper):
@@ -24,11 +39,11 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
     def __init__(
         self,
-        search_terms=None,
-        search_types=None,
-        flatten_output=None,
-        credentials=None
-    ):
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        search_types: Optional[Collection[SearchType]] = None,
+        flatten_output: Optional[bool] = None,
+        credentials: Optional[str] = None
+    ) -> None:
         super().__init__(
             repository_name='paperswithcode',
             search_terms=search_terms,
@@ -39,22 +54,22 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         self.base_url = 'https://paperswithcode.com/api/v1'
 
     @staticmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> bool:
         return True
 
     @classmethod
     @property
-    def search_type_options(cls):
+    def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('conferences', 'datasets', 'evaluations', 'papers', 'tasks')
 
     @AbstractScraper._pb_indeterminate
     def _conduct_search_over_pages(
         self,
-        search_url,
-        search_params,
-        flatten_output,
-        print_progress=False
-    ):
+        search_url: str,
+        search_params: Optional[Any] = None,
+        flatten_output: Optional[bool] = None,
+        print_progress: bool = False
+    ) -> Union[pd.DataFrame, None]:
         """Query paginated results from the Papers With Code API.
 
         Parameters
@@ -145,7 +160,12 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         else:
             return None
 
-    def get_individual_search_output(self, search_term, search_type, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_term: SearchTerm,
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Returns information about all queried information types on PWC.
 
         Parameters
@@ -194,7 +214,10 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             print_progress=True
         )
 
-    def _get_metadata_types(self, search_type):
+    def _get_metadata_types(
+            self,
+            search_type: SearchType
+    ) -> Collection[SearchType]:
         """Return the possible metadata categories for a given search_type."""
         if search_type not in self.search_type_options:
             raise ValueError(
@@ -212,16 +235,21 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         elif search_type == 'tasks':
             return ['children', 'evaluations', 'papers', 'parents']
 
-    def get_query_metadata(self, object_paths, search_type, **kwargs):
+    def get_query_metadata(
+            self,
+            object_paths: Collection[str],
+            **kwargs: Any
+    ) -> TypeResultDict:
         """Retrieves the metadata for the papers listed in object_paths
 
         Parameters
         ----------
         object_paths : str or list-like or str
-        search_type : {
-            'conferences', 'datasets', 'evaluations', 'papers', 'tasks'
-        }
         **kwargs : dict, optional
+            Must include search_type : {
+                'conferences', 'datasets', 'evaluations', 'papers', 'tasks'
+            }
+                search_type in kwargs to match signature of base method.
             Can temporarily overwrite self flatten_output argument
 
         Returns
@@ -231,8 +259,14 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             metadata_dict[metadata_type] = DataFrame
         """
 
+        try:
+            search_type = kwargs['search_type']
+        except KeyError:
+            raise AttributeError(
+                'search_type must be passed to get_query_metadata.'
+            )
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        object_paths = self.validate_metadata_parameters(object_paths)
+        object_paths = validate_metadata_parameters(object_paths)
 
         metadata_types = self._get_metadata_types(search_type)
         metadata_dict = dict()
@@ -266,7 +300,11 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         return metadata_dict
 
-    def get_all_metadata(self, search_dict, **kwargs):
+    def get_all_metadata(
+            self,
+            search_dict: TermTypeResultDict,
+            **kwargs: Any
+    ) -> dict[SearchQuery, TermResultDict]:
         """Retrieves all metadata related to the provided DataFrames.
 
         Parameters

@@ -1,7 +1,19 @@
+from collections.abc import Collection
+from typing import Any, Optional, Union
+
 import pandas as pd
 from flatten_json import flatten
 
-from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
+from pycurator.scrapers.base_scrapers import (
+    AbstractScraper,
+    AbstractTermTypeScraper
+)
+from pycurator.utils.parsing import validate_metadata_parameters
+from pycurator.utils.typing import (
+    SearchTerm,
+    SearchType,
+    TermTypeResultDict
+)
 
 
 class FigshareScraper(AbstractTermTypeScraper):
@@ -24,11 +36,11 @@ class FigshareScraper(AbstractTermTypeScraper):
 
     def __init__(
         self,
-        search_terms=None,
-        search_types=None,
-        flatten_output=None,
-        credentials=None
-    ):
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        search_types: Optional[Collection[SearchType]] = None,
+        flatten_output: Optional[bool] = None,
+        credentials: Optional[str] = None
+    ) -> None:
         super().__init__(
             repository_name='figshare',
             search_terms=search_terms,
@@ -41,32 +53,44 @@ class FigshareScraper(AbstractTermTypeScraper):
         self.headers = dict()
 
         if credentials:
-            self.load_credentials(credential_filepath=credentials)
+            self.credentials = self.load_credentials(
+                credential_filepath=credentials
+            )
 
     @staticmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> bool:
         return True
 
     @classmethod
     @property
-    def search_type_options(cls):
+    def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('articles', 'collections', 'projects')
 
-    def load_credentials(self, credential_filepath):
+    def load_credentials(self, credential_filepath: str) -> Union[str, None]:
         """Load the credentials given filepath or token.
 
         Parameters
         ----------
-        credential_filepath : str, optional (default=credentials.pkl)
+        credential_filepath : str
             JSON filepath containing credentials in the form
             {repository_name}: 'key'.
+
+        Returns
+        -------
+        credentials : str or None
         """
 
-        super().load_credentials(credential_filepath)
-        self.headers['Authorization'] = f'token {self.credentials}'
+        credentials = super().load_credentials(credential_filepath)
+        self.headers['Authorization'] = f'token {credentials}'
+        return credentials
 
     @AbstractScraper._pb_indeterminate
-    def get_individual_search_output(self, search_term, search_type, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_term: SearchTerm,
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> Union[TermTypeResultDict, None]:
         """Calls the Figshare API for the specified search term and type.
 
         Parameters
@@ -169,7 +193,11 @@ class FigshareScraper(AbstractTermTypeScraper):
 
         return search_df
 
-    def get_query_metadata(self, object_paths, **kwargs):
+    def get_query_metadata(
+            self,
+            object_paths: Union[str, Collection[str]],
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """
         Retrieves the metadata for the object/objects listed in object_paths.
 
@@ -183,11 +211,11 @@ class FigshareScraper(AbstractTermTypeScraper):
         Returns
         -------
         metadata_df : pandas.DataFrame
-            DataFrame containing metadata for the requested objects.
+            Metadata for the requested objects.
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        object_paths = self.validate_metadata_parameters(object_paths)
+        object_paths = validate_metadata_parameters(object_paths)
 
         metadata_df = pd.DataFrame()
 
@@ -204,7 +232,11 @@ class FigshareScraper(AbstractTermTypeScraper):
 
         return metadata_df
 
-    def get_all_metadata(self, search_dict, **kwargs):
+    def get_all_metadata(
+            self,
+            search_dict: TermTypeResultDict,
+            **kwargs
+    ) -> TermTypeResultDict:
         """Retrieves all metadata that relates to the provided DataFrames.
 
         Parameters
@@ -216,7 +248,7 @@ class FigshareScraper(AbstractTermTypeScraper):
 
         Returns
         -------
-        metadata_dict : dict
+        metadata_dict : dict of tuple of str to dataframe
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)

@@ -1,12 +1,24 @@
 import json
 import os
+from collections.abc import Collection
+from typing import Any, Optional, Union
 
 import pandas as pd
 from flatten_json import flatten
 from kaggle import KaggleApi
 from kaggle.rest import ApiException
 
-from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermTypeScraper
+from pycurator.scrapers.base_scrapers import (
+    AbstractScraper,
+    AbstractTermTypeScraper
+)
+from pycurator.utils.parsing import validate_metadata_parameters
+from pycurator.utils.typing import (
+    JSONDict,
+    SearchTerm,
+    SearchType,
+    TermTypeResultDict
+)
 
 
 class KaggleScraper(AbstractTermTypeScraper):
@@ -32,10 +44,10 @@ class KaggleScraper(AbstractTermTypeScraper):
 
     def __init__(
         self,
-        search_terms=None,
-        search_types=None,
-        flatten_output=None
-    ):
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        search_types: Optional[Collection[SearchType]] = None,
+        flatten_output: Optional[bool] = None
+    ) -> None:
 
         super().__init__(
             repository_name='kaggle',
@@ -49,16 +61,21 @@ class KaggleScraper(AbstractTermTypeScraper):
         self.merge_on = 'id'
 
     @staticmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> bool:
         return False
 
     @classmethod
     @property
-    def search_type_options(cls):
+    def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('datasets', 'kernels')
 
     @AbstractScraper._pb_indeterminate
-    def get_individual_search_output(self, search_term, search_type, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_term: SearchTerm,
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Calls the Kaggle API for the specified search term and type.
 
         Parameters
@@ -133,14 +150,18 @@ class KaggleScraper(AbstractTermTypeScraper):
 
         return search_df
 
-    def _retrieve_object_json(self, object_path, **kwargs):
+    def _retrieve_object_json(
+            self,
+            object_path: str,
+            **kwargs: Any
+    ) -> Union[JSONDict, None]:
         """Queries Kaggle for metadata json file & returns as a dict.
 
         Parameters
         ----------
         object_path : str
         data_path : str, optional (default='data/')
-            Location to save metadata to
+            Location to save metadata to.
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -184,7 +205,11 @@ class KaggleScraper(AbstractTermTypeScraper):
 
             return json_data
 
-    def get_query_metadata(self, object_paths, **kwargs):
+    def get_query_metadata(
+            self,
+            object_paths: Collection[str],
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Retrieves the metadata for the objects referenced in object_paths.
 
         Parameters
@@ -198,7 +223,7 @@ class KaggleScraper(AbstractTermTypeScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        object_paths = self.validate_metadata_parameters(object_paths)
+        object_paths = validate_metadata_parameters(object_paths)
 
         metadata_df = pd.DataFrame()
 
@@ -214,7 +239,11 @@ class KaggleScraper(AbstractTermTypeScraper):
 
         return metadata_df
 
-    def get_all_metadata(self, search_dict, **kwargs):
+    def get_all_metadata(
+            self,
+            search_dict: TermTypeResultDict,
+            **kwargs
+    ):
         """Retrieves all related metadata for the provided DataFrames.
 
         Parameters

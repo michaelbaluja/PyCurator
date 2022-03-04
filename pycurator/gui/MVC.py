@@ -1,22 +1,22 @@
 from __future__ import annotations
+
 import _tkinter
 import os
+import queue
 import tkinter as tk
 import tkinter.ttk as ttk
+from typing import Optional, ParamSpec, Type, TypeVar, Union
 
-from .bases import ThreadedRun, ViewPage
-from .landing_page import LandingPage
-from .selection_page import SelectionPage
-from .run_page import RunPage
+from pycurator.scrapers import AbstractScraper
 from pycurator.scrapers import (
     TermScraperMixin,
     TypeScraperMixin
 )
-
-from typing import Type, TypeVar, ParamSpec
-from pycurator.scrapers import AbstractScraper
-import queue
-
+from pycurator.utils.typing import AttributeKey, AttributeValue, TKVarValue
+from .bases import ThreadedRun, ViewPage
+from .landing_page import LandingPage
+from .run_page import RunPage
+from .selection_page import SelectionPage
 
 Page = TypeVar('Page', bound=ViewPage)
 P = ParamSpec('P')
@@ -71,13 +71,20 @@ class ScraperModel:
 
 
 class CuratorController:
-    def __init__(self, model, view):
+    def __init__(
+            self,
+            model: Optional[ScraperModel] = None,
+            view: Optional[CuratorView] = None
+    ) -> None:
         self.model = model
         self.view = view
 
+        # Create placeholder for runtime_requirements property attribute
+        self._runtime_requirements = None
+
         self.runtime_param_vars = dict()
 
-    def request_next_page(self, *args: P.args):
+    def request_next_page(self, *args: P.args) -> None:
         try:
             self.view.current_page.next_page_button.invoke()
         except AttributeError:
@@ -85,32 +92,43 @@ class CuratorController:
                 '"<Return>" button not active for this page.'
             )
 
-    def request_execution(self):
+    def request_execution(self) -> None:
         self.model.scraper.request_execution()
 
-    def show(self, page=None):
+    def show(self, page: Type[Page]) -> None:
         self.view.show(page)
 
-    def set_model(self, scraper, scraper_name):
+    def set_model(
+            self,
+            scraper: Type[AbstractScraper],
+            scraper_name: str
+    ) -> None:
         self.model = ScraperModel(scraper, scraper_name)
         self.runtime_requirements = self.model.requirements
         self.runtime_param_vars[scraper_name] = dict()
 
-    def add_run_parameter(self, param, value):
+    def add_run_parameter(
+            self,
+            param: AttributeKey,
+            value: AttributeValue
+    ) -> None:
         self.runtime_param_vars[self.model.scraper_name][param] = value
 
-    def get_run_parameter(self, param):
+    def get_run_parameter(self, param: AttributeKey) -> AttributeValue:
         return self.runtime_param_vars[self.model.scraper_name][param]
 
     @property
-    def runtime_requirements(self):
+    def runtime_requirements(self) -> dict[str, bool]:
         return self._runtime_requirements
 
     @runtime_requirements.setter
-    def runtime_requirements(self, requirements):
+    def runtime_requirements(self, requirements: dict[str, bool]) -> None:
         self._runtime_requirements = requirements
 
-    def evaluate_parameter(self, param_name):
+    def evaluate_parameter(
+            self,
+            param_name: str
+    ) -> Union[list[TKVarValue], TKVarValue]:
         param_var = self.get_run_parameter(param_name)
 
         if isinstance(param_var, dict):
@@ -124,7 +142,7 @@ class CuratorController:
                 f'"{self.model.scraper_name}".'
             )
 
-    def parse_run_parameters(self):
+    def parse_run_parameters(self) -> None:
         """Ensure necessary requirements are present before running.
 
         See Also
@@ -156,7 +174,7 @@ class CuratorController:
         else:
             self.initialize_run(param_val_kwargs)
 
-    def initialize_run(self, param_val_kwargs: P.kwargs):
+    def initialize_run(self, param_val_kwargs: P.kwargs) -> None:
         save_dir = param_val_kwargs.pop('save_dir')
 
         # Set up the run thread
@@ -166,7 +184,7 @@ class CuratorController:
         # Show run page
         self.view.show(RunPage)
 
-    def run_scraper(self):
+    def run_scraper(self) -> None:
         self.model.threaded_run.start()
         self.view.after(100, self.process_runtime_updates)
 

@@ -1,9 +1,15 @@
 import warnings
+from collections.abc import Collection
+from typing import Any, Optional, Iterable, NoReturn
 
 import pandas as pd
 from flatten_json import flatten
 
-from pycurator.scrapers.base_scrapers import AbstractScraper, AbstractTermScraper
+from pycurator.scrapers.base_scrapers import (
+    AbstractScraper,
+    AbstractTermScraper
+)
+from pycurator.utils.typing import SearchTerm
 
 
 class ZenodoScraper(AbstractTermScraper):
@@ -23,19 +29,23 @@ class ZenodoScraper(AbstractTermScraper):
 
     def __init__(
         self,
-        search_terms=None,
-        flatten_output=None,
-        credentials=None
-    ):
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        flatten_output: Optional[bool] = None,
+        credentials: Optional[bool] = None
+    ) -> None:
         super().__init__('zenodo', search_terms, flatten_output, credentials)
         self.base_url = 'https://zenodo.org/api/records'
 
     @staticmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> bool:
         return True
 
     @AbstractScraper._pb_indeterminate
-    def get_individual_search_output(self, search_term, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_term: Collection[SearchTerm],
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Returns information about all records from Zenodo.
 
         Parameters
@@ -141,3 +151,12 @@ class ZenodoScraper(AbstractTermScraper):
         self.num_queries = False
 
         return search_df
+
+    def get_query_metadata(
+            self,
+            object_paths: Iterable[Any],
+            **kwargs: Any
+    ) -> NoReturn:
+        raise NotImplementedError(
+            'Zenodo does not provide object metadata'
+        )

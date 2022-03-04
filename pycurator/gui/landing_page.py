@@ -1,7 +1,7 @@
 import os
-from typing import Any
 import tkinter as tk
 import tkinter.ttk as ttk
+from typing import Any, NoReturn
 
 from .bases import ViewPage
 from .selection_page import SelectionPage
@@ -41,3 +41,6 @@ class LandingPage(ViewPage):
 
         self.grid(row=0, column=0, sticky='nsew')
         self.tkraise()
+
+    def reset_frame(self) -> NoReturn:
+        pass

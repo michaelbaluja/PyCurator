@@ -1,7 +1,7 @@
 import re
 from collections.abc import Collection
 from time import sleep
-from typing import Optional
+from typing import Any, Optional, Union
 
 import pandas as pd
 from flatten_json import flatten
@@ -12,7 +12,11 @@ from pycurator.scrapers.base_scrapers import (
     AbstractWebScraper
 )
 from pycurator.utils import parse_numeric_string, web_utils
-from pycurator.utils.typing import *
+from pycurator.utils.parsing import validate_metadata_parameters
+from pycurator.utils.typing import (
+    SearchTerm,
+    TermResultDict
+)
 
 
 class DryadScraper(AbstractTermScraper, AbstractWebScraper):
@@ -251,7 +255,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        object_paths = self.validate_metadata_parameters(object_paths)
+        object_paths = validate_metadata_parameters(object_paths)
 
         start_page = 1
         metadata_df = pd.DataFrame()

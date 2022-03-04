@@ -1,32 +1,16 @@
 from __future__ import annotations
-import pandas as pd
-import re
+
+import os
 import tkinter as tk
 import tkinter.ttk as ttk
-from typing import Any, AnyStr, Iterable, TypeVar
-import os
+from typing import Any, Iterable, TypeVar
+
+import pandas as pd
+
 import pycurator.gui.bases
+from .parsing import _validate_save_filename
+
 T = TypeVar('T')
-
-month_name_to_integer = {
-    'Jan': '01',
-    'Feb': '02',
-    'Mar': '03',
-    'Apr': '04',
-    'May': '05',
-    'Jun': '06',
-    'Jul': '07',
-    'Aug': '08',
-    'Sep': '09',
-    'Oct': '10',
-    'Nov': '11',
-    'Dec': '12'
-}
-
-
-def _validate_save_filename(filename: str) -> str:
-    """Remove quotations from filename, replace spaces with underscore."""
-    return filename.replace('"', '').replace("'", '').replace(' ', '_')
 
 
 def save_dataframes(results: dict, data_dir: str) -> None:
@@ -112,70 +96,6 @@ def button_label_frame(
     _frame.grid(sticky='w', columnspan=2)
 
 
-def parse_numeric_string(
-        entry: AnyStr,
-        cast: bool = False
-) -> list[str | int] | str | int | None:
-    """Given a string, returns all integer numeric substrings.
-
-    Parameters
-    ----------
-    entry : str
-    cast : bool, optional (default=False)
-        Option for instances to be int type-casted
-
-    Returns
-    -------
-    numeric_instances
-        If none present, NoneType
-        If one present, returns int
-        If multiple present, returns list of ints
-    """
-
-    assert isinstance(entry, str)
-    assert isinstance(cast, bool)
-
-    numeric_instances = re.findall(r'\d+', entry)
-
-    if cast:
-        numeric_instances = [int(num_str) for num_str in numeric_instances]
-
-    # Format return variable based on docstring description
-    if len(numeric_instances) == 0:
-        numeric_instances = None
-    elif len(numeric_instances) == 1:
-        numeric_instances = numeric_instances[0]
-
-    return numeric_instances
-
-
-def find_first_match(
-        string: AnyStr,
-        pattern: re.Pattern[AnyStr]
-) -> AnyStr | None:
-    """Finds the first occurrence of a regex pattern in a given string.
-
-    Parameters
-    ----------
-    string : str
-    pattern : str
-
-    Returns
-    -------
-    str
-
-    See Also
-    --------
-    re.search(), re.Match.group()
-    """
-
-    try:
-        return re.search(pattern, string).group()
-    except AttributeError:
-        # Occurs if re.search returns None, as None has no attribute .group()
-        return None
-
-
 def is_nested(col: Iterable[T]) -> bool:
     """Given an iterable, returns True if any item is a dictionary or list."""
     return any([True for x in col if isinstance(x, (dict, list))])
@@ -184,7 +104,7 @@ def is_nested(col: Iterable[T]) -> bool:
 def select_from_files(
         root: pycurator.gui.bases.ViewPage,
         selection_type: str,
-        filetypes: tuple[tuple[str, str]] = (('All File Types', '*.*'),)
+        filetypes: list[tuple[str, str]] = (('All File Types', '*.*'),)
 ) -> None:
     """Allows user to select local file/directory.
 

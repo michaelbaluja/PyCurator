@@ -2,10 +2,18 @@ import itertools
 import json
 import os
 import queue
-import re
 import sys
 import time
 from abc import ABC, abstractmethod
+from collections.abc import (
+    Iterable,
+    Collection,
+    Callable,
+    Generator,
+    Hashable,
+    Sequence
+)
+from typing import Any, AnyStr, NoReturn, Optional, ParamSpec, TypeVar, Union
 
 import pandas as pd
 import requests
@@ -13,6 +21,20 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+
+import pycurator.utils
+from pycurator.utils.typing import (
+    JSONDict,
+    SearchTerm,
+    SearchType,
+    SearchTuple,
+    TermResultDict,
+    TermTypeResultDict,
+    QueryResultDict
+)
+
+T = TypeVar('T')
+P = ParamSpec('P')
 
 
 class AbstractScraper(ABC):
@@ -30,10 +52,10 @@ class AbstractScraper(ABC):
     """
 
     def __init__(
-        self,
-        repository_name,
-        flatten_output=False
-    ):
+            self,
+            repository_name: str,
+            flatten_output: bool = False
+    ) -> None:
         self.repository_name = repository_name
         self.flatten_output = flatten_output
         self.continue_running = True
@@ -46,7 +68,7 @@ class AbstractScraper(ABC):
         self.queries_completed = None
         self.current_query_ref = None
 
-    def _pb_determinate(self, coll):
+    def _pb_determinate(self, coll: Collection[T]) -> Generator[T, None, None]:
         """Generator for iterating data and updating progress bar status.
 
         Parameters
@@ -76,11 +98,23 @@ class AbstractScraper(ABC):
         self.queries_completed = None
         self.current_query_ref = None
 
+    @abstractmethod
+    def run(self) -> NoReturn:
+        raise NotImplementedError(
+            'Subclass must implement "run()".'
+        )
+
     @staticmethod
-    def _pb_indeterminate(indeterminate_query_func):
+    def _pb_indeterminate(
+            indeterminate_query_func: Callable[P, T]
+    ) -> Callable[P, T]:
         """Progress bar wrapper for indeterminate-length queries."""
 
-        def update_pb(self, *args, **kwargs):
+        def update_pb(
+                self,
+                *args: P.args,
+                **kwargs: P.kwargs
+        ) -> Iterable[Any]:
             self.num_queries = True
             results = indeterminate_query_func(self, *args, **kwargs)
             self.num_queries = False
@@ -88,108 +122,38 @@ class AbstractScraper(ABC):
 
         return update_pb
 
-    def request_execution(self):
+    def request_execution(self) -> None:
         """Raise flag to stop output."""
         self.continue_running = False
 
-    def terminate(self):
+    def terminate(self) -> NoReturn:
         """Handle program execution."""
         self.queue.put('Requesting program termination.')
         sys.exit()
 
     @staticmethod
     @abstractmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> NoReturn:
         raise NotImplementedError(
-            'Subclass must implement accepts_user_credentials'
+            'Subclass must implement "accepts_user_credentials()".'
         )
 
-    def _print_progress(self, page):
+    def _print_progress(self, page: str) -> None:
         """Update queue with current page being searched."""
         self.queue.put(f'Searching page {page}')
 
-    def _update_query_ref(self, **kwargs):
+    def _update_query_ref(self, **kwargs: Any) -> None:
         """Combine keywords and update self.current_query_ref."""
         self.current_query_ref = kwargs
-
-    def _validate_save_filename(self, filename):
-        """Remove quotations from filename, replace spaces with underscore."""
-        return filename.replace('"', '').replace("'", '').replace(' ', '_')
-
-    def save_dataframes(self, results, data_dir):
-        """Export DataFrame objects to json file in specified directory.
-
-        Parameters
-        ----------
-        results : dict
-        data_dir : str
-
-        Raises
-        ------
-        TypeError
-            "results" not of type dict or "datadir" not of type str.
-        """
-
-        if not isinstance(results, dict):
-            raise TypeError(
-                f'results must be of type dict, not \'{type(results)}\'.'
-            )
-        if not isinstance(data_dir, str):
-            raise TypeError(
-                f'data_dir must of type str, not \'{type(data_dir)}\'.'
-            )
-
-        if not os.path.isdir(data_dir):
-            os.makedirs(data_dir)
-
-        for query, df in results.items():
-            if isinstance(query, str):
-                output_filename = f'{query}.json'
-            else:
-                search_term, search_type = query
-                output_filename = f'{search_term}_{search_type}.json'
-
-            output_filename = self._validate_save_filename(output_filename)
-
-            self.save_results(
-                results=df,
-                filepath=os.path.join(data_dir, output_filename)
-            )
-
-    def save_results(self, results, filepath):
-        """Saves the specified results to the file provided.
-
-        Parameters
-        ----------
-        results : pandas.DataFrame
-            If DataFrame, results will be stored in a csv format.
-        filepath : str
-            Location to store file in. Take note of output type as specified
-            above, as appending the incorrect filetype may result in the file
-            being unreadable.
-
-        Raises
-        ------
-        ValueError
-            If a non-dataframe object is passed.
-        """
-
-        if isinstance(results, pd.DataFrame):
-            results.to_json(filepath)
-        else:
-            raise ValueError(
-                f'Input must be of type pandas.DataFrame, not'
-                f' \'{type(results)}\'.'
-            )
 
 
 class WebPathScraperMixin:
     @property
-    def path_dict(self):
+    def path_dict(self) -> JSONDict:
         return self._path_dict
 
     @path_dict.setter
-    def path_dict(self, path_file):
+    def path_dict(self, path_file: str) -> None:
         if not os.path.exists(path_file):
             raise FileNotFoundError(
                 f'Path file \'{path_file}\' does not exist.'
@@ -214,7 +178,11 @@ class AbstractWebScraper(AbstractScraper):
         in directly to functions to override set parameter.
     """
 
-    def __init__(self, repository_name, flatten_output=False):
+    def __init__(
+            self,
+            repository_name: str,
+            flatten_output: bool = False
+    ) -> None:
         AbstractScraper.__init__(
             self,
             repository_name=repository_name,
@@ -232,7 +200,17 @@ class AbstractWebScraper(AbstractScraper):
             options=chrome_options
         )
 
-    def _get_soup(self, **kwargs):
+    @staticmethod
+    def accepts_user_credentials() -> bool:
+        return False
+
+    @abstractmethod
+    def run(self) -> NoReturn:
+        raise NotImplementedError(
+            'Subclass must implement "run()".'
+        )
+
+    def _get_soup(self, **kwargs: Any) -> BeautifulSoup:
         """Return a BeautifulSoup object for the object driver current page."""
         # If user has requested termination, handle cleanup instead of querying
         # additional results
@@ -241,203 +219,6 @@ class AbstractWebScraper(AbstractScraper):
 
         html = self.driver.page_source
         return BeautifulSoup(html, **kwargs)
-
-    def _get_single_tag_from_path(self, soup, path):
-        """Extract HTML given a CSS path."""
-        return soup.select_one(path)
-
-    def _get_single_tag_from_tag_info(
-        self,
-        soup,
-        class_type=re.compile(r''),
-        **kwargs
-    ):
-        """Find and return BeautifulSoup Tag from given specifications."""
-        return soup.find(class_type, **kwargs)
-
-    def _get_parent_tag(
-        self,
-        soup,
-        string,
-    ):
-        """Find BeautifulSoup Tag from given specifications, return parent."""
-        attr = self._get_single_tag_from_tag_info(
-            soup=soup,
-            string=string
-        )
-        try:
-            parent_tag = attr.parent
-        except AttributeError:
-            parent_tag = None
-
-        return parent_tag
-
-    def _get_sibling_tags(self, soup, string, **kwargs):
-        """Return the sibling tags.
-
-        Parameters
-        ----------
-        soup : bs4.BeautifulSoup
-        string : str
-            Pattern for locating tag of interest.
-        **kwargs : dict, optional
-            Additional parameters passed to the
-            bs4.element.Tag.find_next_siblings() call.
-
-        Returns
-        -------
-        list of bs4.element.Tag or empty
-
-        See Also
-        --------
-        bs4.element.Tag.find_next_siblings
-        """
-
-        tag = self._get_single_tag_from_tag_info(
-            soup=soup,
-            string=string
-        )
-        return tag.find_next_siblings(**kwargs)
-
-    def _get_parent_sibling_tags(
-        self,
-        soup,
-        string,
-        **kwargs
-    ):
-        """Return the tag for the parent tag's sibling tags.
-
-        Parameters
-        ----------
-        soup : bs4.BeautifulSoup
-        string : str
-            Pattern for locating tag of interest.
-        **kwargs : dict, optional
-            Additional parameters passed to the
-            bs4.element.Tag.find_next_siblings() call.
-
-        Returns
-        -------
-        list of bs4.element.Tag or empty
-
-        See Also
-        --------
-        bs4.element.Tag.find_next_siblings
-        """
-
-        parent = self._get_parent_tag(soup, string)
-        return parent.find_next_siblings(**kwargs)
-
-    def _get_tag_value(self, tag, err_return=None, **kwargs):
-        """Return text for the provided Tag, queried with kwargs."""
-        try:
-            return tag.get_text(**kwargs)
-        except AttributeError:
-            return err_return
-
-    def get_single_tag(
-        self,
-        soup,
-        path=None,
-        class_type=re.compile(r''),
-        **find_kwargs
-    ):
-        """Retrieves the requested value from the soup object.
-
-        For a page attribute with a single value
-        ('abstract', 'num_instances', etc.), returns the value.
-
-        Either a full CSS Selector Path must be passed via 'path', or an HTML
-        class and additional parameters must be passed via 'class_type' and
-        **find_kwargs, respectively.
-
-        For attributes with potentially multiple values, such as 'keywords',
-        use get_variable_attribute_values(...)
-
-        Parameters
-        ----------
-        soup : BeautifulSoup
-            HTML to be parsed.
-        path : str, optional (default=None)
-            CSS Selector Path for attribute to scrape.
-            If None:
-                Search is performed using class_type and **find_kwargs.
-        class_type : str, optional (default=re.compile(r''))
-            HTML class type to find.
-        **find_kwargs : dict, optional
-            Additional arguments for 'soup.find()' call.
-
-        Returns
-        -------
-        attr : bs4.element.Tag or None
-
-        Raises
-        ------
-        ValueError
-            If no CSS path or find_kwargs are passed.
-
-        See Also
-        --------
-        re.compile : Compile a regular expression pattern into a regular
-            expression object, which can be used for matching using
-            re.search.
-        """
-
-        if path:
-            attr = self._get_single_tag_from_path(soup, path)
-        elif find_kwargs:
-            attr = self._get_single_tag_from_tag_info(
-                soup,
-                class_type,
-                **find_kwargs
-            )
-        else:
-            raise ValueError('Must pass a CSS path or find attributes.')
-
-        return attr
-
-    def get_variable_tags(
-        self,
-        soup,
-        path=None,
-        class_type=re.compile(r''),
-        **find_kwargs
-    ):
-        """Retrieves the requested value from the soup object.
-
-        For a page attribute with potentially multiple values, such as
-        'keywords', return the values as a list. For attributes with a single
-        value, such as 'abstract', use get_single_attribute_value(...)
-
-        Parameters
-        ----------
-        soup : BeautifulSoup
-            HTML to be parsed.
-        path : str, optional (default=None)
-            CSS Selector Path for attribute to scrape.
-        class_type : str, optional (default=re.compile(r''))
-            HTML class type to find.
-        **find_kwargs : dict, optional
-            Additional arguments for 'soup.find_all()' call.
-
-        Returns
-        -------
-        attrs : list of bs4.element.Tag or None
-
-        Raises
-        ------
-        ValueError
-            If no CSS path or find_kwargs are passed.
-        """
-
-        if path:
-            attrs = soup.select(path)
-        elif find_kwargs:
-            attrs = soup.find_all(class_type, **find_kwargs)
-        else:
-            raise ValueError('Must pass a CSS path or find attributes.')
-
-        return attrs
 
 
 class AbstractAPIScraper(AbstractScraper):
@@ -459,11 +240,11 @@ class AbstractAPIScraper(AbstractScraper):
     """
 
     def __init__(
-        self,
-        repository_name,
-        flatten_output=False,
-        credentials=None
-    ):
+            self,
+            repository_name: str,
+            flatten_output: bool = False,
+            credentials: Optional[str] = None
+    ) -> None:
         AbstractScraper.__init__(
             self,
             repository_name=repository_name,
@@ -472,14 +253,20 @@ class AbstractAPIScraper(AbstractScraper):
 
         # Load API credentials
         if credentials:
-            self.load_credentials(credential_filepath=credentials)
+            self.credentials = self.load_credentials(
+                credential_filepath=credentials
+            )
 
-    def load_credentials(self, credential_filepath):
+    def load_credentials(self, credential_filepath: str) -> Union[str, None]:
         """Load the credential file from the given filepath.
 
         Parameters
         ----------
         credential_filepath : str or path-like object
+
+        Returns
+        -------
+        credentials : str or None
 
         Raises
         ------
@@ -504,46 +291,95 @@ class AbstractAPIScraper(AbstractScraper):
             with open(credential_filepath) as credential_file:
                 credential_data = json.load(credential_file)
 
-                self.credentials = credential_data.get(self.repository_name)
+                credentials = credential_data.get(self.repository_name)
 
-                if not self.credentials:
+                if not credentials:
                     self.queue.put(
                         'No credentials found, attempting unauthorized run.'
                     )
+                return credentials
         else:
             raise FileNotFoundError(f'{credential_filepath} does not exist.')
 
-    def validate_metadata_parameters(self, object_paths):
-        """Ensures that the metadata object paths are of the proper form.
+    @staticmethod
+    def accepts_user_credentials() -> NoReturn:
+        raise NotImplementedError(
+            'Subclass must implement "accepts_user_credentials()".'
+        )
+
+    def run(self, **kwargs: Any) -> None:
+        """Queries all data from the implemented API.
 
         Parameters
         ----------
-        object_paths : str or list-like
+        **kwargs : dict, optional
+            Can temporarily overwrite self attributes.
 
-        Returns
-        -------
-        object_paths : str or list-like
-
-        Raises
-        ------
-        TypeError
-            If no object paths are provided.
+        Notes
+        -----
+        In the following order, this function calls:
+            get_all_search_outputs
+            get_all_metadata (if applicable)
+            merge_search_and_metadata_dicts (if applicable)
         """
 
-        if isinstance(object_paths, str):
-            object_paths = [object_paths]
-        if not all([isinstance(path, str) for path in object_paths]):
-            raise TypeError('All object paths must be of type str.')
+        self.queue.put(f'Running {self.repository_name}...')
 
-        return object_paths
+        # Get search_output
+        search_dict = self.get_all_search_outputs(**kwargs)
+
+        # Set merge parameters
+        merge_on = vars(self).get('merge_on')
+        merge_right_on = vars(self).get('merge_right_on')
+        merge_left_on = vars(self).get('merge_left_on')
+
+        # Set save parameter
+        save_dir = kwargs.get('save_dir')
+
+        # Try to get metadata (if available)
+        try:
+            metadata_dict = self.get_all_metadata(
+                search_dict=search_dict,
+                **kwargs
+            )
+            merged_dict = self.merge_search_and_metadata_dicts(
+                search_dict=search_dict,
+                metadata_dict=metadata_dict,
+                on=merge_on,
+                left_on=merge_left_on,
+                right_on=merge_right_on
+            )
+            final_dict = merged_dict
+        except (AttributeError, TypeError):
+            # Attribute Error: Tries to call a function that does not exist
+            # TypeError: Tries to call function with incorrect arguments
+            final_dict = search_dict
+
+        if save_dir:
+            self.queue.put(f'Saving output to "{save_dir}".')
+            pycurator.utils.save_dataframes(final_dict, save_dir)
+            self.queue.put('Save complete.')
+
+        self.queue.put(f'{self.repository_name} run complete.')
+        self.continue_running = False
+
+    def get_all_search_outputs(self, **kwargs: Any) -> NoReturn:
+        raise NotImplementedError(
+            'Scraper subclasses must override "get_all_search_outputs(...)".'
+        )
+
+    def get_all_metadata(self, **kwargs: Any) -> NoReturn:
+        raise NotImplementedError(
+            'Scraper subclasses must override "get_all_metadata(...)".'
+        )
 
     def get_request_output_and_update_query_ref(
-        self,
-        url,
-        params=None,
-        headers=None,
-        **ref_kwargs
-    ):
+            self,
+            url: AnyStr,
+            params: Optional[Any] = None,
+            headers: Optional[Any] = None,
+            **ref_kwargs: Any
+    ) -> tuple[requests.Response, JSONDict]:
         """Return request output and update self.current_query_ref.
 
         Parameters
@@ -566,7 +402,12 @@ class AbstractAPIScraper(AbstractScraper):
         self._update_query_ref(**ref_kwargs)
         return self.get_request_output(url, params, headers)
 
-    def get_request_output(self, url, params=None, headers=None):
+    def get_request_output(
+            self,
+            url: AnyStr,
+            params: Optional[Any] = None,
+            headers: Optional[Any] = None
+    ) -> tuple[requests.Response, JSONDict]:
         """Performs a requests.get(...) call, returns response and json.
 
         Parameters
@@ -633,14 +474,14 @@ class AbstractAPIScraper(AbstractScraper):
         return r, output
 
     def merge_search_and_metadata_dicts(
-        self,
-        search_dict,
-        metadata_dict,
-        on=None,
-        left_on=None,
-        right_on=None,
-        **kwargs
-    ):
+            self,
+            search_dict: QueryResultDict,
+            metadata_dict: dict,
+            on: Optional[Union[Hashable, Sequence[Hashable]]] = None,
+            left_on: Optional[Union[Hashable, Sequence[Hashable]]] = None,
+            right_on: Optional[Union[Hashable, Sequence[Hashable]]] = None,
+            **kwargs: Any
+    ) -> QueryResultDict:
         """Merges together search and metadata DataFrames by 'on' key.
 
         For multiple DataFrames containing similar search references, combines
@@ -693,7 +534,13 @@ class AbstractAPIScraper(AbstractScraper):
                  f' \'{type(metadata_dict)}\'.')
             )
 
-        if not all([isinstance(df, pd.DataFrame) or df is None for df in search_dict]):
+        if not all(
+                [
+                    isinstance(df, pd.DataFrame) or df is None
+                    for df in search_dict
+                ]
+        ):
+            print([type(df) for df in search_dict])
             raise ValueError(
                 'All search_dict entries must be of type pandas.DataFrame.'
             )
@@ -729,11 +576,11 @@ class AbstractAPIScraper(AbstractScraper):
 
 class TermScraperMixin:
     @property
-    def search_terms(self):
+    def search_terms(self) -> Collection[SearchTerm]:
         return self._search_terms
 
     @search_terms.setter
-    def search_terms(self, search_terms):
+    def search_terms(self, search_terms: Collection[SearchTerm]) -> None:
         if isinstance(search_terms, str):
             search_terms = [search_terms]
         if not all([isinstance(term, str) for term in search_terms]):
@@ -760,81 +607,20 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
     """
 
     def __init__(
-        self,
-        repository_name,
-        search_terms=None,
-        flatten_output=False,
-        credentials=None
-    ):
+            self,
+            repository_name: str,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            flatten_output: bool = False,
+            credentials: Optional[str] = None
+    ) -> None:
         super().__init__(repository_name, flatten_output, credentials)
 
         self.search_terms = search_terms
 
-    def run(self, **kwargs):
-        """Queries all data from the implemented API.
-
-        Parameters
-        ----------
-        **kwargs : dict, optional
-            Can temporarily overwrite self attributes.
-
-        Returns
-        -------
-        merged_dict/search_dict : dict of pandas.DataFrame
-            Returns merged_dict if metadata is available. This is the output of
-                the merge_search_and_metadata_dicts function.
-            Returns search_dict if metadata is not available. This is the
-                output of get_all_search_outputs.
-
-        Notes
-        -----
-        In the following order, this function calls:
-            get_all_search_outputs
-            get_all_metadata (if applicable)
-            merge_search_and_metadata_dicts (if applicable)
-        """
-
-        self.queue.put(f'Running {self.repository_name}...')
-
-        # Get search_output
-        search_dict = self.get_all_search_outputs(**kwargs)
-
-        # Set merge parameters
-        merge_on = vars(self).get('merge_on')
-        merge_right_on = vars(self).get('merge_right_on')
-        merge_left_on = vars(self).get('merge_left_on')
-
-        # Set save parameter
-        save_dir = kwargs.get('save_dir')
-
-        # Try to get metadata (if available)
-        try:
-            metadata_dict = self.get_all_metadata(
-                search_dict=search_dict,
-                **kwargs
-            )
-            merged_dict = self.merge_search_and_metadata_dicts(
-                search_dict=search_dict,
-                metadata_dict=metadata_dict,
-                on=merge_on,
-                left_on=merge_left_on,
-                right_on=merge_right_on
-            )
-            final_dict = merged_dict
-        except (AttributeError, TypeError):
-            # Attribute Error: Tries to call a function that does not exist
-            # TypeError: Tries to call function with incorrect arguments
-            final_dict = search_dict
-
-        if save_dir:
-            self.queue.put(f'Saving output to "{save_dir}".')
-            self.save_dataframes(final_dict, save_dir)
-            self.queue.put('Save complete.')
-
-        self.queue.put(f'{self.repository_name} run complete.')
-        self.continue_running = False
-
-    def get_all_search_outputs(self, **kwargs):
+    def get_all_search_outputs(
+            self,
+            **kwargs: Any
+    ) -> TermResultDict:
         """Queries the API for each search term.
 
         Parameters
@@ -867,16 +653,24 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
         return search_dict
 
     @abstractmethod
-    def get_individual_search_output(self, search_term, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_term: SearchTerm,
+            **kwargs: Any
+    ) -> None:
         pass
 
-    def get_all_metadata(self, object_path_dict, **kwargs):
+    def get_all_metadata(
+            self,
+            object_path_dict: dict[SearchTerm, pd.DataFrame],
+            **kwargs: Any
+    ) -> TermResultDict:
         """Retrieves all metadata related to the provided DataFrames.
 
         Parameters
         ----------
         object_path_dict : dict
-            Dictionary of the form {query: object_paths} for list of object paths.
+            Dictionary of the form {query: object_paths} for list of paths.
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -899,17 +693,21 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
 
         return metadata_dict
 
-    def get_query_metadata(self, object_paths, **kwargs):
+    def get_query_metadata(
+            self,
+            object_paths: Iterable[Any],
+            **kwargs: Any
+    ) -> NoReturn:
         raise NotImplementedError
 
 
 class TypeScraperMixin:
     @property
-    def search_types(self):
+    def search_types(self) -> tuple[SearchType]:
         return self._search_types
 
     @search_types.setter
-    def search_types(self, search_types):
+    def search_types(self, search_types: tuple[SearchType]) -> None:
         if not all(
                 [
                     search_type in self.search_type_options
@@ -923,12 +721,16 @@ class TypeScraperMixin:
 
     @classmethod
     @abstractmethod
-    def search_type_options(cls):
+    def search_type_options(cls) -> NoReturn:
         """Return the valid search type options for a given repository."""
         raise NotImplementedError
 
 
-class AbstractTermTypeScraper(TermScraperMixin, TypeScraperMixin, AbstractAPIScraper):
+class AbstractTermTypeScraper(
+    TermScraperMixin,
+    TypeScraperMixin,
+    AbstractAPIScraper
+):
     """Base Class for scraping repository APIs based on search term and type.
 
     Parameters
@@ -950,84 +752,22 @@ class AbstractTermTypeScraper(TermScraperMixin, TypeScraperMixin, AbstractAPIScr
     """
 
     def __init__(
-        self,
-        repository_name,
-        search_terms=None,
-        search_types=None,
-        flatten_output=False,
-        credentials=None
-    ):
+            self,
+            repository_name: str,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            search_types: Optional[Collection[SearchType]] = None,
+            flatten_output: bool = False,
+            credentials: Optional[str] = None
+    ) -> None:
         super().__init__(repository_name, flatten_output, credentials)
 
         self.search_terms = search_terms
         self.search_types = search_types
 
-    def run(self, **kwargs):
-        """Queries all data from the implemented API.
-
-        Parameters
-        ----------
-        **kwargs : dict, optional
-            Can temporarily overwrite self attributes and accept save params.
-
-        Returns
-        -------
-        merged_dict/search_dict : dict of pandas.DataFrame
-            Returns merged_dict if metadata is available. This is the output of
-                the merge_search_and_metadata_dicts function.
-            Returns search_dict if metadata is not available. This is the
-                output of get_all_search_outputs.
-
-        Notes
-        -----
-
-        In the following order, this function calls:
-            get_all_search_outputs
-            get_all_metadata (if applicable)
-            merge_search_and_metadata_dicts (if applicable)
-        """
-
-        self.queue.put(f'Running {self.repository_name}...')
-
-        # Get search_output
-        search_dict = self.get_all_search_outputs(**kwargs)
-
-        # Set merge parameters
-        merge_on = vars(self).get('merge_on')
-        merge_right_on = vars(self).get('merge_right_on')
-        merge_left_on = vars(self).get('merge_left_on')
-
-        # Set save parameters
-        save_dir = kwargs.get('save_dir')
-
-        # Try to get metadata (if available)
-        try:
-            metadata_dict = self.get_all_metadata(
-                search_dict=search_dict,
-                **kwargs
-            )
-            merged_dict = self.merge_search_and_metadata_dicts(
-                search_dict=search_dict,
-                metadata_dict=metadata_dict,
-                on=merge_on,
-                left_on=merge_left_on,
-                right_on=merge_right_on
-            )
-            final_dict = merged_dict
-        except (AttributeError, TypeError):
-            # Attribute Error: Tries to call a function that does not exist
-            # TypeError: Tries to call function with incorrect arguments
-            final_dict = search_dict
-
-        if save_dir:
-            self.queue.put(f'Saving output to "{save_dir}".')
-            self.save_dataframes(final_dict, save_dir)
-            self.queue.put('Save complete.')
-
-        self.queue.put(f'{self.repository_name} run complete.')
-        self.continue_running = False
-
-    def get_all_search_outputs(self, **kwargs):
+    def get_all_search_outputs(
+            self,
+            **kwargs: Any
+    ) -> TermTypeResultDict:
         """Queries the API for each search term/type combination.
 
         Parameters
@@ -1065,16 +805,25 @@ class AbstractTermTypeScraper(TermScraperMixin, TypeScraperMixin, AbstractAPIScr
         return search_dict
 
     @abstractmethod
-    def get_individual_search_output(self, search_term, search_type, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_term: SearchTerm,
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> None:
         pass
 
-    def get_all_metadata(self, object_path_dict, **kwargs):
+    def get_all_metadata(
+            self,
+            object_path_dict: dict[SearchTuple, Collection[str]],
+            **kwargs: Any
+    ) -> TermTypeResultDict:
         """Retrieves all metadata that relates to the provided DataFrames.
 
         Parameters
         ----------
         object_path_dict : dict
-            Dictionary of the form {query: object_paths} for list of object paths.
+            Dictionary of the form {query: object_paths} for list of paths.
         **kwargs : dict, optional
             Can temporarily overwrite self flatten_output argument.
 
@@ -1099,7 +848,11 @@ class AbstractTermTypeScraper(TermScraperMixin, TypeScraperMixin, AbstractAPIScr
 
         return metadata_dict
 
-    def get_query_metadata(self, object_paths, **kwargs):
+    def get_query_metadata(
+            self,
+            object_paths: Collection[str],
+            **kwargs: Any
+    ) -> NoReturn:
         raise NotImplementedError
 
 
@@ -1123,22 +876,22 @@ class AbstractTypeScraper(TypeScraperMixin, AbstractAPIScraper):
     """
 
     def __init__(
-        self,
-        repository_name,
-        search_types=None,
-        flatten_output=False,
-        credentials=None
-    ):
+            self,
+            repository_name: str,
+            search_types: Optional[Collection[SearchType]] = None,
+            flatten_output: bool = False,
+            credentials: Optional[str] = None
+    ) -> None:
         super().__init__(repository_name, flatten_output, credentials)
 
         self.search_types = search_types
 
     @property
-    def search_types(self):
+    def search_types(self) -> Collection[SearchType]:
         return self._search_types
 
     @search_types.setter
-    def search_types(self, search_types):
+    def search_types(self, search_types: Collection[SearchType]) -> None:
         if not all(
             [
                 search_type in self.search_type_options
@@ -1152,75 +905,14 @@ class AbstractTypeScraper(TypeScraperMixin, AbstractAPIScraper):
 
     @classmethod
     @abstractmethod
-    def search_type_options(cls):
+    def search_type_options(cls) -> None:
         """Return the valid search type options for a given repository."""
         pass
 
-    def run(self, **kwargs):
-        """Queries all data from the implemented API.
-
-        Parameters
-        ----------
-        **kwargs : dict, optional
-            Can temporarily overwrite self attributes.
-
-        Returns
-        -------
-        merged_dict/search_dict : dict of pandas.DataFrame
-            Returns merged_dict if metadata is available. This is the output of
-                the merge_search_and_metadata_dicts function.
-            Returns search_dict if metadata is not available. This is the
-                output of get_all_search_outputs.
-
-        Notes
-        -----
-        In the following order, this function calls:
-            get_all_search_outputs
-            get_all_metadata (if applicable)
-            merge_search_and_metadata_dicts (if applicable)
-        """
-
-        self.queue.put(f'Running {self.repository_name}...')
-
-        # Get search_output
-        search_dict = self.get_all_search_outputs(**kwargs)
-
-        # Set merge parameters
-        merge_on = vars(self).get('merge_on')
-        merge_right_on = vars(self).get('merge_right_on')
-        merge_left_on = vars(self).get('merge_left_on')
-
-        # Set save parameter
-        save_dir = kwargs.get('save_dir')
-
-        # Try to get metadata (if available)
-        try:
-            metadata_dict = self.get_all_metadata(
-                search_dict=search_dict,
-                **kwargs
-            )
-            merged_dict = self.merge_search_and_metadata_dicts(
-                search_dict=search_dict,
-                metadata_dict=metadata_dict,
-                on=merge_on,
-                left_on=merge_left_on,
-                right_on=merge_right_on
-            )
-            final_dict = merged_dict
-        except (AttributeError, TypeError):
-            # Attribute Error: Tries to call a function that does not exist
-            # TypeError: Tries to call function with incorrect arguments
-            final_dict = search_dict
-
-        if save_dir:
-            self.queue.put(f'Saving output to "{save_dir}".')
-            self.save_dataframes(final_dict, save_dir)
-            self.queue.put('Save complete.')
-
-        self.queue.put(f'{self.repository_name} run complete.')
-        self.continue_running = False
-
-    def get_all_search_outputs(self, **kwargs):
+    def get_all_search_outputs(
+            self,
+            **kwargs: Any
+    ) -> TermResultDict:
         """Queries the API for each search type.
 
         Parameters
@@ -1252,8 +944,17 @@ class AbstractTypeScraper(TypeScraperMixin, AbstractAPIScraper):
         return search_dict
 
     @abstractmethod
-    def get_individual_search_output(self, search_type, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> None:
         pass
 
-    def get_query_metadata(self, object_paths, search_type, **kwargs):
+    def get_query_metadata(
+            self,
+            object_paths: Collection[str],
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> NoReturn:
         raise NotImplementedError

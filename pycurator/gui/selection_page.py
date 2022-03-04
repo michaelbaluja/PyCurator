@@ -1,12 +1,11 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from typing import Any
 from collections.abc import Iterable
+from typing import Any, NoReturn
 
 import pycurator.scrapers
 from pycurator.scrapers import AbstractWebScraper, WebPathScraperMixin
 from pycurator.utils import button_label_frame, select_from_files
-
 from .bases import ViewPage
 
 
@@ -187,7 +186,10 @@ class SelectionPage(ViewPage):
 
         # Get search types, if needed
         if self.controller.model.requirements.get('search_types'):
-            search_type_options = self.controller.model.scraper_class.search_type_options
+            search_type_options = self.controller \
+                .model \
+                .scraper_class. \
+                search_type_options
             search_type_outer_frame = ttk.Frame(self.param_frame)
             search_type_inner_frame = ttk.Frame(search_type_outer_frame)
             search_type_label = ttk.Label(
@@ -207,7 +209,9 @@ class SelectionPage(ViewPage):
                 search_type_button = ttk.Checkbutton(
                     search_type_inner_frame,
                     text=search_type.title(),
-                    variable=self.controller.get_run_parameter('search_types')[search_type]
+                    variable=self.controller.get_run_parameter(
+                        'search_types'
+                    )[search_type]
                 )
                 search_type_button.grid(sticky='w')
 
@@ -248,3 +252,6 @@ class SelectionPage(ViewPage):
             btn.config(state=tk.NORMAL)
         else:
             btn.config(state=tk.DISABLED)
+
+    def reset_frame(self) -> NoReturn:
+        pass

@@ -1,4 +1,5 @@
 import tkinter as tk
+
 from .MVC import CuratorView, CuratorController
 
 
@@ -9,7 +10,7 @@ class ScraperGUI(tk.Tk):
         self.title('PyCurator')
 
         view = CuratorView(self)
-        controller = CuratorController(None, view)
+        controller = CuratorController(view=view)
 
         self.bind('<Return>', controller.request_next_page)
 

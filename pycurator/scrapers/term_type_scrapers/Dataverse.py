@@ -14,6 +14,7 @@ from pycurator.scrapers.base_scrapers import (
     WebPathScraperMixin
 )
 from pycurator.utils import parse_numeric_string, web_utils
+from pycurator.utils.parsing import validate_metadata_parameters
 from pycurator.utils.typing import (
     AttributeDict,
     SearchTerm,
@@ -85,7 +86,9 @@ class DataverseScraper(
         self.headers = dict()
 
         if credentials:
-            self.load_credentials(credential_filepath=credentials)
+            self.credentials = self.load_credentials(
+                credential_filepath=credentials
+            )
 
     @staticmethod
     def accepts_user_credentials() -> bool:
@@ -96,7 +99,7 @@ class DataverseScraper(
     def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('dataset', 'file')
 
-    def load_credentials(self, credential_filepath: str) -> None:
+    def load_credentials(self, credential_filepath: str) -> Union[str, None]:
         """Load the credentials given filepath or token.
 
         Parameters
@@ -104,10 +107,15 @@ class DataverseScraper(
         credential_filepath : str,
             JSON filepath containing credentials in form
             {repository_name}: 'key'.
+
+        Returns
+        -------
+        credentials : str or None
         """
 
-        super().load_credentials(credential_filepath)
-        self.headers['X-Dataverse-key'] = self.credentials
+        credentials = super().load_credentials(credential_filepath)
+        self.headers['X-Dataverse-key'] = credentials
+        return credentials
 
     @AbstractScraper._pb_indeterminate
     def get_individual_search_output(
@@ -375,7 +383,7 @@ class DataverseScraper(
             Metadata for the requested objects.
         """
 
-        object_paths = self.validate_metadata_parameters(object_paths)
+        object_paths = validate_metadata_parameters(object_paths)
 
         metadata_df = pd.DataFrame()
 
