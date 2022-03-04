@@ -1,11 +1,22 @@
+import ast
 import re
+from collections.abc import Collection
+from typing import Any, Optional, Union
 
 import openml
 import pandas as pd
+from flatten_json import flatten
 from selenium.webdriver.remote.errorhandler import InvalidArgumentException
 
-from pycurator.scrapers.base_scrapers import AbstractTypeScraper, AbstractWebScraper
-from pycurator.utils import flatten_nested_df, parse_numeric_string
+from pycurator.scrapers.base_scrapers import (
+    AbstractTypeScraper,
+    AbstractWebScraper
+)
+from pycurator.utils import flatten_nested_df, parse_numeric_string, web_utils
+from pycurator.utils.typing import (
+    SearchType,
+    TypeResultDict
+)
 
 
 class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
@@ -28,11 +39,11 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
     def __init__(
         self,
-        scrape=True,
-        search_types=None,
-        flatten_output=None,
-        credentials=None
-    ):
+        scrape: bool = True,
+        search_types: Optional[Collection[SearchType]] = None,
+        flatten_output: Optional[bool] = None,
+        credentials: Optional[str] = None
+    ) -> None:
 
         self.scrape = scrape
 
@@ -60,73 +71,54 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             openml.config.apikey = credentials
 
     @staticmethod
-    def accepts_user_credentials():
+    def accepts_user_credentials() -> bool:
         return True
 
     @classmethod
     @property
-    def search_type_options(cls):
+    def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('datasets', 'runs', 'tasks', 'evaluations')
 
-    def _get_value_attributes(self, obj):
-        """Returns a list of an object's value-based variables.
+    def _get_evaluations_search_output(self, **kwargs: Any) -> pd.DataFrame:
+        flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
-        Given an object, returns the attributes that are not callable or
-        contain a leading underscore.
-
-        Parameters
-        ----------
-        obj
-
-        Returns
-        -------
-        list
-            Value-based variables for the object given.
-        """
-
-        return [
-            attr for attr in dir(obj)
-            if not hasattr(getattr(obj, attr), '__call__')
-            and not attr.startswith('_')
-        ]
-
-    def _get_evaluations_search_output(self, flatten_output):
         evaluations_measures = openml.evaluations.list_evaluation_measures()
 
         evaluations_df = pd.DataFrame()
 
         # Get evaluation data for each available measure
         for measure in evaluations_measures:
-            evaluations_dict = dict(openml.evaluations.list_evaluations(measure))
-
-            try:
-                # Grab one of the evaluations in order to extract attributes
-                sample_evaluation = next(iter(evaluations_dict.items()))[1]
-            except StopIteration:
-                # Occurs if no results are available for a given measure
-                continue
-
-            # Get list of attributes the evaluation offers
-            evaluations_attributes = self._get_value_attributes(
-                sample_evaluation
+            evaluations_dict = dict(
+                openml.evaluations.list_evaluations(measure)
             )
 
-            for query in evaluations_dict.values():
-                attribute_dict = {
-                    attribute: getattr(query, attribute)
-                    for attribute in evaluations_attributes
-                }
-                evaluations_df = evaluations_df.append(
-                    attribute_dict,
-                    ignore_index=True
-                )
+            # Convert string list array_data to list
+            if evaluations_dict.get('array_data'):
+                try:
+                    evaluations_dict['array_data'] = ast.literal_eval(
+                        evaluations_dict['array_data']
+                    )
+                # Occurs if 'array_data' is already a list
+                except ValueError:
+                    pass
 
             if flatten_output:
-                evaluations_df = flatten_nested_df(evaluations_df)
+                evaluations_dict = flatten(evaluations_dict)
+
+            measure_df = pd.DataFrame(
+                map(
+                    lambda evaluation: evaluation.__dict__,
+                    evaluations_dict.values()
+                )
+            )
+
+            evaluations_df = pd.concat(
+                [evaluations_df, measure_df]
+            ).reset_index(drop=True)
 
         return evaluations_df
 
-    def get_dataset_related_tasks(self, df):
+    def get_dataset_related_tasks(self, df: pd.DataFrame) -> pd.DataFrame:
         """Queries the task/run information related to the provided datasets.
 
         Parameters
@@ -164,23 +156,25 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
             object_dict['openml_url'] = url
 
-            downloads = self.get_single_tag(
-                soup=soup,
-                string=re.compile(self.attr_dict['downloads'])
+            downloads = web_utils.get_tag_value(
+                web_utils.get_single_tag(
+                    soup=soup,
+                    string=re.compile(self.attr_dict['downloads'])
+                )
             )
             downloads = parse_numeric_string(downloads)
             object_dict['num_downloads'], \
                 object_dict['num_unique_downloads'] = downloads
 
-            num_tasks = self._get_tag_value(
-                self._get_parent_tag(
+            num_tasks = web_utils.get_tag_value(
+                web_utils.get_parent_tag(
                     soup=soup,
                     string=re.compile(self.attr_dict['num_tasks'])
                 )
             )
             num_tasks = parse_numeric_string(num_tasks, cast=True)
 
-            task_tags = self._get_parent_sibling_tags(
+            task_tags = web_utils.get_parent_sibling_tags(
                 soup=soup,
                 string=re.compile(self.attr_dict['num_tasks']),
                 limit=num_tasks
@@ -214,7 +208,11 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         return search_df
 
-    def get_individual_search_output(self, search_type, **kwargs):
+    def get_individual_search_output(
+            self,
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Returns information about all queried information types on OpenML.
 
         Parameters
@@ -242,7 +240,9 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         self.queue.put(f'Querying {search_type}...')
 
         if search_type == 'evaluations':
-            return self._get_evaluations_search_output(flatten_output)
+            return self._get_evaluations_search_output(
+                flatten_output=flatten_output
+            )
 
         # Use query type to get necessary openml api functions
         base_command = getattr(openml, search_type)
@@ -274,7 +274,12 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         return search_df
 
-    def get_query_metadata(self, object_paths, search_type, **kwargs):
+    def get_query_metadata(
+            self,
+            object_paths: Union[str, Collection[str]],
+            search_type: SearchType,
+            **kwargs: Any
+    ) -> pd.DataFrame:
         """Retrieves the metadata for the file/files listed in object_paths.
 
         Parameters
@@ -309,20 +314,12 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         for object_path in object_paths:
             self._update_query_ref(object_name=object_path)
             try:
-                queries.append(get_query(object_path))
-            except TypeError:
+                query = get_query(object_path).__dict__
+                queries.append(query)
+            except openml.exceptions.OpenMLServerException:
                 error_queries.append(object_path)
 
-        query_attributes = self._get_value_attributes(queries[0])
-
-        metadata_df = pd.DataFrame(columns=query_attributes)
-
-        for query in queries:
-            attribute_dict = {
-                attribute: getattr(query, attribute)
-                for attribute in query_attributes
-            }
-            metadata_df = metadata_df.append(attribute_dict, ignore_index=True)
+        metadata_df = pd.DataFrame(queries)
 
         if flatten_output:
             metadata_df = flatten_nested_df(metadata_df)
@@ -335,7 +332,11 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         return metadata_df
 
-    def get_all_metadata(self, search_dict, **kwargs):
+    def get_all_metadata(
+            self,
+            search_dict: TypeResultDict,
+            **kwargs: Any
+    ) -> TypeResultDict:
         """Retrieves all metadata that relates to the provided DataFrames.
 
         Parameters
@@ -361,7 +362,9 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             elif query == 'tasks':
                 id_name = 'tid'
             else:
-                raise ValueError(f'Query \'{query}\' is not a valid search_type.')
+                raise ValueError(
+                    f'Query \'{query}\' is not a valid search_type.'
+                )
 
             object_paths = df[id_name].values
 
