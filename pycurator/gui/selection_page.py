@@ -86,7 +86,7 @@ class SelectionPage(ViewPage):
             command=self.controller.parse_run_parameters
         )
 
-        # Get save location
+        # Get save information
         button_label_frame(
             root=self.param_frame,
             label_text='Save Directory:',
@@ -96,6 +96,25 @@ class SelectionPage(ViewPage):
                 selection_type='save_dir'
             )
         )
+
+        self.controller.add_run_parameter('save_csv', tk.BooleanVar())
+        self.controller.add_run_parameter('save_json', tk.BooleanVar())
+
+        save_type_frame = tk.Frame(self.param_frame)
+        csv_button = tk.Checkbutton(
+            master=save_type_frame,
+            text='CSV',
+            variable=self.controller.get_run_parameter('save_csv')
+        )
+        json_button = tk.Checkbutton(
+            master=save_type_frame,
+            text='JSON',
+            variable=self.controller.get_run_parameter('save_json')
+        )
+
+        csv_button.grid(row=0, column=0)
+        json_button.grid(row=0, column=1)
+        save_type_frame.grid()
 
         # Get credentials
         if self.controller.model.scraper_class.accepts_user_credentials():

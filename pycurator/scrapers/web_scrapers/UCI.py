@@ -1,4 +1,3 @@
-import os
 import re
 from collections.abc import Collection
 from typing import Any, Union
@@ -122,10 +121,12 @@ class UCIScraper(AbstractWebScraper):
             Can temporarily overwrite self attributes.
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
+        self.queue.put(f'Running {self.repository_name}...')
 
+        # Set save parameters
         save_dir = kwargs.get('save_dir')
-        repo_name = self.repository_name
+        save_csv = kwargs.get('save_csv')
+        save_json = kwargs.get('save_json')
 
         dataset_ids = self.get_dataset_ids(
             dataset_list_url=self.dataset_list_url,
@@ -134,14 +135,24 @@ class UCIScraper(AbstractWebScraper):
 
         dataset_df = self.get_all_page_data(
             page_ids=dataset_ids,
-            flatten_output=flatten_output
         )
 
-        if save_dir:
-            output_filename = os.path.join(save_dir, f'{repo_name}.json')
-            self.queue.put(f'Saving output to "{output_filename}.')
-            save_results(dataset_df, output_filename)
-            self.queue.put('Save complete.')
+        results_dict = {'datasets': dataset_df}
+
+        self.queue.put(f'Saving output to "{save_dir}.')
+        if save_csv:
+            save_results(
+                results_dict,
+                save_dir,
+                extension='csv'
+            )
+        if save_json:
+            save_results(
+                results_dict,
+                save_dir,
+                extension='json'
+            )
+        self.queue.put('Save complete.')
 
         self.queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False

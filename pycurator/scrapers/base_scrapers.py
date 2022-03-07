@@ -307,6 +307,27 @@ class AbstractAPIScraper(AbstractScraper):
             'Subclass must implement "accepts_user_credentials()".'
         )
 
+    @staticmethod
+    def _all_empty(data_dict: QueryResultDict) -> bool:
+        """Check if all DataFrames are empty.
+
+        Parameters
+        ----------
+        data_dict : dict from search params to pandas.DataFrame.
+
+        Returns
+        -------
+        all_empty : bool
+        """
+
+        all_empty = False
+
+        for df in data_dict.values():
+            if df is None or df.empty:
+                all_empty = True
+
+        return all_empty
+
     def run(self, **kwargs: Any) -> None:
         """Queries all data from the implemented API.
 
@@ -333,8 +354,10 @@ class AbstractAPIScraper(AbstractScraper):
         merge_right_on = vars(self).get('merge_right_on')
         merge_left_on = vars(self).get('merge_left_on')
 
-        # Set save parameter
+        # Set save parameters
         save_dir = kwargs.get('save_dir')
+        save_csv = kwargs.get('save_csv')
+        save_json = kwargs.get('save_json')
 
         # Try to get metadata (if available)
         try:
@@ -355,10 +378,24 @@ class AbstractAPIScraper(AbstractScraper):
             # TypeError: Tries to call function with incorrect arguments
             final_dict = search_dict
 
-        if save_dir:
+        # Handle saving if output exists
+        if not self._all_empty(final_dict):
             self.queue.put(f'Saving output to "{save_dir}".')
-            pycurator.utils.save_dataframes(final_dict, save_dir)
+            if save_csv:
+                pycurator.utils.save_results(
+                    final_dict,
+                    save_dir,
+                    extension='csv'
+                )
+            if save_json:
+                pycurator.utils.save_results(
+                    final_dict,
+                    save_dir,
+                    extension='json'
+                )
             self.queue.put('Save complete.')
+        else:
+            self.queue.put('No results found, nothing to save.')
 
         self.queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False
@@ -676,7 +713,7 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
 
         Returns
         -------
-        metadata_dict : dict of pandas.DataFrame
+        metadata_dict : dict of {SearchTerm: pd.DataFrame}
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
@@ -829,7 +866,7 @@ class AbstractTermTypeScraper(
 
         Returns
         -------
-        metadata_dict : dict of pandas.DataFrame
+        metadata_dict : dict of {(SearchTerm, SearchType): pd.DataFrame}
         """
 
         flatten_output = kwargs.get('flatten_output', self.flatten_output)
