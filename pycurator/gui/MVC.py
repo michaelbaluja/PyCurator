@@ -133,10 +133,13 @@ class CuratorController:
 
         if isinstance(param_var, dict):
             return [key for key, val in param_var.items() if val.get()]
+        elif isinstance(param_var, str):
+            return param_var
 
         try:
             return param_var.get()
         except AttributeError:
+            print(param_var)
             raise ValueError(
                 f'Param "{param_name} not present in '
                 f'"{self.model.scraper_name}".'
