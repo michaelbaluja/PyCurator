@@ -13,13 +13,14 @@ from .parsing import _validate_save_filename
 T = TypeVar('T')
 
 
-def save_dataframes(results: dict, data_dir: str) -> None:
+def save_results(results: dict, data_dir: str, extension: str) -> None:
     """Export DataFrame objects to json file in specified directory.
 
     Parameters
     ----------
     results : dict
     data_dir : str
+    extension : {'csv', 'json'}
 
     Raises
     ------
@@ -35,26 +36,30 @@ def save_dataframes(results: dict, data_dir: str) -> None:
         raise TypeError(
             f'data_dir must of type str, not \'{type(data_dir)}\'.'
         )
+    if extension not in ('csv', 'json'):
+        raise ValueError(
+            f'extension must be either csv or json, not \'{extension}\'.'
+        )
 
     if not os.path.isdir(data_dir):
         os.makedirs(data_dir)
 
     for query, df in results.items():
         if isinstance(query, str):
-            output_filename = f'{query}.json'
+            output_filename = f'{query}.{extension}'
         else:
             search_term, search_type = query
-            output_filename = f'{search_term}_{search_type}.json'
+            output_filename = f'{search_term}_{search_type}.{extension}'
 
         output_filename = _validate_save_filename(output_filename)
 
-        save_results(
+        save_dataframe(
             results=df,
             filepath=os.path.join(data_dir, output_filename)
         )
 
 
-def save_results(results: pd.DataFrame, filepath: str) -> None:
+def save_dataframe(results: pd.DataFrame, filepath: str) -> None:
     """Saves the specified results to the file provided.
 
     Parameters
@@ -72,12 +77,20 @@ def save_results(results: pd.DataFrame, filepath: str) -> None:
         If a non-dataframe object is passed.
     """
 
-    if isinstance(results, pd.DataFrame):
-        results.to_json(filepath)
-    else:
+    if not isinstance(results, pd.DataFrame):
         raise ValueError(
             f'Input must be of type pandas.DataFrame, not'
             f' \'{type(results)}\'.'
+        )
+
+    if filepath.endswith('csv'):
+        results.to_csv(filepath)
+    elif filepath.endswith('json'):
+        results.to_json(filepath)
+    else:
+        raise ValueError(
+            f'\'{filepath}\' is not supported.'
+            'Data can only be saved to json or csv.'
         )
 
 
