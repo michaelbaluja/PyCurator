@@ -129,15 +129,6 @@ class SelectionPage(ViewPage):
                 )
             )
 
-        # Get flatten_output value
-        self.controller.add_run_parameter('flatten_output', tk.IntVar())
-        flatten_check = ttk.Checkbutton(
-            self.param_frame,
-            text='Flatten Output',
-            variable=self.controller.get_run_parameter('flatten_output')
-        )
-        flatten_check.grid(column=0, sticky='w')
-
         # If repo utilizes web scraping, get path file
         if issubclass(self.controller.model.scraper_class, AbstractWebScraper):
             path_dict_frame = ttk.Frame(self.param_frame)
@@ -259,7 +250,7 @@ class SelectionPage(ViewPage):
             return
 
         # Validate input
-        if hasattr(toggle_vars, 'get') and not hasattr(toggle_vars, '__iter__'):
+        if isinstance(toggle_vars, tk.Variable):
             toggle_vars = [toggle_vars]
         if not all([hasattr(var, 'get') for var in toggle_vars]):
             raise TypeError(

@@ -1,11 +1,10 @@
 import os
 import re
 from collections.abc import Collection
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import bs4
 import pandas as pd
-from flatten_json import flatten
 
 from pycurator.scrapers.base_scrapers import (
     AbstractScraper,
@@ -45,9 +44,6 @@ class DataverseScraper(
     search_types : list-like, optional (default=None)
         Data types to search over. Can be (re)set via set_search_types() or
         passed in directly to search functions to override set parameter.
-    flatten_output : bool, optional (default=None)
-        Flag for specifying if nested output should be flattened. Can be passed
-        in directly to functions to override set parameter.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
@@ -58,7 +54,6 @@ class DataverseScraper(
         scrape: bool = True,
         search_terms: Optional[Collection[SearchTerm]] = None,
         search_types: Optional[Collection[SearchType]] = None,
-        flatten_output: Optional[bool] = None,
         credentials: Optional[str] = None,
     ) -> None:
 
@@ -68,8 +63,7 @@ class DataverseScraper(
             self,
             repository_name='dataverse',
             search_terms=search_terms,
-            search_types=search_types,
-            flatten_output=flatten_output
+            search_types=search_types
         )
 
         if self.scrape:
@@ -121,8 +115,7 @@ class DataverseScraper(
     def get_individual_search_output(
             self,
             search_term: SearchTerm,
-            search_type: SearchType,
-            **kwargs: Any
+            search_type: SearchType
     ) -> pd.DataFrame:
         """Scrapes Dataverse API for the specified search term and type.
 
@@ -130,8 +123,6 @@ class DataverseScraper(
         ----------
         search_term : str
         search_type : {'dataset', 'file'}
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -145,7 +136,6 @@ class DataverseScraper(
             Invalid search_type provided.
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         search_url = f'{self.api_url}/search'
         search_type_options = self.search_type_options
 
@@ -183,9 +173,6 @@ class DataverseScraper(
 
         while output.get('items'):
             output = output['items']
-
-            if flatten_output:
-                output = [flatten(result) for result in output]
 
             output_df = pd.DataFrame(output)
             output_df['page'] = (
@@ -406,8 +393,7 @@ class DataverseScraper(
 
     def get_all_metadata(
             self,
-            search_dict: TermTypeResultDict,
-            **kwargs: Any
+            search_dict: TermTypeResultDict
     ) -> TermTypeResultDict:
         """Retrieves all metadata that relates to the provided DataFrames.
 
@@ -415,8 +401,6 @@ class DataverseScraper(
         ----------
         search_dict : dict
             Dictionary of DataFrames from get_all_search_outputs.
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------

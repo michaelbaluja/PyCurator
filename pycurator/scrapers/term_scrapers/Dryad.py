@@ -4,7 +4,6 @@ from time import sleep
 from typing import Any, Optional, Union
 
 import pandas as pd
-from flatten_json import flatten
 
 from pycurator.scrapers.base_scrapers import (
     AbstractScraper,
@@ -30,9 +29,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
     search_terms : list-like, optional
         Terms to search over. Can be (re)set via set_search_terms() or passed
         in directly to search functions.
-    flatten_output : bool, optional (default=None)
-        Flag for specifying if nested output should be flattened. Can be passed
-        in directly to functions to override set parameter.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
@@ -41,7 +37,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         self,
         scrape: bool = True,
         search_terms: Optional[Collection[SearchTerm]] = None,
-        flatten_output: Optional[bool] = None,
         credentials: Optional[bool] = None,
     ) -> None:
         self.scrape = scrape
@@ -50,8 +45,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             self,
             repository_name='dryad',
             search_terms=search_terms,
-            credentials=credentials,
-            flatten_output=flatten_output
+            credentials=credentials
         )
 
         if self.scrape:
@@ -80,7 +74,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         self,
         search_url: str,
         search_params: Any,
-        flatten_output: bool,
         print_progress: bool = False,
         delim: Optional[str] = None
     ) -> pd.DataFrame:
@@ -93,8 +86,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             Contains parameters to pass to requests.get({params}). Most common
             include search term 'q', and page index 'page'. For full details,
             see below.
-        flatten_output : bool
-            If True, nested columns are flattened into individual columns.
         print_progress : bool, optional (default=False)
             If True, updates on query page progress is sent to object queue
             to be displayed in UI window.
@@ -148,9 +139,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             if delim:
                 output = output[delim]
 
-            if flatten_output:
-                output = [flatten(result) for result in output]
-
             output_df = pd.DataFrame(output)
             output_df['page'] = search_params['page']
 
@@ -173,16 +161,13 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
     def get_individual_search_output(
             self,
-            search_term: SearchTerm,
-            **kwargs: Any
+            search_term: SearchTerm
     ) -> pd.DataFrame:
         """Returns information about all datasets from Data Dryad.
 
         Parameters
         ----------
         search_term : str
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -193,8 +178,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         TypeError
             Incorrect search_term type.
         """
-
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
         if not isinstance(search_term, str):
             raise TypeError(
@@ -208,7 +191,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         search_df = self._conduct_search_over_pages(
             search_url=search_url,
             search_params=search_params,
-            flatten_output=flatten_output,
             print_progress=True,
             delim='stash:datasets'
         )
@@ -241,8 +223,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         Parameters
         ----------
         object_paths : str or collection of str
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -254,7 +234,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             If no object paths are provided.
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         object_paths = validate_metadata_parameters(object_paths)
 
         start_page = 1
@@ -267,7 +246,6 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             object_df = self._conduct_search_over_pages(
                 search_url,
                 search_params,
-                flatten_output,
                 delim='stash:files',
                 print_progress=False
             )
@@ -344,28 +322,17 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         return search_df
 
     def _extract_version_ids(self, df: pd.DataFrame) -> pd.DataFrame:
-        if self.flatten_output:
-            return df['_links_stash:versions_href'].apply(
-                lambda row: row.split('/')[-1]
-            )
-        else:
-            return df['_links'].apply(
-                lambda row: row['stash:version']['href'].split('/')[-1]
-            )
+        return df['_links'].apply(
+            lambda row: row['stash:version']['href'].split('/')[-1]
+        )
 
-    def get_all_metadata(
-            self,
-            search_dict: TermResultDict,
-            **kwargs: Any
-    ) -> TermResultDict:
+    def get_all_metadata(self, search_dict: TermResultDict) -> TermResultDict:
         """Retrieves all metadata that relates to the provided DataFrames.
 
         Parameters
         ----------
         search_dict : dict
             Dictionary of DataFrames from get_all_search_outputs.
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -378,8 +345,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         }
 
         metadata_dict = super().get_all_metadata(
-            object_path_dict=object_path_dict,
-            **kwargs
+            object_path_dict=object_path_dict
         )
 
         return metadata_dict

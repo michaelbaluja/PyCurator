@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
-from typing import Any, Iterable, TypeVar
+from typing import Any, TypeVar
 
 import pandas as pd
 
@@ -109,11 +109,6 @@ def button_label_frame(
     _frame.grid(sticky='w', columnspan=2)
 
 
-def is_nested(col: Iterable[T]) -> bool:
-    """Given an iterable, returns True if any item is a dictionary or list."""
-    return any([True for x in col if isinstance(x, (dict, list))])
-
-
 def select_from_files(
         root: pycurator.gui.bases.ViewPage,
         selection_type: str,
@@ -171,74 +166,3 @@ def select_from_files(
         raise NotImplementedError(
             f'{root} must contain add_run_parameter() attribute.'
         )
-
-
-def expand_series(series: pd.Series) -> pd.DataFrame:
-    """Given a Series of nested data, returns unnested data as DataFrame.
-
-    Parameters
-    ----------
-    series : pandas.Series
-        Data to be unnested.
-
-    Returns
-    -------
-    col_expand : pandas.DataFrame
-        Column expanded to DataFrame.
-    """
-
-    # Ensure variable is of proper type
-    try:
-        assert isinstance(series, pd.Series)
-    except AssertionError:
-        raise ValueError(
-            f'series must be of type pandas.Series, not \'{type(series)}\'.'
-        )
-
-    # Expand column
-    col_expand = series.apply(pd.Series).dropna(axis=1, how='all')
-    col_name = series.name
-
-    # Rename expanded columns to clarify source
-    # add source column name prefix to each new column to identify source
-    col_expand_names = [
-        f'{col_name}_{nested_col}' for nested_col in col_expand.columns
-    ]
-    # rename columns
-    col_expand.columns = col_expand_names
-
-    return col_expand
-
-
-def flatten_nested_df(df: pd.DataFrame) -> pd.DataFrame:
-    """Takes in a DataFrame and flattens any nested columns.
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-
-    Returns
-    -------
-    pandas.DataFrame
-    """
-    # If the df is empty, then we want to return
-    if df.empty:
-        return df
-    # If the df is a Series, convert to DataFrame
-    if isinstance(df, pd.Series):
-        df = pd.DataFrame(df)
-    # If there's only one column & it's not nested, return it
-    if df.shape[1] == 1:
-        if not is_nested(df.iloc[:, 0]):
-            return df
-
-    # Slice the first column off of the DataFrame
-    first_col, df = df.iloc[:, 0], df.iloc[:, 1:]
-
-    # If the first column is nested, unnest it
-    if is_nested(first_col):
-        first_col = expand_series(first_col)
-
-    # Want to flatten the first column again (in case nested) and
-    # combine with the rest of the flattened df
-    return flatten_nested_df(first_col).join(flatten_nested_df(df))

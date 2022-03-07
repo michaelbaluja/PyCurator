@@ -3,7 +3,6 @@ from collections.abc import Collection
 from typing import Any, Optional, Iterable, NoReturn
 
 import pandas as pd
-from flatten_json import flatten
 
 from pycurator.scrapers.base_scrapers import (
     AbstractScraper,
@@ -20,9 +19,6 @@ class ZenodoScraper(AbstractTermScraper):
     search_terms : list-like, optional
         Terms to search over. Can be (re)set via set_search_terms() or passed
         in directly to search functions.
-    flatten_output : bool, optional (default=None)
-        Flag for specifying if nested output should be flattened. Can be passed
-        in directly to functions to override set parameter.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
@@ -30,10 +26,9 @@ class ZenodoScraper(AbstractTermScraper):
     def __init__(
         self,
         search_terms: Optional[Collection[SearchTerm]] = None,
-        flatten_output: Optional[bool] = None,
         credentials: Optional[bool] = None
     ) -> None:
-        super().__init__('zenodo', search_terms, flatten_output, credentials)
+        super().__init__('zenodo', search_terms, credentials)
         self.base_url = 'https://zenodo.org/api/records'
 
     @staticmethod
@@ -43,16 +38,13 @@ class ZenodoScraper(AbstractTermScraper):
     @AbstractScraper._pb_indeterminate
     def get_individual_search_output(
             self,
-            search_term: Collection[SearchTerm],
-            **kwargs: Any
+            search_term: Collection[SearchTerm]
     ) -> pd.DataFrame:
         """Returns information about all records from Zenodo.
 
         Parameters
         ----------
         search_term : str
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -74,8 +66,6 @@ class ZenodoScraper(AbstractTermScraper):
                 'search_term must be of type str, not'
                 f' \'{type(search_term)}\'.'
             )
-
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
 
         search_year = 2021
         search_df = pd.DataFrame()
@@ -111,9 +101,6 @@ class ZenodoScraper(AbstractTermScraper):
                 output.get('hits').get('hits')
             ):
                 output = output['hits']['hits']
-
-                if flatten_output:
-                    output = [flatten(result) for result in output]
 
                 output_df = pd.DataFrame(output)
                 output_df['page'] = search_params['page']
@@ -152,11 +139,7 @@ class ZenodoScraper(AbstractTermScraper):
 
         return search_df
 
-    def get_query_metadata(
-            self,
-            object_paths: Iterable[Any],
-            **kwargs: Any
-    ) -> NoReturn:
+    def get_query_metadata(self, object_paths: Iterable[Any]) -> NoReturn:
         raise NotImplementedError(
             'Zenodo does not provide object metadata'
         )

@@ -5,7 +5,6 @@ from typing import Any, Union
 import bs4
 import pandas as pd
 import selenium.webdriver.support.expected_conditions as ec
-from flatten_json import flatten
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -30,28 +29,23 @@ class UCIScraper(AbstractWebScraper):
 
     Parameters
     ----------
-    flatten_output : bool, optional (default=False)
-        Flag for specifying if nested output should be flattened. Can be passed
-        in directly to functions to override set parameter.
     **kwargs : dict, optional
         Allows user to overwrite hardcoded data
     """
 
-    def __init__(
-        self,
-        flatten_output: bool = False,
-        **kwargs: Any
-    ) -> None:
+    def __init__(self, **kwargs) -> None:
 
-        super().__init__(
-            repository_name='uci',
-            flatten_output=flatten_output
+        super().__init__(repository_name='uci')
+
+        self.base_url = kwargs.get(
+            'base_url',
+            'https://archive-beta.ics.uci.edu/ml/datasets'
         )
 
-        self.base_url = 'https://archive-beta.ics.uci.edu/ml/datasets'
-
-        self.dataset_list_url = f'{self.base_url}?&p%5Boffset%5D=0&p%5Blimit' \
-            '%5D=591&p%5BorderBy%5D=NumHits&p%5Border%5D=desc'
+        self.dataset_list_url = kwargs.get(
+            'dataset_list_url',
+            f'{self.base_url}?&p%5Boffset%5D=0&p%5Blimit%5D=591&p%5BorderBy%5D=NumHits&p%5Border%5D=desc'  # noqa E501
+        )
 
         # Set scrape attribute dicts
         self.parent_attr_dict = {
@@ -124,9 +118,9 @@ class UCIScraper(AbstractWebScraper):
         self.queue.put(f'Running {self.repository_name}...')
 
         # Set save parameters
-        save_dir = kwargs.get('save_dir')
-        save_csv = kwargs.get('save_csv')
-        save_json = kwargs.get('save_json')
+        save_dir = kwargs.pop('save_dir', None)
+        save_csv = kwargs.pop('save_csv', False)
+        save_json = kwargs.pop('save_json', False)
 
         dataset_ids = self.get_dataset_ids(
             dataset_list_url=self.dataset_list_url,
@@ -207,20 +201,6 @@ class UCIScraper(AbstractWebScraper):
             results['num_views'] = parse_numeric_string(num_views)
 
         return results
-
-    def is_external(self, soup: bs4.BeautifulSoup) -> bool:
-        """Returns if the dataset is externally-hosted.
-
-        Parameters
-        ----------
-        soup : BeautifulSoup
-
-        Returns
-        -------
-        bool
-        """
-
-        return bool(soup.find('span', string='EXTERNAL'))
 
     @AbstractScraper._pb_indeterminate
     def get_dataset_ids(
@@ -336,7 +316,6 @@ class UCIScraper(AbstractWebScraper):
         self,
         url: str,
         clean: bool = True,
-        flatten_output: bool = False,
     ) -> AttributeDict:
         """Returns all data from the requested page.
 
@@ -344,8 +323,6 @@ class UCIScraper(AbstractWebScraper):
         ----------
         url : str
         clean : bool, optional (default=True)
-        flatten_output : bool, optional (default=False)
-            Flag for specifying if nested output should be flattened.
 
         Returns
         -------
@@ -389,8 +366,14 @@ class UCIScraper(AbstractWebScraper):
         result_dict = self._get_attribute_values(soup)
         result_dict['url'] = self.driver.current_url
 
+        is_external = web_utils.get_single_tag_from_tag_info(
+            soup,
+            'span',
+            string='EXTERNAL'
+        )
+
         # Get file info
-        if not self.is_external(soup):
+        if not is_external:
             try:
                 self.driver.find_element_by_link_text('Download').click()
             except NoSuchElementException:
@@ -414,16 +397,12 @@ class UCIScraper(AbstractWebScraper):
         if clean:
             result_dict = self._clean_results(result_dict)
 
-        if flatten_output:
-            result_dict = flatten(result_dict)
-
         return result_dict
 
     def get_all_page_data(
         self,
         page_ids: Collection[str],
-        clean: bool = True,
-        flatten_output: bool = False
+        clean: bool = True
     ) -> pd.DataFrame:
         """Returns data for all pages for the requested base url.
 
@@ -432,8 +411,6 @@ class UCIScraper(AbstractWebScraper):
         page_ids : list-like
             dataset ids to use for pulling up each page.
         clean : bool, optional (default=True)
-        flatten_output : bool, optional (default=False)
-            Flag for specifying if nested output should be flattened.
 
         Returns
         -------
@@ -449,8 +426,7 @@ class UCIScraper(AbstractWebScraper):
 
             results = self.get_individual_page_data(
                 url=url,
-                clean=clean,
-                flatten_output=flatten_output
+                clean=clean
             )
             dataset_df = dataset_df.append(results, ignore_index=True)
 
