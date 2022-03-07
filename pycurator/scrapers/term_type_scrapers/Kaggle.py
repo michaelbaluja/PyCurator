@@ -1,10 +1,9 @@
 import json
 import os
 from collections.abc import Collection
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import pandas as pd
-from flatten_json import flatten
 from kaggle import KaggleApi
 from kaggle.rest import ApiException
 
@@ -32,9 +31,6 @@ class KaggleScraper(AbstractTermTypeScraper):
     search_types : list-like, optional (default=None)
         Data types to search over. Can be (re)set via set_search_types() or
         passed in directly to search functions to override set parameter.
-    flatten_output : bool, optional (default=None)
-        Flag for specifying if nested output should be flattened. Can be passed
-        in directly to functions to override set parameter.
 
     Notes
     -----
@@ -45,15 +41,13 @@ class KaggleScraper(AbstractTermTypeScraper):
     def __init__(
         self,
         search_terms: Optional[Collection[SearchTerm]] = None,
-        search_types: Optional[Collection[SearchType]] = None,
-        flatten_output: Optional[bool] = None
+        search_types: Optional[Collection[SearchType]] = None
     ) -> None:
 
         super().__init__(
             repository_name='kaggle',
             search_terms=search_terms,
-            search_types=search_types,
-            flatten_output=flatten_output
+            search_types=search_types
         )
 
         self.api = KaggleApi()
@@ -74,7 +68,6 @@ class KaggleScraper(AbstractTermTypeScraper):
             self,
             search_term: SearchTerm,
             search_type: SearchType,
-            **kwargs: Any
     ) -> pd.DataFrame:
         """Calls the Kaggle API for the specified search term and type.
 
@@ -82,8 +75,6 @@ class KaggleScraper(AbstractTermTypeScraper):
         ----------
         search_term : str
         search_type : {'datasets', 'kernels'}
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -97,7 +88,6 @@ class KaggleScraper(AbstractTermTypeScraper):
             Invalid search_type provided.
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         search_type_options = self.search_type_options
 
         # Validate input
@@ -124,8 +114,6 @@ class KaggleScraper(AbstractTermTypeScraper):
 
             if search_type == 'kernels':
                 output = [vars(result) for result in output]
-            if flatten_output:
-                output = [flatten(result) for result in output]
 
             output_df = pd.DataFrame(output)
             output_df['page'] = page_idx
@@ -153,7 +141,7 @@ class KaggleScraper(AbstractTermTypeScraper):
     def _retrieve_object_json(
             self,
             object_path: str,
-            **kwargs: Any
+            data_path: Optional[str] = f'data{os.sep}'
     ) -> Union[JSONDict, None]:
         """Queries Kaggle for metadata json file & returns as a dict.
 
@@ -162,8 +150,6 @@ class KaggleScraper(AbstractTermTypeScraper):
         object_path : str
         data_path : str, optional (default='data/')
             Location to save metadata to.
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -178,9 +164,6 @@ class KaggleScraper(AbstractTermTypeScraper):
         --------
         kaggle
         """
-
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
-        data_path = kwargs.get('data_path', f'data{os.sep}')
 
         if not self.continue_running:
             self.terminate()
@@ -200,38 +183,29 @@ class KaggleScraper(AbstractTermTypeScraper):
 
             os.remove(metadata_file_path)
 
-            if flatten_output:
-                json_data = flatten(json_data)
-
             return json_data
 
     def get_query_metadata(
             self,
             object_paths: Collection[str],
-            **kwargs: Any
     ) -> pd.DataFrame:
         """Retrieves the metadata for the objects referenced in object_paths.
 
         Parameters
         ----------
         object_paths : str or list-like of str
-        **kwargs : dict, optional
 
         Returns
         -------
         metadata_df : pandas.DataFrame
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         object_paths = validate_metadata_parameters(object_paths)
 
         metadata_df = pd.DataFrame()
 
         for object_path in self._pb_determinate(object_paths):
-            json_data = self._retrieve_object_json(
-                object_path,
-                flatten_output=flatten_output
-            )
+            json_data = self._retrieve_object_json(object_path)
 
             metadata_df = metadata_df.append(json_data, ignore_index=True)
 
@@ -241,17 +215,14 @@ class KaggleScraper(AbstractTermTypeScraper):
 
     def get_all_metadata(
             self,
-            search_dict: TermTypeResultDict,
-            **kwargs
-    ):
+            search_dict: TermTypeResultDict
+    ) -> TermTypeResultDict:
         """Retrieves all related metadata for the provided DataFrames.
 
         Parameters
         ----------
         search_dict : dict of pandas.DataFrames
             Output from get_all_search_outputs function.
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -260,7 +231,6 @@ class KaggleScraper(AbstractTermTypeScraper):
             metadata_dict[(search_term, search_type)] = df.
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         object_path_dict = dict()
 
         for query, df in search_dict.items():
@@ -270,9 +240,6 @@ class KaggleScraper(AbstractTermTypeScraper):
                 object_paths = df.id.values
                 object_path_dict[query] = object_paths
 
-        metadata_dict = super().get_all_metadata(
-            object_path_dict,
-            flatten_output=flatten_output
-        )
+        metadata_dict = super().get_all_metadata(object_path_dict)
 
         return metadata_dict

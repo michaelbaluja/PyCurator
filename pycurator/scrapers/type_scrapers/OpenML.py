@@ -1,18 +1,17 @@
 import ast
 import re
 from collections.abc import Collection
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import openml
 import pandas as pd
-from flatten_json import flatten
 from selenium.webdriver.remote.errorhandler import InvalidArgumentException
 
 from pycurator.scrapers.base_scrapers import (
     AbstractTypeScraper,
     AbstractWebScraper
 )
-from pycurator.utils import flatten_nested_df, parse_numeric_string, web_utils
+from pycurator.utils import parse_numeric_string, web_utils
 from pycurator.utils.parsing import validate_metadata_parameters
 from pycurator.utils.typing import (
     SearchType,
@@ -31,9 +30,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
     search_types : list-like, optional
         Types to search over. Can be (re)set via set_search_types() or passed
         in directly to search functions.
-    flatten_output : bool, optional (default=None)
-        Flag for specifying if nested output should be flattened. Can be passed
-        in directly to functions to override set parameter.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
@@ -42,7 +38,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         self,
         scrape: bool = True,
         search_types: Optional[Collection[SearchType]] = None,
-        flatten_output: Optional[bool] = None,
         credentials: Optional[str] = None
     ) -> None:
 
@@ -51,8 +46,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         AbstractTypeScraper.__init__(
             self,
             repository_name='openml',
-            search_types=search_types,
-            flatten_output=flatten_output
+            search_types=search_types
         )
 
         if self.scrape:
@@ -80,11 +74,8 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
     def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('datasets', 'runs', 'tasks', 'evaluations')
 
-    def _get_evaluations_search_output(self, **kwargs: Any) -> pd.DataFrame:
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
-
+    def _get_evaluations_search_output(self) -> pd.DataFrame:
         evaluations_measures = openml.evaluations.list_evaluation_measures()
-
         evaluations_df = pd.DataFrame()
 
         # Get evaluation data for each available measure
@@ -102,9 +93,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
                 # Occurs if 'array_data' is already a list
                 except ValueError:
                     pass
-
-            if flatten_output:
-                evaluations_dict = flatten(evaluations_dict)
 
             measure_df = pd.DataFrame(
                 map(
@@ -211,16 +199,13 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
     def get_individual_search_output(
             self,
-            search_type: SearchType,
-            **kwargs: Any
+            search_type: SearchType
     ) -> pd.DataFrame:
         """Returns information about all queried information types on OpenML.
 
         Parameters
         ----------
         search_type : {'datasets', 'runs', 'tasks', 'evaluations'}
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -232,7 +217,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             Incorrect search_type provided.
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         search_type_options = self.search_type_options
 
         if search_type not in search_type_options:
@@ -241,9 +225,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         self.queue.put(f'Querying {search_type}...')
 
         if search_type == 'evaluations':
-            return self._get_evaluations_search_output(
-                flatten_output=flatten_output
-            )
+            return self._get_evaluations_search_output()
 
         # Use query type to get necessary openml api functions
         base_command = getattr(openml, search_type)
@@ -268,9 +250,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             self._update_query_ref(page=index)
             search_results = list_queries(offset=(index * size), size=size)
 
-        if flatten_output:
-            search_df = flatten_nested_df(search_df)
-
         self.queue.put(f'{search_type} search complete.')
 
         return search_df
@@ -278,8 +257,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
     def get_query_metadata(
             self,
             object_paths: Union[str, Collection[str]],
-            search_type: SearchType,
-            **kwargs: Any
+            search_type: SearchType
     ) -> pd.DataFrame:
         """Retrieves the metadata for the file/files listed in object_paths.
 
@@ -287,8 +265,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         ----------
         object_paths : str or list-like
         search_type : {'datasets', 'runs', 'tasks', 'evaluations'}
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -300,7 +276,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             Invalid search_type provided.
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         object_paths = validate_metadata_parameters(object_paths)
 
         search_type_options = self.search_type_options
@@ -322,9 +297,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         metadata_df = pd.DataFrame(queries)
 
-        if flatten_output:
-            metadata_df = flatten_nested_df(metadata_df)
-
         if search_type == 'datasets' and self.scrape:
             web_df = self.get_dataset_related_tasks(metadata_df)
             metadata_df = pd.merge(metadata_df, web_df, on='openml_url')
@@ -335,8 +307,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
     def get_all_metadata(
             self,
-            search_dict: TypeResultDict,
-            **kwargs: Any
+            search_dict: TypeResultDict
     ) -> TypeResultDict:
         """Retrieves all metadata that relates to the provided DataFrames.
 
@@ -344,8 +315,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         ----------
         search_dict : dict
             Dictionary of DataFrames from get_all_search_outputs.
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -371,8 +340,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
             metadata_dict[query] = self.get_query_metadata(
                 object_paths=object_paths,
-                search_type=query,
-                **kwargs
+                search_type=query
             )
 
         self.queue.put('Metadata query complete.')

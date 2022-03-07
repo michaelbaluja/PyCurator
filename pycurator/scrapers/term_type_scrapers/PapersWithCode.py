@@ -2,7 +2,6 @@ from collections.abc import Collection
 from typing import Any, Optional, Union
 
 import pandas as pd
-from flatten_json import flatten
 
 from pycurator.scrapers.base_scrapers import (
     AbstractScraper,
@@ -30,9 +29,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     search_types : list-like, optional
         Types to search over. Can be (re)set via set_search_types() or passed
         in directly to search functions.
-    flatten_output : bool, optional (default=None)
-        Flag for specifying if nested output should be flattened. Can be passed
-        in directly to functions to override set parameter.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form {repository_name}: 'key'.
     """
@@ -41,14 +37,12 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         self,
         search_terms: Optional[Collection[SearchTerm]] = None,
         search_types: Optional[Collection[SearchType]] = None,
-        flatten_output: Optional[bool] = None,
         credentials: Optional[str] = None
     ) -> None:
         super().__init__(
             repository_name='paperswithcode',
             search_terms=search_terms,
             search_types=search_types,
-            flatten_output=flatten_output,
             credentials=credentials
         )
         self.base_url = 'https://paperswithcode.com/api/v1'
@@ -67,7 +61,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         self,
         search_url: str,
         search_params: Optional[Any] = None,
-        flatten_output: Optional[bool] = None,
         print_progress: bool = False
     ) -> Union[pd.DataFrame, None]:
         """Query paginated results from the Papers With Code API.
@@ -79,8 +72,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             Contains parameters to pass to requests.get({params}). Most common
             include search term 'q', and page index 'page'. For full details,
             see below.
-        flatten_output : bool
-            If True, nested columns are flattened into individual columns.
         print_progress : bool, optional (default=False)
             If True, updates on query page progress is sent to object queue
             to be displayed in UI window.
@@ -117,9 +108,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         while output.get('results'):
             output = output['results']
-
-            if flatten_output:
-                output = [flatten(result) for result in output]
 
             output_df = pd.DataFrame(output)
             output_df['page'] = search_params['page']
@@ -163,8 +151,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     def get_individual_search_output(
             self,
             search_term: SearchTerm,
-            search_type: SearchType,
-            **kwargs: Any
+            search_type: SearchType
     ) -> pd.DataFrame:
         """Returns information about all queried information types on PWC.
 
@@ -174,8 +161,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         search_type : {
             'conferences', 'datasets', 'evaluations', 'papers', 'tasks'
         }
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -189,7 +174,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             Invalid search_type provided.
         """
 
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         search_type_options = self.search_type_options
         search_url = f'{self.base_url}/{search_type}'
 
@@ -210,7 +194,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         return self._conduct_search_over_pages(
             search_url=search_url,
             search_params=search_params,
-            flatten_output=flatten_output,
             print_progress=True
         )
 
@@ -249,8 +232,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             Must include search_type : {
                 'conferences', 'datasets', 'evaluations', 'papers', 'tasks'
             }
-                search_type in kwargs to match signature of base method.
-            Can temporarily overwrite self flatten_output argument
+            Search_type in kwargs to match signature of base method.
 
         Returns
         -------
@@ -265,7 +247,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             raise AttributeError(
                 'search_type must be passed to get_query_metadata.'
             )
-        flatten_output = kwargs.get('flatten_output', self.flatten_output)
         object_paths = validate_metadata_parameters(object_paths)
 
         metadata_types = self._get_metadata_types(search_type)
@@ -283,8 +264,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
                 # Conduct the search and add supplementary info to DataFrame
                 object_df = self._conduct_search_over_pages(
                     search_url,
-                    search_params,
-                    flatten_output
+                    search_params
                 )
 
                 if object_df:
@@ -302,8 +282,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
     def get_all_metadata(
             self,
-            search_dict: TermTypeResultDict,
-            **kwargs: Any
+            search_dict: TermTypeResultDict
     ) -> dict[SearchQuery, TermResultDict]:
         """Retrieves all metadata related to the provided DataFrames.
 
@@ -311,8 +290,6 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         ----------
         search_dict : dict
             Dictionary of DataFrames from get_all_search_outputs.
-        **kwargs : dict, optional
-            Can temporarily overwrite self flatten_output argument.
 
         Returns
         -------
@@ -332,8 +309,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
                 metadata_dict[query] = self.get_query_metadata(
                     object_paths=object_paths,
-                    search_type=search_type,
-                    **kwargs
+                    search_type=search_type
                 )
 
                 self.queue.put(
