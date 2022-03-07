@@ -159,7 +159,7 @@ class CuratorController:
         }
 
         # Add default save directory
-        if 'save_dir' not in param_val_kwargs:
+        if not param_val_kwargs.get('save_dir'):
             param_val_kwargs['save_dir'] = os.path.join(
                 'data',
                 self.model.scraper_name
@@ -219,8 +219,11 @@ class CuratorController:
                 while not self.model.threaded_run.scraper.queue.empty():
                     self.process_runtime_updates()
 
+                # Remove query message
+                self.view.current_page.progress_label['text'] = 'Complete'
+
                 # Stop progress bar
-                self.view.current_page.progress_bar.stop()
+                self._clear_progress_bar()
 
                 # Reactivate back button
                 self.view.current_page.back_button.config(state='normal')
@@ -234,13 +237,17 @@ class CuratorController:
         except queue.Empty:
             self.view.after(100, self.process_runtime_updates)
 
+    def _clear_progress_bar(self) -> None:
+        self.view.current_page.progress_bar.stop()
+        self.view.current_page.progress_bar['mode'] = 'determinate'
+        self.view.current_page.progress_bar['value'] = 0
+
     def _update_progress_bar_indeterminate(self) -> None:
         self.view.current_page.progress_bar['mode'] = 'indeterminate'
         if self.model.threaded_run.scraper.num_queries:
             self.view.current_page.progress_bar.start()
         else:
-            self.view.current_page.progress_bar.stop()
-            self.view.current_page.progress_bar['value'] = 0
+            self._clear_progress_bar()
 
     def _update_progress_bar_determinate(self) -> None:
         self.view.current_page.progress_bar.stop()

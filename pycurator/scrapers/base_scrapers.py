@@ -90,6 +90,20 @@ class AbstractScraper(ABC):
         self.queries_completed = None
         self.current_query_ref = None
 
+    def _save_results(
+            self,
+            save_dir: str,
+            final_dict: QueryResultDict,
+            extension: str
+    ) -> None:
+        self.queue.put(f'Saving {extension.upper()} output to "{save_dir}".')
+        pycurator.utils.save_results(
+            results=final_dict,
+            data_dir=save_dir,
+            extension=extension
+        )
+        self.queue.put(f'{extension.upper()} save complete.')
+
     @abstractmethod
     def run(self) -> NoReturn:
         raise NotImplementedError(
@@ -349,20 +363,10 @@ class AbstractAPIScraper(AbstractScraper):
 
         # Handle saving if output exists
         if not self._all_empty(final_dict):
-            self.queue.put(f'Saving output to "{save_dir}".')
             if save_csv:
-                pycurator.utils.save_results(
-                    final_dict,
-                    save_dir,
-                    extension='csv'
-                )
+                self._save_results(save_dir, final_dict, 'csv')
             if save_json:
-                pycurator.utils.save_results(
-                    final_dict,
-                    save_dir,
-                    extension='json'
-                )
-            self.queue.put('Save complete.')
+                self._save_results(save_dir, final_dict, 'json')
         else:
             self.queue.put('No results found, nothing to save.')
 
