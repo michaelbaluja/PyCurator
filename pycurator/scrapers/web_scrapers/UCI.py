@@ -1,11 +1,11 @@
 import re
 from collections.abc import Collection
-from typing import Any, Union
+from typing import Any
 
 import bs4
 import pandas as pd
 import selenium.webdriver.support.expected_conditions as ec
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -22,6 +22,7 @@ from pycurator.utils import (
 from pycurator.utils.typing import (
     AttributeDict
 )
+from pycurator.utils.web_utils import text_to_be_present_on_page
 
 
 class UCIScraper(AbstractWebScraper):
@@ -61,21 +62,15 @@ class UCIScraper(AbstractWebScraper):
             'doi': r'DOI',
             'creation_purpose': r'For what purpose was the dataset created?',
             'funders': r'Who funded the creation of the dataset?',
-            'instances_represent': r'What do the instances that comprise the '
-            r'dataset represent?',
+            'instances_represent': r'What do the instances that comprise the dataset represent?',  # noqa E501
             'recommended_data_split': r'Are there recommended data splits?',
-            'sensitive_data': r'Does the dataset contain data that might be'
-            r' considered sensitive in any way?',
-            'preprocessing_done': r'Was there any data preprocessing '
-            r'performed?',
-            'previous_tasks': r'Has the dataset been used for any tasks '
-            r'already?',
+            'sensitive_data': r'Does the dataset contain data that might be considered sensitive in any way?',  # noqa E501
+            'preprocessing_done': r'Was there any data preprocessing performed?',  # noqa E501
+            'previous_tasks': r'Has the dataset been used for any tasks already?',  # noqa E501
             'additional_info': r'Additional Information',
-            'citation_requests/acknowledgements': r'Citation Requests'
-            r'/Acknowledgements',
+            'citation_requests/acknowledgements': r'Citation Requests/Acknowledgements',  # noqa E501
             'missing_values': r'Does this dataset contain missing values?',
-            'missing_value_placeholder': r'What symbol is used to indicate '
-            r'missing data?',
+            'missing_value_placeholder': r'What symbol is used to indicate missing data?',  # noqa E501
             'num_attributes': r'Number of Attributes'
         }
         self.uncle_attr_dict = {
@@ -93,9 +88,8 @@ class UCIScraper(AbstractWebScraper):
             'license': self.parent_attr_dict['license'],
             'general': self.sibling_attr_dict['abstract'],
             'descriptive': self.sibling_attr_dict['creation_purpose'],
-            'tabular': self.sibling_attr_dict['missing_values'],
             'creators': self.uncle_attr_dict['creators'],
-            'headers': self.individual_attr_dict['donation_date']
+            'headers': self.individual_attr_dict['num_views']
         }
 
     @staticmethod
@@ -223,6 +217,7 @@ class UCIScraper(AbstractWebScraper):
         """
 
         self.queue.put('Scraping dataset ids...')
+        self.current_query_ref = 'Dataset ID\'s'
 
         self.driver.get(dataset_list_url)
         WebDriverWait(self.driver, 5).until(
@@ -302,16 +297,6 @@ class UCIScraper(AbstractWebScraper):
 
         return result_dict
 
-    def _tag_wait_path(
-            self,
-            soup: bs4.BeautifulSoup,
-            tag_str: Union[str, re.Pattern[str]]
-    ) -> str:
-        tag = web_utils.get_sibling_tag(soup, tag_str)
-        tag_type = tag.name
-        tag_path_classes = tag.attrs['class']
-        return '.'.join([tag_type, *tag_path_classes])
-
     def get_individual_page_data(
         self,
         url: str,
@@ -330,36 +315,19 @@ class UCIScraper(AbstractWebScraper):
         """
 
         self.driver.get(url)
-        soup = self._get_soup(features='html.parser')
 
-        # Wait for sections to load
         for section, wait_path_str in self.wait_path_strings.items():
-            wait_path = self._tag_wait_path(
-                soup,
-                re.compile(wait_path_str)
-            )
             # Wait for element to load
             try:
                 WebDriverWait(self.driver, 10).until(
-                    ec.visibility_of_element_located(
-                        (By.CSS_SELECTOR, wait_path)
-                    )
+                    text_to_be_present_on_page(wait_path_str)
                 )
-            except TimeoutError:
+            except TimeoutException:
                 self.queue.put(
                     f'Unable to locate \'{wait_path_str}\' '
                     f'on \'{url}\'.'
                 )
-            # Wait for text to be present in element
-            try:
-                WebDriverWait(self.driver, 5).until_not(
-                    ec.text_to_be_present_in_element(
-                        (By.CSS_SELECTOR, wait_path),
-                        'N/A'
-                    )
-                )
-            except TimeoutError:
-                pass
+                print(wait_path_str)
 
         soup = self._get_soup(features='html.parser')
 
@@ -379,7 +347,7 @@ class UCIScraper(AbstractWebScraper):
             except NoSuchElementException:
                 pass
             else:
-                self.driver.switch_to_window(self.driver.window_handles[-1])
+                self.driver.switch_to.window(self.driver.window_handles[-1])
 
                 soup = self._get_soup(features='html.parser')
                 result_dict['files'] = [
@@ -392,7 +360,7 @@ class UCIScraper(AbstractWebScraper):
 
                 # Close new window and switch back to previous
                 self.driver.close()
-                self.driver.switch_to_window(self.driver.window_handles[0])
+                self.driver.switch_to.window(self.driver.window_handles[0])
 
         if clean:
             result_dict = self._clean_results(result_dict)
@@ -421,15 +389,16 @@ class UCIScraper(AbstractWebScraper):
 
         dataset_df = pd.DataFrame()
 
-        for page_id in self._pb_determinate(page_ids[:10]):
+        for page_id in self._pb_determinate(page_ids):
             url = f'{self.base_url}/{page_id}'
 
             results = self.get_individual_page_data(
                 url=url,
                 clean=clean
             )
-            dataset_df = dataset_df.append(results, ignore_index=True)
+            dataset_df = pd.concat([dataset_df, pd.DataFrame([results])])
 
         self.queue.put('Scraping complete.')
 
+        dataset_df = dataset_df.reset_index(drop=True)
         return dataset_df

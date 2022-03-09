@@ -1,10 +1,22 @@
-import bs4
 import re
-from typing import Any, Optional, ParamSpec, Union
+from typing import Any, AnyStr, Optional, ParamSpec, Union
+
+import bs4
+from selenium import webdriver
+
 from pycurator.utils.typing import Strainable
 
-
 P = ParamSpec('P')
+
+
+class text_to_be_present_on_page:
+    """An expectation for checking that specific text has loaded."""
+    def __init__(self, text: AnyStr) -> None:
+        self.text = text
+
+    def __call__(self, driver: webdriver):
+        soup = bs4.BeautifulSoup(driver.page_source, features='html.parser')
+        return soup.find(text=re.compile(self.text))
 
 
 def get_single_tag_from_path(
@@ -33,12 +45,8 @@ def get_parent_tag(
         soup=soup,
         string=string
     )
-    try:
-        parent_tag = attr.parent
-    except AttributeError:
-        parent_tag = None
 
-    return parent_tag
+    return attr.parent if attr else None
 
 
 def get_sibling_tag(
@@ -53,7 +61,7 @@ def get_sibling_tag(
         class_type=pattern,
         string=string
     )
-    return tag.find_next_sibling(*args, **kwargs)
+    return tag.find_next_sibling(*args, **kwargs) if tag else None
 
 
 def get_sibling_tags(
@@ -61,7 +69,7 @@ def get_sibling_tags(
         string: Strainable,
         *args: Any,
         **kwargs: Any
-) -> bs4.element.ResultSet[bs4.element.PageElement]:
+) -> Union[bs4.element.ResultSet[bs4.element.PageElement], None]:
     """Return the sibling tags.
 
     Parameters
@@ -75,7 +83,7 @@ def get_sibling_tags(
 
     Returns
     -------
-    list of bs4.element.Tag or empty
+    list of bs4.element.Tag or None
 
     See Also
     --------
@@ -86,14 +94,14 @@ def get_sibling_tags(
         soup=soup,
         string=string
     )
-    return tag.find_next_siblings(*args, **kwargs)
+    return tag.find_next_siblings(*args, **kwargs) if tag else None
 
 
 def get_parent_sibling_tags(
         soup: bs4.BeautifulSoup,
         string: Strainable,
         **kwargs: Any
-) -> bs4.element.ResultSet[bs4.element.PageElement]:
+) -> Union[bs4.element.ResultSet[bs4.element.PageElement], None]:
     """Return the tag for the parent tag's sibling tags.
 
     Parameters
@@ -107,7 +115,7 @@ def get_parent_sibling_tags(
 
     Returns
     -------
-    list of bs4.element.Tag or empty
+    list of bs4.element.Tag or None
 
     See Also
     --------
@@ -115,7 +123,7 @@ def get_parent_sibling_tags(
     """
 
     parent = get_parent_tag(soup, string)
-    return parent.find_next_siblings(**kwargs)
+    return parent.find_next_siblings(**kwargs) if parent else None
 
 
 def get_tag_value(
@@ -163,7 +171,7 @@ def get_single_tag(
 
     Returns
     -------
-    attr : bs4.element.Tag or None
+    attr : bs4.element.{Tag or Element} or None
 
     Raises
     ------
