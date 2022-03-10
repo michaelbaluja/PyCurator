@@ -315,7 +315,9 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
                 )
             )
 
-            search_df = pd.concat([search_df, pd.DataFrame([object_dict])])
+            search_df = pd.concat(
+                [search_df, pd.DataFrame([object_dict])]
+            ).reset_index(drop=True)
 
         self.queue.put('Web metadata scraping complete.')
 

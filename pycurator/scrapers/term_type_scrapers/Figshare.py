@@ -206,7 +206,9 @@ class FigshareScraper(AbstractTermTypeScraper):
                 headers=self.headers
             )
 
-            metadata_df = pd.concat([metadata_df, pd.DataFrame([json_data])])
+            metadata_df = pd.concat(
+                [metadata_df, pd.DataFrame([json_data])]
+            ).reset_index(drop=True)
 
         return metadata_df
 
