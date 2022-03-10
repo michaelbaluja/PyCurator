@@ -29,6 +29,8 @@ Required depencencies are listed below in the [Dependencies](#dependencies) sect
 It is recommended to create a virtual environment to ensure there is no conflict with the packages
 in your current work space.
 
+PyCurator requires a Python version >= 3.9.
+
 To run, simply paste the following commands into your terminal
 ```bash
 git clone https://github.com/michaelbaluja/PyCurator.git
@@ -45,7 +47,7 @@ copyright information. Clicking ```Continue``` will bring you to the following p
 
 #### Parameter Selection
 Clicking on one of the repositories will bring up the respective parameters used for querying the API and 
-saving your results.
+saving your results. Parameters will vary depending on repository selected.
 
 ![Parameter Selection](/images/param_selection_1.png "Dataverse Parameter Selection")
 ![Parameter Selection](/images/param_selection_2.png "UCI Parameter Selection")
@@ -53,9 +55,8 @@ saving your results.
 These parameters are outlined as
 | Parameter      | Description                                                                                                                                                                             |
 |----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Save Directory | Location to save results, defaults to "/data/{repo_name}/{search_term}_{search_type}.json".                                                                                             |
-| Flatten Output | Flag for flattening nested json results from the API.                                                                                                                                   |
-| Web Scrape     | Flag for querying additional data via web scraping that is not available through the API.  This is an optional parameter for repositories that are not predominately web-scraper based. |
+| Save Directory | Location to save results. Defaults to "/data/{repo_name}/{search_term}_{search_type}.json" within PyCurator /data sub-directory.                                                                                             |                                                                                                                               |
+| Web Scrape     | Flag for querying additional data via web scraping that is not available through the API.  This is an optional parameter for repositories that are not predominately web-scraper based. See [doc TBD] for full list of fields accessible via API vs web scraping.|
 | Search Terms   | Search term(s) to query. Terms should be separated with a comma, and multi-word terms should be wrapped in quotes.                                                                      |
 | Search Types   | Type of objects to query.                                                                                                                                                               |
 After all required parameters are provided, the ```Run``` button is activated.
@@ -75,9 +76,12 @@ during runtime, but is activated after completion. The ```Stop``` button is used
 After runtime completion or interruption, the ```Stop``` button is replaced by the ```Exit``` button, allowing you to 
 safely terminate the program.
 
+#### Benchmarking
+
+[table of time to search for ~1k results from repos]
+
 ### Dependencies
 - bs4
-- flatten_json
 - kaggle
 - openml
 - pandas
@@ -96,4 +100,4 @@ the API and why you think it would be beneficial, and make sure to follow the fo
 through the existing Scraper classes.
 
 ## Funding
-The initial development of this program was funded by the Librarians Association of the University of California (LAUC) and UC San Diego Library Research Data Curation Program (RDCP).
+The initial development of this program was funded by the Librarians Association of The University of California (LAUC) and UC San Diego Library Research Data Curation Program (RDCP).
