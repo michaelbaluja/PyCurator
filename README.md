@@ -29,7 +29,7 @@ Required depencencies are listed below in the [Dependencies](#dependencies) sect
 It is recommended to create a virtual environment to ensure there is no conflict with the packages
 in your current work space.
 
-PyCurator was developed using Python 3.10 and expects a Python version >= 3.10.
+PyCurator requires a Python version >= 3.9.
 
 To run, simply paste the following commands into your terminal
 ```bash
@@ -55,11 +55,10 @@ saving your results. Parameters will vary depending on repository selected.
 These parameters are outlined as
 | Parameter      | Description                                                                                                                                                                             |
 |----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Save Directory | Location to save results. Defaults to "/data/{repo_name}/{search_term}_{search_type}.json" within PyCurator /data sub-directory.                                                                                             |
-| Flatten Output | Flag for flattening nested json results from the API. Note: flattening output will substantially increase runtime of PyCurator. See [Benchmarking](#benchmarking)for more details.                                                                                                                                  |
+| Save Directory | Location to save results. Defaults to "/data/{repo_name}/{search_term}_{search_type}.json" within PyCurator /data sub-directory.                                                                                             |                                                                                                                               |
 | Web Scrape     | Flag for querying additional data via web scraping that is not available through the API.  This is an optional parameter for repositories that are not predominately web-scraper based. See [doc TBD] for full list of fields accessible via API vs web scraping.|
 | Search Terms   | Search term(s) to query. Terms should be separated with a comma, and multi-word terms should be wrapped in quotes.                                                                      |
-| Search Types   | Type of objects to query (optional, not applicable to all repositories).                                                                                                                                                               |
+| Search Types   | Type of objects to query.                                                                                                                                                               |
 After all required parameters are provided, the ```Run``` button is activated.
 
 #### Run Page
@@ -79,11 +78,10 @@ safely terminate the program.
 
 #### Benchmarking
 
-[table of time to search for ~100, 1k, 10k, 100k results from repos]
+[table of time to search for ~1k results from repos]
 
 ### Dependencies
 - bs4
-- flatten_json
 - kaggle
 - openml
 - pandas
