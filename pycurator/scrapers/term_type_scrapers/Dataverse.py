@@ -384,7 +384,7 @@ class DataverseScraper(
 
             object_dict = self._clean_results(object_dict)
 
-            metadata_df = metadata_df.append(object_dict, ignore_index=True)
+            metadata_df = pd.concat([metadata_df, pd.DataFrame([object_dict])])
 
         # Remove any objects that did not return metadata (fully null rows)
         metadata_df = metadata_df.dropna(how='all')
