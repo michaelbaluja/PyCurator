@@ -191,7 +191,9 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             object_dict['task_types'] = task_type_list
             object_dict['task_ids'] = task_id_list
 
-            search_df = pd.concat([search_df, pd.DataFrame([object_dict])])
+            search_df = pd.concat(
+                [search_df, pd.DataFrame([object_dict])]
+            ).reset_index(drop=True)
 
         self.queue.put('Dataset info scraping complete.')
 
