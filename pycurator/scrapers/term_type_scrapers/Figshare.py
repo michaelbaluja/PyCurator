@@ -159,7 +159,8 @@ class FigshareScraper(AbstractTermTypeScraper):
                         page=search_params['page']
                     )
 
-            if output_df and output_df.shape[0] < search_params['page_size']:
+            if (output_df is not None
+                    and output_df.shape[0] < search_params['page_size']):
                 return search_df
 
             # Get new date to search
