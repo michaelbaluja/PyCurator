@@ -7,9 +7,6 @@ authors:
 - family-names: "Labou"
   given-names: "Stephanie"
   orcid: "https://orcid.org/0000-0001-5633-5983"
-- family-names: "Pennington"
-  given-names: "Abigail"
-  orcid: "https://orcid.org/0000-0002-9364-1995"
 title: "PyCurator"
 version: [tbd]
 doi: [tbd]
