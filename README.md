@@ -91,7 +91,7 @@ safely terminate the program.
 
 ## Contributions
 ### Bugs
-For any bugs or problems that you come across, open an issue that details the problem that 
+Please note that as of Spring 2022, PyCurator is still undergoing active development. For any bugs or problems that you come across, open an issue that details the problem that 
 you're experiencing.
 
 ### Extension
