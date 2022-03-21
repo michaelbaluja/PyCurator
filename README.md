@@ -25,17 +25,18 @@ If there's a repository that you would like to see added to the list, check out 
 
 ## Installation and use
 ### Installation
-Required depencencies are listed below in the [Dependencies](#dependencies) section.
+Required dependencies are listed below in the [Dependencies](#dependencies) section.
 It is recommended to create a virtual environment to ensure there is no conflict with the packages
 in your current work space.
 
-PyCurator requires a Python version >= 3.9.
+PyCurator requires a Python version >= 3.9.2.
 
 To run, simply paste the following commands into your terminal
 ```bash
 git clone https://github.com/michaelbaluja/PyCurator.git
 cd PyCurator
-python main.py
+python -m pip install -e .
+pycurator
 ```
 
 ### Use
@@ -67,7 +68,7 @@ After all required parameters are provided, the ```Run``` button is activated.
 The run page provides high level status updates in the main window. These include the beginning and end
 of processes, rate-limiting issues, runtime completion, and saving confirmation. Below are real-time status updates for the 
 specific query being completed as well as a progress bar for the high level task. During tasks that have
-a fixed duration, such as metadata querying or some webscraping, a fixed-length progress bar will show
+a fixed duration, such as metadata querying or some web scraping, a fixed-length progress bar will show
 the progression of output. During tasks that have an indeterminate duration, a cycling task bar will be 
 present to represent continued progress.
 
@@ -87,6 +88,7 @@ safely terminate the program.
 - pandas
 - requests
 - selenium
+- typing_extensions
 - webdriver_manager
 
 ## Contributions

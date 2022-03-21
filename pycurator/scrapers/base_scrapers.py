@@ -13,13 +13,14 @@ from collections.abc import (
     Hashable,
     Sequence
 )
-from typing import Any, AnyStr, NoReturn, Optional, ParamSpec, TypeVar, Union
+from typing import Any, AnyStr, NoReturn, Optional, TypeVar, Union
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from typing_extensions import ParamSpec
 from webdriver_manager.chrome import ChromeDriverManager
 
 import pycurator.utils

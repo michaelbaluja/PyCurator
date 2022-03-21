@@ -5,7 +5,9 @@ import os
 import queue
 import tkinter as tk
 import tkinter.ttk as ttk
-from typing import Optional, ParamSpec, Type, TypeVar, Union
+from typing import Optional, Type, TypeVar, Union
+
+from typing_extensions import ParamSpec
 
 from pycurator.scrapers import AbstractScraper
 from pycurator.scrapers import (
@@ -173,7 +175,7 @@ class CuratorController:
         ]
 
         if missing_reqs:
-            self.view.current_page.alert_missing_reqs(missing_reqs)
+            self.view.pages[LandingPage].alert_missing_reqs(missing_reqs)
         else:
             self.initialize_run(param_val_kwargs)
 

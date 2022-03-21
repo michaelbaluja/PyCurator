@@ -1,8 +1,9 @@
 import re
-from typing import Any, AnyStr, Optional, ParamSpec, Union
+from typing import Any, AnyStr, Optional, Union
 
 import bs4
 from selenium import webdriver
+from typing_extensions import ParamSpec
 
 from pycurator.utils.typing import Strainable
 
