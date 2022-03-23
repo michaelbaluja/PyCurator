@@ -547,14 +547,18 @@ class AbstractAPIScraper(AbstractScraper):
         if not all(
                 [
                     isinstance(df, pd.DataFrame) or df is None
-                    for df in search_dict
+                    for df in search_dict.values()
                 ]
         ):
-            print([type(df) for df in search_dict])
             raise ValueError(
                 'All search_dict entries must be of type pandas.DataFrame.'
             )
-        if not all([isinstance(df, pd.DataFrame) for df in metadata_dict]):
+        if not all(
+                [
+                    isinstance(df, pd.DataFrame) or df is None
+                    for df in metadata_dict.values()
+                ]
+        ):
             raise ValueError(
                 'All metadata_dict entries must be of type pandas.DataFrame.'
             )
