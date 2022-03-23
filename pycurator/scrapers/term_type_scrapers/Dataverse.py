@@ -1,9 +1,8 @@
+import ast
 import os
-import re
 from collections.abc import Collection
 from typing import Optional, Union
 
-import bs4
 import pandas as pd
 
 from pycurator.scrapers.base_scrapers import (
@@ -207,7 +206,7 @@ class DataverseScraper(
 
         return search_df
 
-    def _scrape_file_info(self) -> Collection[Union[AttributeDict, None]]:
+    def _scrape_file_info(self) -> list[Union[AttributeDict, None]]:
         """Scrapes the file info for the current dataset.
 
         For a page in self.driver, scrapes any information available
@@ -215,49 +214,21 @@ class DataverseScraper(
 
         Returns
         -------
-        file_info_list : list of dicts of {'file_attr': val} or empty
+        list of dicts of {'file_attr': val} or empty
         """
 
-        file_info_list = []
         soup = self._get_soup(features='html.parser')
-        try:
-            file_info = web_utils.get_single_tag_from_tag_info(
-                soup,
-                'script',
-                attrs={'type': r'application/ld+json'}
-            )
-            file_info = file_info.contents[0]
+        header_metadata_tag = web_utils.get_single_tag_from_tag_info(
+            soup,
+            'script',
+            attrs={'type': r'application/ld+json'}
+        )
 
-            if isinstance(file_info, bs4.element.Tag):
-                # Get the file info & remove unnecessary delimiters
-                file_info = file_info.split(r'"distribution":')[1]
-                file_info = file_info.replace('},{', '}{') \
-                    .strip('[]').split('}{')
-        except IndexError:
-            return file_info_list
+        header_metadata_dict = ast.literal_eval(
+            header_metadata_tag.text.strip()
+        )
 
-        # Remove unnecessary attributes
-        file_info = [
-            re.sub(r'"@type":"(.*?)",', '', entry).strip('{}').replace('"', '')
-            for entry in file_info
-        ]
-
-        # Transform each string into dict
-        file_info = [entry.split(',', maxsplit=1) for entry in file_info]
-
-        for file_list in file_info:
-            file_dict = {}
-            for attr_str in file_list:
-                key, val = attr_str.split(':', maxsplit=1)
-                file_dict[key] = val
-
-            # Convert file size from str to int
-            if file_dict.get('contentSize'):
-                file_dict['contentSize'] = int(file_dict['contentSize'])
-
-            file_info_list.append(file_dict)
-
-        return file_info_list
+        return header_metadata_dict.get('distribution', [])
 
     def _get_attribute_values(
             self,
