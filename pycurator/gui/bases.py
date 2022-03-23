@@ -1,12 +1,29 @@
 from __future__ import annotations
-from abc import abstractmethod
-import threading
-import tkinter.ttk as ttk
-from typing import Any, NoReturn
-from collections.abc import Callable
 
-import pycurator.scrapers
+import threading
+import tkinter as tk
+import tkinter.ttk as ttk
+from abc import abstractmethod
+from collections.abc import Callable
+from typing import Any, NoReturn
+
 import pycurator.gui
+import pycurator.scrapers
+
+
+class ScraperGUI(tk.Tk):
+    def __init__(self):
+        super().__init__()
+
+        self.title('PyCurator')
+
+        view = pycurator.gui.CuratorView(self)
+        controller = pycurator.gui.CuratorController(view=view)
+
+        self.bind('<Return>', controller.request_next_page)
+
+        view.set_controller(controller)
+        view.show()
 
 
 class ThreadedRun(threading.Thread):
