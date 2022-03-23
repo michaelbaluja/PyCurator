@@ -175,7 +175,7 @@ class CuratorController:
         ]
 
         if missing_reqs:
-            self.view.pages[LandingPage].alert_missing_reqs(missing_reqs)
+            self.view.pages[SelectionPage].alert_missing_reqs(missing_reqs)
         else:
             self.initialize_run(param_val_kwargs)
 

@@ -189,15 +189,21 @@ class SelectionPage(ViewPage):
 
             search_term_label = ttk.Label(
                 search_term_frame,
-                text='Search Terms:'
+                text='Search Term(s):'
             )
             search_term_entry = ttk.Entry(
                 search_term_frame,
                 textvariable=self.controller.get_run_parameter('search_terms')
             )
+            search_term_req = ttk.Label(
+                search_term_frame,
+                foreground='#FF0000',
+                text='*'
+            )
 
-            search_term_label.grid(row=0, column=0)
-            search_term_entry.grid(row=0, column=1)
+            search_term_req.grid(row=0, column=0, sticky='w')
+            search_term_label.grid(row=0, column=1)
+            search_term_entry.grid(row=0, column=2)
             search_term_frame.grid(columnspan=2)
 
         # Get search types, if needed
@@ -210,7 +216,12 @@ class SelectionPage(ViewPage):
             search_type_inner_frame = ttk.Frame(search_type_outer_frame)
             search_type_label = ttk.Label(
                 search_type_outer_frame,
-                text='Search Types:'
+                text='Search Type(s):'
+            )
+            search_type_req = ttk.Label(
+                search_type_outer_frame,
+                foreground='#FF0000',
+                text='*'
             )
 
             self.controller.add_run_parameter(
@@ -231,7 +242,8 @@ class SelectionPage(ViewPage):
                 )
                 search_type_button.grid(sticky='w')
 
-            search_type_label.grid(column=0, sticky='n')
+            search_type_req.grid(row=0, column=0, sticky='w')
+            search_type_label.grid(row=0, column=1, sticky='n')
             search_type_inner_frame.grid(column=1, sticky='w')
             search_type_outer_frame.grid(sticky='w')
 
@@ -240,12 +252,25 @@ class SelectionPage(ViewPage):
 
     def alert_missing_reqs(self, missing_requirements: list[str]) -> None:
         try:
-            self.req_label.pack_forget()
-        except AttributeError:
+            self.req_label.grid_forget()
+        except tk.TclError:
             pass
-
-        self.req_var.set(f'Must provide {missing_requirements} to proceed.')
-        self.req_label.grid(anchor='nsew')
+        finally:
+            req_list = '\n'.join(
+                [
+                    f'\u2022 {" ".join(req.split("_")).title()}'
+                    for req in missing_requirements
+                ]
+            )
+            self.req_var.set(
+                f'Missing Requirements:\n{req_list}'
+            )
+            self.req_label = ttk.Label(
+                self.param_frame,
+                foreground='#FF0000',
+                textvariable=self.req_var
+            )
+        self.req_label.grid(sticky='nsew')
 
     def _toggle_button_state(
             self,

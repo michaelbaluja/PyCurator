@@ -35,9 +35,9 @@ class LandingPage(ViewPage):
         )
 
         # Arrange elements
-        label.grid(row=0)
-        message_box.grid(row=1)
-        self.next_page_button.grid(row=2)
+        label.grid(row=0, pady=7)
+        message_box.grid(row=1, padx=10)
+        self.next_page_button.grid(row=2, pady=5)
 
         self.grid(row=0, column=0, sticky='nsew')
         self.tkraise()
