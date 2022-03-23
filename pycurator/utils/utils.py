@@ -5,6 +5,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from typing import Any, TypeVar
 
+import pandas
 import pandas as pd
 
 import pycurator.gui.bases
@@ -13,19 +14,33 @@ from .parsing import _validate_save_filename
 T = TypeVar('T')
 
 
-def save_results(results: dict, data_dir: str, extension: str) -> None:
-    """Export DataFrame objects to json file in specified directory.
+save_options = {
+    'CSV': '.csv',
+    'Excel': '.xlsx',
+    'JSON': '.json',
+    'Parquet': '.parquet',
+    'Pickle': '.pkl'
+}
+
+
+def save_results(results: dict, data_dir: str, output_format: str) -> None:
+    """Export DataFrame objects to specified directory.
 
     Parameters
     ----------
     results : dict
     data_dir : str
-    extension : {'csv', 'json'}
+    output_format : str
+        Format for saved results. Acceptable options are seen in save_options.
 
     Raises
     ------
     TypeError
         "results" not of type dict or "datadir" not of type str.
+
+    See Also
+    --------
+    save_options : Output format to extension dict.
     """
 
     if not isinstance(results, dict):
@@ -36,9 +51,13 @@ def save_results(results: dict, data_dir: str, extension: str) -> None:
         raise TypeError(
             f'data_dir must of type str, not \'{type(data_dir)}\'.'
         )
-    if extension not in ('csv', 'json'):
+
+    try:
+        extension = save_options[output_format]
+    except KeyError:
         raise ValueError(
-            f'extension must be either csv or json, not \'{extension}\'.'
+            f'output_format must be one of {list(save_options.keys())}, '
+            f'not \'{output_format}\'.'
         )
 
     if not os.path.isdir(data_dir):
@@ -46,20 +65,25 @@ def save_results(results: dict, data_dir: str, extension: str) -> None:
 
     for query, df in results.items():
         if isinstance(query, str):
-            output_filename = f'{query}.{extension}'
+            output_filename = f'{query}{extension}'
         else:
             search_term, search_type = query
-            output_filename = f'{search_term}_{search_type}.{extension}'
+            output_filename = f'{search_term}_{search_type}{extension}'
 
         output_filename = _validate_save_filename(output_filename)
 
         save_dataframe(
             results=df,
-            filepath=os.path.join(data_dir, output_filename)
+            filepath=os.path.join(data_dir, output_filename),
+            output_format=output_format
         )
 
 
-def save_dataframe(results: pd.DataFrame, filepath: str) -> None:
+def save_dataframe(
+        results: pd.DataFrame,
+        filepath: str,
+        output_format: str
+) -> None:
     """Saves the specified results to the file provided.
 
     Parameters
@@ -70,6 +94,8 @@ def save_dataframe(results: pd.DataFrame, filepath: str) -> None:
         Location to store file in. Take note of output type as specified
         above, as appending the incorrect filetype may result in the file
         being unreadable.
+    output_format : str
+        Format for saved results. Acceptable options are seen in save_options.
 
     Raises
     ------
@@ -83,14 +109,12 @@ def save_dataframe(results: pd.DataFrame, filepath: str) -> None:
             f' \'{type(results)}\'.'
         )
 
-    if filepath.endswith('csv'):
-        results.to_csv(filepath)
-    elif filepath.endswith('json'):
-        results.to_json(filepath)
-    else:
+    try:
+        getattr(results, f'to_{output_format.lower()}')(filepath)
+    except AttributeError:
         raise ValueError(
-            f'\'{filepath}\' is not supported.'
-            'Data can only be saved to json or csv.'
+            f'\'{output_format}\' is not supported.'
+            f'Data can only be saved to one of {list(save_options.values())}.'
         )
 
 

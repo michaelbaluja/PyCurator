@@ -181,16 +181,14 @@ class CuratorController:
 
     def initialize_run(self, param_val_kwargs: P.kwargs) -> None:
         save_dir = param_val_kwargs.pop('save_dir')
-        save_csv = param_val_kwargs.pop('save_csv')
-        save_json = param_val_kwargs.pop('save_json')
+        save_type = param_val_kwargs.pop('save_type')
 
         # Set up the run thread
         self.model.initialize_scraper(param_val_kwargs)
         self.model.initialize_thread(
             {
                 'save_dir': save_dir,
-                'save_csv': save_csv,
-                'save_json': save_json
+                'save_type': save_type,
             }
         )
 

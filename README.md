@@ -85,6 +85,7 @@ safely terminate the program.
 - bs4
 - kaggle
 - openml
+- openpyxl
 - pandas
 - requests
 - selenium

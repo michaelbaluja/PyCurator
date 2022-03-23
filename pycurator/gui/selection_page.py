@@ -5,17 +5,25 @@ from typing import Any, NoReturn
 
 import pycurator.scrapers
 from pycurator.scrapers import AbstractWebScraper, WebPathScraperMixin
-from pycurator.utils import button_label_frame, select_from_files
+from pycurator.utils import button_label_frame, select_from_files, save_options
 from .bases import ViewPage
 
 
 class SelectionPage(ViewPage):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self.current_repository = None
 
         # Create global selection frame/widgets
         self.selector_frame = ttk.Frame(self)
         self.scraper_listbox = tk.Listbox(self.selector_frame)
+        self.scraper_listbox.bind(
+            '<<ListboxSelect>>',
+            self.display_repo_params
+        )
+
+        for repo_name in pycurator.scrapers.available_scrapers:
+            self.scraper_listbox.insert(tk.END, repo_name)
 
         self.param_frame = ttk.Frame(self)
 
@@ -36,14 +44,6 @@ class SelectionPage(ViewPage):
             font='helvetica 14 bold'
         )
 
-        self.scraper_listbox.bind(
-            '<<ListboxSelect>>',
-            self.display_repo_params
-        )
-
-        for repo_name in pycurator.scrapers.available_scrapers:
-            self.scraper_listbox.insert(tk.END, repo_name)
-
         # Align widgets
         selection_text.grid(
             sticky='n',
@@ -55,22 +55,33 @@ class SelectionPage(ViewPage):
         self.grid(row=0, column=0, sticky='nsew')
         self.tkraise()
 
-    def _set_model(self) -> None:
-        # Get repository to gather params for
-        repo_name = self.scraper_listbox.get(
-            self.scraper_listbox.curselection()[0]
-        )
+    def _set_model_from_name(self, repo_name) -> None:
         repo_class = pycurator.scrapers.available_scrapers[repo_name]
-
         self.controller.set_model(repo_class, repo_name)
+
+    def _clear_frame(self, frame: tk.Frame):
+        for widget in frame.winfo_children():
+            widget.destroy()
+
+    def _get_selected_repo(self):
+        selection_tuple = self.scraper_listbox.curselection()
+        if selection_tuple:
+            return self.scraper_listbox.get(selection_tuple[0])
+        else:
+            return None
 
     def display_repo_params(self, *args: Any) -> None:
         """Create and display Frame with repo-specific query parameters."""
-        # Clear frame
-        for widget in self.param_frame.winfo_children():
-            widget.destroy()
+        repo_selection = self._get_selected_repo()
 
-        self._set_model()
+        # No selection: nothing to show. No new selection: do not update
+        if not repo_selection or repo_selection == self.current_repository:
+            return
+
+        self.current_repository = repo_selection
+        self._clear_frame(self.param_frame)
+        self._set_model_from_name(repo_selection)
+        self.scraper_listbox.selection_clear(0, tk.END)
 
         label = ttk.Label(
             self.param_frame,
@@ -87,6 +98,7 @@ class SelectionPage(ViewPage):
         )
 
         # Get save information
+        self.controller.add_run_parameter('save_type', tk.StringVar())
         button_label_frame(
             root=self.param_frame,
             label_text='Save Directory:',
@@ -96,25 +108,19 @@ class SelectionPage(ViewPage):
                 selection_type='save_dir'
             )
         )
-
-        self.controller.add_run_parameter('save_csv', tk.BooleanVar())
-        self.controller.add_run_parameter('save_json', tk.BooleanVar())
-
-        save_type_frame = tk.Frame(self.param_frame)
-        csv_button = tk.Checkbutton(
-            master=save_type_frame,
-            text='CSV',
-            variable=self.controller.get_run_parameter('save_csv')
+        save_frame = tk.Frame(self.param_frame)
+        save_label = ttk.Label(save_frame, text='File Type:')
+        save_type_menu = ttk.Combobox(
+            master=save_frame,
+            textvariable=self.controller.get_run_parameter('save_type'),
+            values=[
+                output_format for output_format in save_options.keys()
+            ],
+            state='readonly'
         )
-        json_button = tk.Checkbutton(
-            master=save_type_frame,
-            text='JSON',
-            variable=self.controller.get_run_parameter('save_json')
-        )
-
-        csv_button.grid(row=0, column=0)
-        json_button.grid(row=0, column=1)
-        save_type_frame.grid()
+        save_label.grid(row=0, column=0)
+        save_type_menu.grid(row=0, column=1)
+        save_frame.grid()
 
         # Get credentials
         if self.controller.model.scraper_class.accepts_user_credentials():

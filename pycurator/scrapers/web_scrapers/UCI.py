@@ -113,8 +113,7 @@ class UCIScraper(AbstractWebScraper):
 
         # Set save parameters
         save_dir = kwargs.pop('save_dir', None)
-        save_csv = kwargs.pop('save_csv', False)
-        save_json = kwargs.pop('save_json', False)
+        save_type = kwargs.pop('save_type', None)
 
         dataset_ids = self.get_dataset_ids(
             dataset_list_url=self.dataset_list_url,
@@ -127,20 +126,10 @@ class UCIScraper(AbstractWebScraper):
 
         results_dict = {'datasets': dataset_df}
 
-        self.queue.put(f'Saving output to "{save_dir}.')
-        if save_csv:
-            save_results(
-                results_dict,
-                save_dir,
-                extension='csv'
-            )
-        if save_json:
-            save_results(
-                results_dict,
-                save_dir,
-                extension='json'
-            )
-        self.queue.put('Save complete.')
+        if save_dir and save_type:
+            self.queue.put(f'Saving output to "{save_dir}.')
+            save_results(results_dict, save_dir, save_type)
+            self.queue.put('Save complete.')
 
         self.queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False

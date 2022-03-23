@@ -22,6 +22,7 @@ REQUIRED = [
     'bs4',
     'kaggle >= 1.5.5',
     'openml',
+    'openpyxl',
     'pandas',
     'requests',
     'selenium >= 2.41.0',
