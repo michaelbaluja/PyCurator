@@ -21,6 +21,7 @@ VERSION = '0.1.0'
 REQUIRED = [
     'bs4',
     'kaggle >= 1.5.5',
+    'numpy',
     'openml',
     'openpyxl',
     'pandas',

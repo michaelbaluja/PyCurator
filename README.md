@@ -87,6 +87,7 @@ safely terminate the program.
 ### Dependencies
 - bs4
 - kaggle
+- numpy
 - openml
 - openpyxl
 - pandas

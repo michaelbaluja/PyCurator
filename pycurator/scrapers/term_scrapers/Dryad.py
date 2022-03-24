@@ -3,7 +3,9 @@ from collections.abc import Collection
 from time import sleep
 from typing import Any, Optional, Union
 
+import numpy as np
 import pandas as pd
+from selenium.webdriver.support.wait import WebDriverWait
 
 from pycurator.scrapers.base_scrapers import (
     AbstractScraper,
@@ -16,6 +18,7 @@ from pycurator.utils.typing import (
     SearchTerm,
     TermResultDict
 )
+from pycurator.utils.web_utils import text_to_be_present_on_page
 
 
 class DryadScraper(AbstractTermScraper, AbstractWebScraper):
@@ -278,19 +281,16 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             self.driver.get(url)
             soup = self._get_soup(features='html.parser')
 
-            while (
-                'Request rejected due to rate limits.' in soup.text or
-                not web_utils.get_tag_value(
-                    web_utils.get_single_tag(
-                        soup=soup,
-                        string=re.compile(self.attr_dict['numViews'])
-                    )
-                )
-            ):
-                self.queue.put('Rate limit hit, waiting for request...')
-                sleep(5)
+            while 'Request rejected due to rate limits.' in soup.text:
+                self.queue.put('Rate limit hit, pausing for one minute...')
+                sleep(60)
                 self.driver.get(url)
                 soup = self._get_soup(features='html.parser')
+
+            WebDriverWait(self.driver, 10).until(
+                text_to_be_present_on_page(self.attr_dict['numViews'])
+            )
+            soup = self._get_soup(features='html.parser')
 
             object_dict = {
                 var: web_utils.get_tag_value(
@@ -325,7 +325,10 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
     def _extract_version_ids(self, df: pd.DataFrame) -> pd.DataFrame:
         return df['_links'].apply(
-            lambda row: row['stash:version']['href'].split('/')[-1]
+            lambda entry: entry.get('stash:version', {})
+                               .get('href', '')
+                               .split('/')[-1]
+            if entry is not np.nan else None
         )
 
     def get_all_metadata(self, search_dict: TermResultDict) -> TermResultDict:
