@@ -178,7 +178,6 @@ class SelectionPage(ViewPage):
                     )
                 )
                 scrape_check_btn.grid(column=0, sticky='w')
-                scrape_check_btn.invoke()
 
             path_dict_frame.grid(column=0, sticky='w')
 

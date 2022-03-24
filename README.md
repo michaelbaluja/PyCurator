@@ -10,6 +10,9 @@ UI for quickly retrieving data that is built on top of an extensible collection 
 PyCurator currently supports the following repositories in the capacities listed. Authentication is only required for Kaggle,
 though may provide runtime benefits for Dryad as rate-limiting is relaxed.
 
+**Note**: The web-scraping functionality of the supported repositories is experimental. The primary aim of PyCurator is API
+support, so utilize the web aspects at your own discretion. 
+
 | Repository           | API                | Web                | Authentication                                                                               |
 |----------------------|--------------------|--------------------|----------------------------------------------------------------------------------------------|
 | Dataverse            | :white_check_mark: | :white_check_mark: |                                                                                              |
