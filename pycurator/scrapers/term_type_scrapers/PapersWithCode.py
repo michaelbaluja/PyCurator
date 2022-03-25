@@ -267,7 +267,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
                     search_params
                 )
 
-                if object_df:
+                if object_df is not None:
                     object_df['id'] = object_path
                     object_df['page'] = search_params['page']
 
