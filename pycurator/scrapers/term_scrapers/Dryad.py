@@ -273,7 +273,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         search_df : pandas.DataFrame
         """
 
-        self.queue.put('Scraping web metadata...')
+        self.status_queue.put('Scraping web metadata...')
 
         search_df = pd.DataFrame()
 
@@ -282,7 +282,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
 
             while 'Request rejected due to rate limits.' in soup.text:
-                self.queue.put('Rate limit hit, pausing for one minute...')
+                self.status_queue.put('Rate limit hit, pausing for one minute...')
                 sleep(60)
                 self.driver.get(url)
                 soup = self._get_soup(features='html.parser')
@@ -319,7 +319,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
                 [search_df, pd.DataFrame([object_dict])]
             ).reset_index(drop=True)
 
-        self.queue.put('Web metadata scraping complete.')
+        self.status_queue.put('Web metadata scraping complete.')
 
         return search_df
 

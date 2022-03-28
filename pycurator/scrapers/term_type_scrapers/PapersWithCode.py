@@ -129,7 +129,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             # Ensure we've received results if they exist
             # 200: OK, 404: page not found (no more results)
             while response.status_code not in [200, 404]:
-                self.queue.put(
+                self.status_queue.put(
                     f'Search error "{response.status_code}" on '
                     f'page {search_params["page"]}'
                 )
@@ -254,7 +254,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         for metadata_type in metadata_types:
             search_df = pd.DataFrame()
-            self.queue.put(f'Querying {metadata_type}.')
+            self.status_queue.put(f'Querying {metadata_type}.')
 
             for object_path in self._pb_determinate(object_paths):
                 search_url = f'{self.base_url}/{search_type}/{object_path}/' \
@@ -301,7 +301,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         for query, df in search_dict.items():
             if df is not None:
                 search_term, search_type = query
-                self.queue.put(
+                self.status_queue.put(
                     f'Querying {search_term} {search_type} metadata.'
                 )
 
@@ -312,7 +312,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
                     search_type=search_type
                 )
 
-                self.queue.put(
+                self.status_queue.put(
                     f'{search_term} {search_type} metadata query complete.'
                 )
 

@@ -67,7 +67,7 @@ class ZenodoScraper(AbstractTermScraper):
                 f' \'{type(search_term)}\'.'
             )
 
-        search_year = 2021
+        search_year = 2022
         search_df = pd.DataFrame()
         start_date = f'{search_year}-01-01'
         end_date = f'{search_year}-12-31'

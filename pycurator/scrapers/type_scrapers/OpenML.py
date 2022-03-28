@@ -124,7 +124,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         search_df = pd.DataFrame()
         urls = df['openml_url'].dropna()
 
-        self.queue.put('Scraping dataset task/run information...')
+        self.status_queue.put('Scraping dataset task/run information...')
 
         for url in urls:
             self._update_query_ref(page=url)
@@ -137,7 +137,9 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             try:
                 self.driver.get(url)
             except InvalidArgumentException:
-                self.queue.put(f'Invalid URL provided for scraping: {url}')
+                self.status_queue.put(
+                    f'Invalid URL provided for scraping: {url}'
+                )
             soup = self._get_soup(features='html.parser')
 
             if err_msg in soup.text:
@@ -195,7 +197,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
                 [search_df, pd.DataFrame([object_dict])]
             ).reset_index(drop=True)
 
-        self.queue.put('Dataset info scraping complete.')
+        self.status_queue.put('Dataset info scraping complete.')
 
         return search_df
 
@@ -224,7 +226,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         if search_type not in search_type_options:
             raise ValueError(f'Can only search {search_type_options}.')
 
-        self.queue.put(f'Querying {search_type}...')
+        self.status_queue.put(f'Querying {search_type}...')
 
         if search_type == 'evaluations':
             return self._get_evaluations_search_output()
@@ -252,7 +254,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             self._update_query_ref(page=index)
             search_results = list_queries(offset=(index * size), size=size)
 
-        self.queue.put(f'{search_type} search complete.')
+        self.status_queue.put(f'{search_type} search complete.')
 
         return search_df
 
@@ -303,7 +305,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             web_df = self.get_dataset_related_tasks(metadata_df)
             metadata_df = pd.merge(metadata_df, web_df, on='openml_url')
 
-        self.queue.put(f' {search_type} metadata query complete.')
+        self.status_queue.put(f' {search_type} metadata query complete.')
 
         return metadata_df
 
@@ -326,7 +328,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         metadata_dict = dict()
 
         for query, df in search_dict.items():
-            self.queue.put(f'Querying {query} metadata...')
+            self.status_queue.put(f'Querying {query} metadata...')
             if query == 'datasets':
                 id_name = 'did'
             elif query == 'runs':
@@ -345,6 +347,6 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
                 search_type=query
             )
 
-        self.queue.put('Metadata query complete.')
+        self.status_queue.put('Metadata query complete.')
 
         return metadata_dict

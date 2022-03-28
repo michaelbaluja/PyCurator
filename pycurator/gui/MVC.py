@@ -207,7 +207,7 @@ class CuratorController:
 
         # Get next object in queue and push to output widget.
         try:
-            msg = self.model.threaded_run.scraper.queue.get_nowait()
+            msg = self.model.threaded_run.scraper.status_queue.get_nowait()
 
             self._update_runtime_output(msg)
 
@@ -216,7 +216,7 @@ class CuratorController:
                 self.view.after(100, self.process_runtime_updates)
             else:
                 # Empty queue
-                while not self.model.threaded_run.scraper.queue.empty():
+                while not self.model.threaded_run.scraper.status_queue.empty():
                     self.process_runtime_updates()
 
                 # Remove query message
@@ -257,7 +257,7 @@ class CuratorController:
         self.view.current_page.progress_bar['mode'] = 'determinate'
         self.view.current_page.progress_bar['value'] = \
             (self.model.threaded_run.scraper.queries_completed /
-                self.model.threaded_run.scraper.num_queries * 100)
+                self.model.threaded_run.scraper.num_queries * 100) + 1
 
     def _update_progress_bar(self) -> None:
         """Update status of progress bar based on scraper status."""

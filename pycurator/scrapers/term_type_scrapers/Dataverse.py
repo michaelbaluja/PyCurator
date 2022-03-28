@@ -394,7 +394,7 @@ class DataverseScraper(
         for query, df in search_dict.items():
             if df is not None and not df.empty:
                 search_term, search_type = query
-                self.queue.put(
+                self.status_queue.put(
                     f'Querying {search_term} {search_type} metadata.'
                 )
 
@@ -414,7 +414,7 @@ class DataverseScraper(
                     **self.path_dict[search_type]
                 )
 
-                self.queue.put(
+                self.status_queue.put(
                     f'{search_term} {search_type} metadata query complete.'
                 )
 

@@ -109,7 +109,7 @@ class UCIScraper(AbstractWebScraper):
             Can temporarily overwrite self attributes.
         """
 
-        self.queue.put(f'Running {self.repository_name}...')
+        self.status_queue.put(f'Running {self.repository_name}...')
 
         # Set save parameters
         save_dir = kwargs.pop('save_dir', None)
@@ -127,11 +127,11 @@ class UCIScraper(AbstractWebScraper):
         results_dict = {'datasets': dataset_df}
 
         if save_dir and save_type:
-            self.queue.put(f'Saving output to "{save_dir}.')
+            self.status_queue.put(f'Saving output to "{save_dir}.')
             save_results(results_dict, save_dir, save_type)
-            self.queue.put('Save complete.')
+            self.status_queue.put('Save complete.')
 
-        self.queue.put(f'{self.repository_name} run complete.')
+        self.status_queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False
 
     def _clean_results(
@@ -205,7 +205,7 @@ class UCIScraper(AbstractWebScraper):
         dataset_ids : list[str]
         """
 
-        self.queue.put('Scraping dataset ids...')
+        self.status_queue.put('Scraping dataset ids...')
         self.current_query_ref = 'Dataset ID\'s'
 
         self.driver.get(dataset_list_url)
@@ -223,7 +223,7 @@ class UCIScraper(AbstractWebScraper):
             )
         ]
 
-        self.queue.put('Dataset id scraping complete.')
+        self.status_queue.put('Dataset id scraping complete.')
 
         return dataset_ids
 
@@ -312,7 +312,7 @@ class UCIScraper(AbstractWebScraper):
                     text_to_be_present_on_page(wait_path_str)
                 )
             except TimeoutException:
-                self.queue.put(
+                self.status_queue.put(
                     f'Unable to locate \'{wait_path_str}\' '
                     f'on \'{url}\'.'
                 )
@@ -374,7 +374,7 @@ class UCIScraper(AbstractWebScraper):
         dataset_df : pandas.DataFrame
         """
 
-        self.queue.put('Scraping page data...')
+        self.status_queue.put('Scraping page data...')
 
         dataset_df = pd.DataFrame()
 
@@ -387,7 +387,7 @@ class UCIScraper(AbstractWebScraper):
             )
             dataset_df = pd.concat([dataset_df, pd.DataFrame([results])])
 
-        self.queue.put('Scraping complete.')
+        self.status_queue.put('Scraping complete.')
 
         dataset_df = dataset_df.reset_index(drop=True)
         return dataset_df
