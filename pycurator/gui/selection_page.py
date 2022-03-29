@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import Any, NoReturn
 
 import pycurator.collectors
-from pycurator.collectors import BaseWebCollector, WebPathScraperMixin
+from pycurator.collectors import BaseWebCollector
 from pycurator.utils import button_label_frame, select_from_files, save_options
 from .base import ViewPage
 
@@ -163,10 +163,7 @@ class SelectionPage(ViewPage):
             path_dict_frame = ttk.Frame(self.param_frame)
 
             # Get optional CSS path file if necessary
-            if issubclass(
-                    self.controller.model.collector_class,
-                    WebPathScraperMixin
-            ):
+            if self.controller.model.requirements.get('path_dict'):
                 path_dict_label = ttk.Label(
                     path_dict_frame,
                     text='CSS Selector Path:'
