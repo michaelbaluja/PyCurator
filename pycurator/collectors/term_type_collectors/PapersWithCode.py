@@ -3,9 +3,9 @@ from typing import Any, Optional, Union
 
 import pandas as pd
 
-from pycurator.scrapers.base_scrapers import (
-    AbstractScraper,
-    AbstractTermTypeScraper
+from pycurator.collectors.base import (
+    BaseCollector,
+    BaseTermTypeCollector
 )
 from pycurator.utils.parsing import validate_metadata_parameters
 from pycurator.utils.typing import (
@@ -18,19 +18,21 @@ from pycurator.utils.typing import (
 )
 
 
-class PapersWithCodeScraper(AbstractTermTypeScraper):
-    """Scrapes PapersWithCode API for all data for the given search params.
+class PapersWithCodeCollector(BaseTermTypeCollector):
+    """PapersWithCode collector for search term and type queries.
 
     Parameters
     ----------
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed
-        in directly to search functions to override set parameter.
+        Terms to search over. Can be (re)set via set_search_terms()
+        or passed in directly to search functions to override set
+        parameter.
     search_types : list-like, optional
-        Types to search over. Can be (re)set via set_search_types() or passed
-        in directly to search functions.
+        Types to search over. Can be (re)set via set_search_types()
+        or passed in directly to search functions.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
     """
 
     def __init__(
@@ -56,7 +58,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
     def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('conferences', 'datasets', 'evaluations', 'papers', 'tasks')
 
-    @AbstractScraper._pb_indeterminate
+    @BaseCollector._pb_indeterminate
     def _conduct_search_over_pages(
         self,
         search_url: str,
@@ -69,12 +71,12 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
         ----------
         search_url : str
         search_params : dict
-            Contains parameters to pass to requests.get({params}). Most common
-            include search term 'q', and page index 'page'. For full details,
-            see below.
+            Contains parameters to pass to requests.get({params}). Most
+            common include search term 'q', and page index 'page'. For
+            full details, see the Notes.
         print_progress : bool, optional (default=False)
-            If True, updates on query page progress is sent to object queue
-            to be displayed in UI window.
+            If True, updates on query page progress is sent to object
+            queue to be displayed in UI window.
 
         Returns
         -------
@@ -82,8 +84,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
 
         Notes
         -----
-        For querying base objects to list all results, the following parameters
-        are most common:
+        For querying base objects, the following parameters are most common:
         q : str, optional
             Term to query for.
         page : int, optional
@@ -153,7 +154,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             search_term: SearchTerm,
             search_type: SearchType
     ) -> pd.DataFrame:
-        """Returns information about all queried information types on PWC.
+        """Queries Papers With Code API for the specified search term and type.
 
         Parameters
         ----------
@@ -201,7 +202,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             self,
             search_type: SearchType
     ) -> Collection[SearchType]:
-        """Return the possible metadata categories for a given search_type."""
+        """Return the metadata categories for a given search_type."""
         if search_type not in self.search_type_options:
             raise ValueError(
                 f'Incorrect search type "{search_type}" passed in'
@@ -223,11 +224,11 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             object_paths: Collection[str],
             **kwargs: Any
     ) -> TypeResultDict:
-        """Retrieves the metadata for the papers listed in object_paths
+        """Retrieves metadata for the object_paths objects.
 
         Parameters
         ----------
-        object_paths : str or list-like or str
+        object_paths : str or collection of str
         **kwargs : dict, optional
             Must include search_type : {
                 'conferences', 'datasets', 'evaluations', 'papers', 'tasks'
@@ -284,7 +285,7 @@ class PapersWithCodeScraper(AbstractTermTypeScraper):
             self,
             search_dict: TermTypeResultDict
     ) -> dict[SearchQuery, TermResultDict]:
-        """Retrieves all metadata related to the provided DataFrames.
+        """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
         ----------

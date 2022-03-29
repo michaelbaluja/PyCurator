@@ -57,6 +57,7 @@ def get_sibling_tag(
         *args: P.args,
         **kwargs: P.kwargs
 ) -> Union[bs4.element.Tag, bs4.element.NavigableString, None]:
+    """Find and return sibling of the desired Tag to find."""
     tag = get_single_tag_from_tag_info(
         soup=soup,
         class_type=pattern,

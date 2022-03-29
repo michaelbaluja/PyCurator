@@ -3,9 +3,9 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from pycurator.scrapers.base_scrapers import (
-    AbstractScraper,
-    AbstractTermTypeScraper
+from pycurator.collectors.base import (
+    BaseCollector,
+    BaseTermTypeCollector
 )
 from pycurator.utils.parsing import validate_metadata_parameters
 from pycurator.utils.typing import (
@@ -15,19 +15,21 @@ from pycurator.utils.typing import (
 )
 
 
-class FigshareScraper(AbstractTermTypeScraper):
-    """Scrapes Figshare API for all data relating to the given search params.
+class FigshareCollector(BaseTermTypeCollector):
+    """Figshare collector for search term and type queries.
 
     Parameters
     ----------
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed
-        in directly to search functions.
+        Terms to search over. Can be (re)set via set_search_terms() or
+        passed in directly to search functions.
     search_types : list-like, optional (default=None)
-        Data types to search over. Can be (re)set via set_search_types() or
-        passed in directly to search functions to override set parameter.
+        Data types to search over. Can be (re)set via set_search_types()
+        or passed in directly to search functions to override set
+        parameter.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
     """
 
     def __init__(
@@ -67,7 +69,7 @@ class FigshareScraper(AbstractTermTypeScraper):
         ----------
         credential_filepath : str
             JSON filepath containing credentials in the form
-            {repository_name}: 'key'.
+            {repository_name}: {key}.
 
         Returns
         -------
@@ -78,13 +80,13 @@ class FigshareScraper(AbstractTermTypeScraper):
         self.headers['Authorization'] = f'token {credentials}'
         return credentials
 
-    @AbstractScraper._pb_indeterminate
+    @BaseCollector._pb_indeterminate
     def get_individual_search_output(
             self,
             search_term: SearchTerm,
             search_type: SearchType,
     ) -> Union[TermTypeResultDict, None]:
-        """Calls the Figshare API for the specified search term and type.
+        """Queries the Figshare API for the given search term and type.
 
         Parameters
         ----------
@@ -184,12 +186,12 @@ class FigshareScraper(AbstractTermTypeScraper):
             object_paths: Union[str, Collection[str]],
     ) -> pd.DataFrame:
         """
-        Retrieves the metadata for the object/objects listed in object_paths.
+        Retrieves metadata for the object_paths objects.
 
         Parameters
         ----------
         object_paths : str or list-like
-            string or list of strings containing the paths for the objects.
+            string or list of strings containing object paths.
 
         Returns
         -------
@@ -217,7 +219,7 @@ class FigshareScraper(AbstractTermTypeScraper):
             self,
             search_dict: TermTypeResultDict
     ) -> TermTypeResultDict:
-        """Retrieves all metadata that relates to the provided DataFrames.
+        """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
         ----------

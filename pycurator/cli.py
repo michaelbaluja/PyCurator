@@ -24,11 +24,11 @@
 #  details. You should have received a copy of the GNU Lesser General Public
 #  License along with PyCurator. If not, see <https://www.gnu.org/licenses/>.
 
-from pycurator.gui import ScraperGUI
+from pycurator.gui import PyCuratorUI
 
 
 def main():
-    root = ScraperGUI()
+    root = PyCuratorUI()
     root.mainloop()
 
 

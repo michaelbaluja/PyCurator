@@ -3,27 +3,47 @@ import tkinter.ttk as ttk
 from collections.abc import Iterable
 from typing import Any, NoReturn
 
-import pycurator.scrapers
-from pycurator.scrapers import AbstractWebScraper, WebPathScraperMixin
+import pycurator.collectors
+from pycurator.collectors import BaseWebCollector, WebPathScraperMixin
 from pycurator.utils import button_label_frame, select_from_files, save_options
-from .bases import ViewPage
+from .base import ViewPage
 
 
 class SelectionPage(ViewPage):
+    """Selection Page of the PyCurator View component.
+
+    Parameters
+    ----------
+    *args : tuple, optional
+        Positional arguments for ViewPage constructor, which further
+        passes to ttk.Frame.
+    **kwargs : dict, optional
+        Keyword arguments for ViewPage constructor, which further
+        passes to ttk.Frame.
+
+    Attributes
+    ----------
+    current_repository : str
+
+    See Also
+    --------
+    pycurator.gui.base.ViewPage
+    """
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.current_repository = None
 
         # Create global selection frame/widgets
         self.selector_frame = ttk.Frame(self)
-        self.scraper_listbox = tk.Listbox(self.selector_frame)
-        self.scraper_listbox.bind(
+        self.repo_listbox = tk.Listbox(self.selector_frame)
+        self.repo_listbox.bind(
             '<<ListboxSelect>>',
             self.display_repo_params
         )
 
-        for repo_name in pycurator.scrapers.available_scrapers:
-            self.scraper_listbox.insert(tk.END, repo_name)
+        for repo_name in pycurator.collectors.available_repos:
+            self.repo_listbox.insert(tk.END, repo_name)
 
         self.param_frame = ttk.Frame(self)
 
@@ -36,7 +56,7 @@ class SelectionPage(ViewPage):
 
     @ViewPage.no_overwrite
     def show(self, *args: Any) -> None:
-        """Display scraper selection widgets."""
+        """Display collector selection widgets."""
         selection_text = ttk.Label(
             self.selector_frame,
             text='Select Repository:',
@@ -49,24 +69,27 @@ class SelectionPage(ViewPage):
             sticky='n',
             pady=(0, 10)
         )
-        self.scraper_listbox.grid(sticky='n')
+        self.repo_listbox.grid(sticky='n')
         self.selector_frame.grid(row=0, column=0, sticky='n', padx=10, pady=5)
         self.param_frame.grid(row=0, column=1, sticky='n', padx=10, pady=5)
         self.grid(row=0, column=0, sticky='nsew')
         self.tkraise()
 
     def _set_model_from_name(self, repo_name) -> None:
-        repo_class = pycurator.scrapers.available_scrapers[repo_name]
+        """Update Model element via Controller."""
+        repo_class = pycurator.collectors.available_repos[repo_name]
         self.controller.set_model(repo_class, repo_name)
 
     def _clear_frame(self, frame: tk.Frame):
+        """Delete widgets present on the provided frame."""
         for widget in frame.winfo_children():
             widget.destroy()
 
     def _get_selected_repo(self):
-        selection_tuple = self.scraper_listbox.curselection()
+        """Get repository name from listbox selection."""
+        selection_tuple = self.repo_listbox.curselection()
         if selection_tuple:
-            return self.scraper_listbox.get(selection_tuple[0])
+            return self.repo_listbox.get(selection_tuple[0])
         else:
             return None
 
@@ -81,7 +104,7 @@ class SelectionPage(ViewPage):
         self.current_repository = repo_selection
         self._clear_frame(self.param_frame)
         self._set_model_from_name(repo_selection)
-        self.scraper_listbox.selection_clear(0, tk.END)
+        self.repo_listbox.selection_clear(0, tk.END)
 
         label = ttk.Label(
             self.param_frame,
@@ -93,7 +116,7 @@ class SelectionPage(ViewPage):
         # Initialize run button
         self.next_page_button = ttk.Button(
             self.param_frame,
-            text=f'Run {self.controller.model.scraper_name}',
+            text=f'Run {self.controller.model.collector_name}',
             command=self.controller.parse_run_parameters
         )
 
@@ -123,7 +146,7 @@ class SelectionPage(ViewPage):
         save_frame.grid()
 
         # Get credentials
-        if self.controller.model.scraper_class.accepts_user_credentials():
+        if self.controller.model.collector_class.accepts_user_credentials():
             button_label_frame(
                 root=self.param_frame,
                 label_text='Credentials:',
@@ -136,12 +159,12 @@ class SelectionPage(ViewPage):
             )
 
         # If repo utilizes web scraping, get path file
-        if issubclass(self.controller.model.scraper_class, AbstractWebScraper):
+        if issubclass(self.controller.model.collector_class, BaseWebCollector):
             path_dict_frame = ttk.Frame(self.param_frame)
 
             # Get optional CSS path file if necessary
             if issubclass(
-                    self.controller.model.scraper_class,
+                    self.controller.model.collector_class,
                     WebPathScraperMixin
             ):
                 path_dict_label = ttk.Label(
@@ -165,7 +188,7 @@ class SelectionPage(ViewPage):
 
             # If web scraping is not the primary method of collection, allow
             # user to decide to scrape
-            if len(self.controller.model.scraper_class.__bases__) > 1:
+            if len(self.controller.model.collector_class.__bases__) > 1:
                 self.controller.add_run_parameter('scrape', tk.IntVar())
                 scrape_check_btn = ttk.Checkbutton(
                     self.param_frame,
@@ -209,7 +232,7 @@ class SelectionPage(ViewPage):
         if self.controller.model.requirements.get('search_types'):
             search_type_options = self.controller \
                 .model \
-                .scraper_class. \
+                .collector_class. \
                 search_type_options
             search_type_outer_frame = ttk.Frame(self.param_frame)
             search_type_inner_frame = ttk.Frame(search_type_outer_frame)
@@ -250,6 +273,7 @@ class SelectionPage(ViewPage):
         self.next_page_button.grid()
 
     def alert_missing_reqs(self, missing_requirements: list[str]) -> None:
+        """Display unfulfilled requirements when attempting to run."""
         try:
             self.req_label.grid_forget()
         except tk.TclError:
@@ -276,6 +300,21 @@ class SelectionPage(ViewPage):
             toggle_vars: Iterable[tk.Variable],
             btn: tk.Button
     ) -> None:
+        """Modify button state based on values of provided variables.
+
+        Parameters
+        ----------
+        toggle_vars : tk.Variable or iterable of tk.Variable
+            Variables on which value state is used to update
+            button state.
+        btn : tk.Button
+            Widget to update state of.
+
+        Raises
+        ------
+        TypeError
+            Incorrect variable types provided to toggle_vars.
+        """
         if not btn:
             return
 

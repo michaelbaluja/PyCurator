@@ -4,23 +4,24 @@ from typing import Any, Optional, Iterable, NoReturn
 
 import pandas as pd
 
-from pycurator.scrapers.base_scrapers import (
-    AbstractScraper,
-    AbstractTermScraper
+from pycurator.collectors.base import (
+    BaseCollector,
+    BaseTermCollector
 )
 from pycurator.utils.typing import SearchTerm
 
 
-class ZenodoScraper(AbstractTermScraper):
-    """Scrapes the Zenodo API for all data relating to the given search terms.
+class ZenodoCollector(BaseTermCollector):
+    """Zenodo collector for search term queries.
 
     Parameters
     ----------
     search_terms : list-like, optional
-        Terms to search over. Can be (re)set via set_search_terms() or passed
-        in directly to search functions.
+        Terms to search over. Can be (re)set via set_search_terms()
+        or passed in directly to search functions.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
     """
 
     def __init__(
@@ -35,7 +36,7 @@ class ZenodoScraper(AbstractTermScraper):
     def accepts_user_credentials() -> bool:
         return True
 
-    @AbstractScraper._pb_indeterminate
+    @BaseCollector._pb_indeterminate
     def get_individual_search_output(
             self,
             search_term: Collection[SearchTerm]
@@ -141,5 +142,5 @@ class ZenodoScraper(AbstractTermScraper):
 
     def get_query_metadata(self, object_paths: Iterable[Any]) -> NoReturn:
         raise NotImplementedError(
-            'Zenodo does not provide object metadata'
+            'Zenodo does not provide object metadata.'
         )

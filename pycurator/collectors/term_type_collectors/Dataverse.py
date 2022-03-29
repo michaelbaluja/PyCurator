@@ -5,10 +5,10 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from pycurator.scrapers.base_scrapers import (
-    AbstractScraper,
-    AbstractTermTypeScraper,
-    AbstractWebScraper,
+from pycurator.collectors.base import (
+    BaseCollector,
+    BaseTermTypeCollector,
+    BaseWebCollector,
     WebPathScraperMixin
 )
 from pycurator.utils import parse_numeric_string, web_utils
@@ -21,30 +21,36 @@ from pycurator.utils.typing import (
 )
 
 
-class DataverseScraper(
-    AbstractTermTypeScraper,
-    AbstractWebScraper,
+class DataverseCollector(
+    BaseTermTypeCollector,
+    BaseWebCollector,
     WebPathScraperMixin
 ):
-    """Scrapes Dataverse API for all data relating to the given search params.
+    """Harvard Dataverse collector for search term and type queries.
+
+    This collector allows for both API collection and web scraping for
+    additional attributes only available via the webpage for a given
+    dataset or file.
 
     Parameters
     ----------
     path_file : str, optional
             (default=os.path.join('paths', 'dataverse_paths.json'))
-        Json file for loading path dict.
+        JSON file for loading path dict.
         Must be of the form {search_type: {path_type: path_dict}}
     scrape : bool, optional (default=True)
-        Flag for requesting web scraping as a method for additional metadata
-        collection.
+        Flag for requesting web scraping as a method for additional
+        metadata collection.
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed
-        in directly to search functions.
+        Terms to search over. Can be (re)set via set_search_terms()
+        or passed in directly to search functions.
     search_types : list-like, optional (default=None)
-        Data types to search over. Can be (re)set via set_search_types() or
-        passed in directly to search functions to override set parameter.
+        Data types to search over. Can be (re)set via set_search_types()
+        or passed in directly to search functions to override set
+        parameter.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
     """
 
     def __init__(
@@ -58,7 +64,7 @@ class DataverseScraper(
 
         self.scrape = scrape
 
-        AbstractTermTypeScraper.__init__(
+        BaseTermTypeCollector.__init__(
             self,
             repository_name='dataverse',
             search_terms=search_terms,
@@ -67,7 +73,7 @@ class DataverseScraper(
 
         if self.scrape:
             self.path_dict = path_file
-            AbstractWebScraper.__init__(
+            BaseWebCollector.__init__(
                 self,
                 repository_name='dataverse'
             )
@@ -99,7 +105,7 @@ class DataverseScraper(
         ----------
         credential_filepath : str,
             JSON filepath containing credentials in form
-            {repository_name}: 'key'.
+            {repository_name}: {key}.
 
         Returns
         -------
@@ -110,13 +116,13 @@ class DataverseScraper(
         self.headers['X-Dataverse-key'] = credentials
         return credentials
 
-    @AbstractScraper._pb_indeterminate
+    @BaseCollector._pb_indeterminate
     def get_individual_search_output(
             self,
             search_term: SearchTerm,
             search_type: SearchType
     ) -> pd.DataFrame:
-        """Scrapes Dataverse API for the specified search term and type.
+        """Queries Dataverse API for the specified search term and type.
 
         Parameters
         ----------
@@ -234,13 +240,13 @@ class DataverseScraper(
             self,
             **kwargs: Optional[Union[AttributeDict, Collection[AttributeDict]]]
     ) -> AttributeDict:
-        """Return attribute values for all relevant given attribute path dicts.
+        """Return values for all relevant attribute path dicts provided.
 
         Parameters
         ----------
         **kwargs : dict, optional
-            Attribute dicts to parse through. Accepts landing page, metadata,
-            and terms dicts.
+            Attribute dicts to parse through. Utilizes landing page,
+            metadata, and terms dicts, when provided.
 
         Returns
         -------
@@ -325,13 +331,12 @@ class DataverseScraper(
             object_paths: Collection[str],
             **attribute_dicts: dict[str, AttributeDict]
     ) -> pd.DataFrame:
-        """
-        Retrieves the metadata for the object/objects listed in object_paths.
+        """Retrieves metadata for the object_paths objects.
 
         Parameters
         ----------
         object_paths : str or list-like
-            String or list of strings containing the paths for the objects.
+            String or list of strings containing object paths.
         **attribute_dicts : dict, optional
             Holds attribute paths for scraping metadata.
 
@@ -368,7 +373,7 @@ class DataverseScraper(
             self,
             search_dict: TermTypeResultDict
     ) -> TermTypeResultDict:
-        """Retrieves all metadata that relates to the provided DataFrames.
+        """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
         ----------
