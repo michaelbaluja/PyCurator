@@ -7,9 +7,9 @@ import pandas as pd
 from kaggle import KaggleApi
 from kaggle.rest import ApiException
 
-from pycurator.scrapers.base_scrapers import (
-    AbstractScraper,
-    AbstractTermTypeScraper
+from pycurator.collectors.base import (
+    BaseCollector,
+    BaseTermTypeCollector
 )
 from pycurator.utils.parsing import validate_metadata_parameters
 from pycurator.utils.typing import (
@@ -20,17 +20,18 @@ from pycurator.utils.typing import (
 )
 
 
-class KaggleScraper(AbstractTermTypeScraper):
-    """Scrapes Kaggle API for all data relating to the given search params.
+class KaggleCollector(BaseTermTypeCollector):
+    """Kaggle collector for search term and type queries.
 
     Parameters
     ----------
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed
-        in directly to search functions.
+        Terms to search over. Can be (re)set via set_search_terms() or
+        passed in directly to search functions.
     search_types : list-like, optional (default=None)
-        Data types to search over. Can be (re)set via set_search_types() or
-        passed in directly to search functions to override set parameter.
+        Data types to search over. Can be (re)set via set_search_types()
+        or passed in directly to search functions to override set
+        parameter.
 
     Notes
     -----
@@ -63,13 +64,13 @@ class KaggleScraper(AbstractTermTypeScraper):
     def search_type_options(cls) -> tuple[SearchType, ...]:
         return ('datasets', 'kernels')
 
-    @AbstractScraper._pb_indeterminate
+    @BaseCollector._pb_indeterminate
     def get_individual_search_output(
             self,
             search_term: SearchTerm,
             search_type: SearchType,
     ) -> pd.DataFrame:
-        """Calls the Kaggle API for the specified search term and type.
+        """Queries the Kaggle API for the specified search term and type.
 
         Parameters
         ----------
@@ -88,16 +89,14 @@ class KaggleScraper(AbstractTermTypeScraper):
             Invalid search_type provided.
         """
 
-        search_type_options = self.search_type_options
-
         # Validate input
         if not isinstance(search_term, str):
             raise TypeError(
                 'search_term must be of type str, not'
                 f' \'{type(search_term)}\'.'
             )
-        if search_type not in search_type_options:
-            raise ValueError(f'Can only search {search_type_options}.')
+        if search_type not in self.search_type_options:
+            raise ValueError(f'Can only search {self.search_type_options}.')
 
         # Use search type to get relevant API function
         list_queries = getattr(self.api, f'{search_type}_list')
@@ -143,7 +142,7 @@ class KaggleScraper(AbstractTermTypeScraper):
             object_path: str,
             data_path: Optional[str] = f'data{os.sep}'
     ) -> Union[JSONDict, None]:
-        """Queries Kaggle for metadata json file & returns as a dict.
+        """Queries the Kaggle API for metadata JSON file.
 
         Parameters
         ----------
@@ -189,7 +188,7 @@ class KaggleScraper(AbstractTermTypeScraper):
             self,
             object_paths: Collection[str],
     ) -> pd.DataFrame:
-        """Retrieves the metadata for the objects referenced in object_paths.
+        """Retrieves the metadata for the object_paths objects.
 
         Parameters
         ----------
@@ -206,8 +205,7 @@ class KaggleScraper(AbstractTermTypeScraper):
 
         for object_path in self._pb_determinate(object_paths):
             json_data = self._retrieve_object_json(object_path)
-
-            metadata_df = metadata_df.append(json_data, ignore_index=True)
+            metadata_df = pd.concat([metadata_df, pd.DataFrame(json_data)])
 
         metadata_df = metadata_df.convert_dtypes()
 
@@ -217,7 +215,7 @@ class KaggleScraper(AbstractTermTypeScraper):
             self,
             search_dict: TermTypeResultDict
     ) -> TermTypeResultDict:
-        """Retrieves all related metadata for the provided DataFrames.
+        """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
         ----------
@@ -227,8 +225,8 @@ class KaggleScraper(AbstractTermTypeScraper):
         Returns
         -------
         metadata_dict : dict of DataFrames
-            Stores the results of each call to get_query_metadata in the form
-            metadata_dict[(search_term, search_type)] = df.
+            Stores the results of each call to get_query_metadata in the
+            form: metadata_dict[(search_term, search_type)] = df.
         """
 
         object_path_dict = dict()

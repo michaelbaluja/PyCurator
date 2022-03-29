@@ -9,9 +9,9 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
 
-from pycurator.scrapers.base_scrapers import (
-    AbstractScraper,
-    AbstractWebScraper
+from pycurator.collectors.base import (
+    BaseCollector,
+    BaseWebCollector
 )
 from pycurator.utils import (
     parse_numeric_string,
@@ -25,8 +25,8 @@ from pycurator.utils.typing import (
 from pycurator.utils.web_utils import text_to_be_present_on_page
 
 
-class UCIScraper(AbstractWebScraper):
-    """Scrapes the UCI ML Repository for all datasets.
+class UCIScraper(BaseWebCollector):
+    """UCI Machine Learning Repository web scraper.
 
     Parameters
     ----------
@@ -35,7 +35,6 @@ class UCIScraper(AbstractWebScraper):
     """
 
     def __init__(self, **kwargs) -> None:
-
         super().__init__(repository_name='uci')
 
         self.base_url = kwargs.get(
@@ -138,7 +137,7 @@ class UCIScraper(AbstractWebScraper):
             self,
             results: AttributeDict
     ) -> AttributeDict:
-        """Applies parse functions to relevant entries of the input dictionary.
+        """Applies parse functions to the results entries.
 
         For the results of a scraped UCI dataset page, removes text from
         donation or link date, num_citations, and num_views.
@@ -185,7 +184,7 @@ class UCIScraper(AbstractWebScraper):
 
         return results
 
-    @AbstractScraper._pb_indeterminate
+    @BaseCollector._pb_indeterminate
     def get_dataset_ids(
             self,
             dataset_list_url: str,
@@ -231,7 +230,7 @@ class UCIScraper(AbstractWebScraper):
             self,
             soup: bs4.BeautifulSoup
     ) -> AttributeDict:
-        """Scrapes the possible attributes provided in the repository
+        """Scrapes the possible attributes provided in the repository.
 
         Parameters
         ----------

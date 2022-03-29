@@ -7,9 +7,9 @@ import openml
 import pandas as pd
 from selenium.webdriver.remote.errorhandler import InvalidArgumentException
 
-from pycurator.scrapers.base_scrapers import (
-    AbstractTypeScraper,
-    AbstractWebScraper
+from pycurator.collectors.base import (
+    BaseTypeCollector,
+    BaseWebCollector
 )
 from pycurator.utils import parse_numeric_string, web_utils
 from pycurator.utils.parsing import validate_metadata_parameters
@@ -19,19 +19,23 @@ from pycurator.utils.typing import (
 )
 
 
-class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
-    """Scrapes the OpenML API for all data relating to the given search types.
+class OpenMLCollector(BaseTypeCollector, BaseWebCollector):
+    """OpenML collector for search type queries.
+
+    This collector allows for both API collection and web scraping for
+    additional dataset attributes that may take much longer to be
+    queried via API, such as basic task and run information.
 
     Parameters
     ----------
     scrape : bool, optional (default=True)
-        Flag for requesting web scraping as a method for additional metadata
-        collection.
+        Flag for requesting web scraping as a method for additional
+        metadata collection.
     search_types : list-like, optional
-        Types to search over. Can be (re)set via set_search_types() or passed
-        in directly to search functions.
+        Types to search over. Can be (re)set via set_search_types() or
+        passed in directly to search functions.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        OpenML API key.
     """
 
     def __init__(
@@ -43,14 +47,14 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
 
         self.scrape = scrape
 
-        AbstractTypeScraper.__init__(
+        BaseTypeCollector.__init__(
             self,
             repository_name='openml',
             search_types=search_types
         )
 
         if self.scrape:
-            AbstractWebScraper.__init__(
+            BaseWebCollector.__init__(
                 self,
                 repository_name='openml',
             )
@@ -75,6 +79,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         return ('datasets', 'runs', 'tasks', 'evaluations')
 
     def _get_evaluations_search_output(self) -> pd.DataFrame:
+        """Retrieve information on OpenML Evaluations."""
         evaluations_measures = openml.evaluations.list_evaluation_measures()
         evaluations_df = pd.DataFrame()
 
@@ -108,7 +113,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
         return evaluations_df
 
     def get_dataset_related_tasks(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Queries the task/run information related to the provided datasets.
+        """Queries the task/run information for the provided datasets.
 
         Parameters
         ----------
@@ -205,7 +210,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             self,
             search_type: SearchType
     ) -> pd.DataFrame:
-        """Returns information about all queried information types on OpenML.
+        """Queries OpenML API for the specified search type.
 
         Parameters
         ----------
@@ -263,7 +268,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             object_paths: Union[str, Collection[str]],
             search_type: SearchType
     ) -> pd.DataFrame:
-        """Retrieves the metadata for the file/files listed in object_paths.
+        """Retrieves the metadata for the object_paths objects.
 
         Parameters
         ----------
@@ -313,7 +318,7 @@ class OpenMLScraper(AbstractTypeScraper, AbstractWebScraper):
             self,
             search_dict: TypeResultDict
     ) -> TypeResultDict:
-        """Retrieves all metadata that relates to the provided DataFrames.
+        """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
         ----------

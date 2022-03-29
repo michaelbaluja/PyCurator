@@ -1,6 +1,6 @@
-from pycurator.gui import ScraperGUI
+from pycurator.gui import PyCuratorUI
 
 
 if __name__ == '__main__':
-    main = ScraperGUI()
+    main = PyCuratorUI()
     main.mainloop()

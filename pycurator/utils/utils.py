@@ -8,7 +8,7 @@ from typing import Any, TypeVar
 import pandas
 import pandas as pd
 
-import pycurator.gui.bases
+import pycurator.gui.base
 from .parsing import _validate_save_filename
 
 T = TypeVar('T')
@@ -31,12 +31,15 @@ def save_results(results: dict, data_dir: str, output_format: str) -> None:
     results : dict
     data_dir : str
     output_format : str
-        Format for saved results. Acceptable options are seen in save_options.
+        Format for saved results. Acceptable options are seen in
+        save_options.
 
     Raises
     ------
     TypeError
         "results" not of type dict or "datadir" not of type str.
+    ValueError
+        Incorrect output_format provided.
 
     See Also
     --------
@@ -92,15 +95,17 @@ def save_dataframe(
         If DataFrame, results will be stored in a csv format.
     filepath : str
         Location to store file in. Take note of output type as specified
-        above, as appending the incorrect filetype may result in the file
-        being unreadable.
+        above, as appending the incorrect filetype may result in the
+        file being unreadable.
     output_format : str
-        Format for saved results. Acceptable options are seen in save_options.
+        Format for saved results. Acceptable options are seen in
+        save_options.
 
     Raises
     ------
     ValueError
-        If a non-dataframe object is passed.
+        If a non-dataframe object results or an incorrect output_format
+        is provided.
     """
 
     if not isinstance(results, pd.DataFrame):
@@ -124,6 +129,7 @@ def button_label_frame(
         button_text: float | str,
         button_command: Any
 ) -> None:
+    """Create frame containing vertically-aligned button and label."""
     _frame = ttk.Frame(root)
     _label = ttk.Label(_frame, text=label_text)
     _button = ttk.Button(_frame, text=button_text, command=button_command)
@@ -134,7 +140,7 @@ def button_label_frame(
 
 
 def select_from_files(
-        root: pycurator.gui.bases.ViewPage,
+        root: pycurator.gui.base.ViewPage,
         selection_type: str,
         filetypes: list[tuple[str, str]] = (('All File Types', '*.*'),)
 ) -> None:
@@ -144,9 +150,8 @@ def select_from_files(
     ----------
     root : Tkinter.Frame
         Derived Frame class that contains UI.
-
-        If choosing file:
-            Root must contain "files" dict attribute to hold the selected file.
+        If choosing file, root must contain "files" dict attribute to
+        hold the selected file.
     selection_type : str
         Type of selection to be made.
         Examples include "credentials", "directory", "css_paths" etc.

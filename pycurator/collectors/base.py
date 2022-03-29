@@ -38,31 +38,48 @@ T = TypeVar('T')
 P = ParamSpec('P')
 
 
-class AbstractScraper(ABC):
-    """
-    Contains basic functions that are relevant for all scraper objects.
+class BaseCollector(ABC):
+    """Generic abstract base for data-collection classes.
 
     Parameters
     ----------
     repository_name : str
-        Name of the repository being scraped. Used for providing updates to
-        user, loading credentials, and saving output results.
+        Name of the repository being collected from. Used for providing
+        updates to user, loading credentials, and saving output results.
+
+    Attributes
+    ----------
+    continue_running : bool
+        Flag when the collector completes a run. Used for pushing
+        updates from the object's status_queue.
+    current_query_ref : str or None (default=None)
+        Representation of the current state of the collector run.
+    num_queries : int or bool or None (default=None)
+        Number of queries for a given run.
+        If there is no fixed number, such as for paginated queries, the
+        variable is True.
+    queries_completed : int or None (default=None)
+    status_queue : queue.Queue of str
+        FIFO collection of the object's status.
+
+    See Also
+    --------
+    queue.Queue : Queue data structure
+    BaseAPICollector : Derived Class for API queries.
+    BaseWebCollector : Derived Class for web scraping.
     """
 
     def __init__(self, repository_name: str) -> None:
         self.repository_name = repository_name
         self.continue_running = True
 
-        # Container for holding status update messages
-        self.queue = queue.Queue()
-
-        # Variable for updating progress over structured loop queries
+        self.status_queue = queue.Queue()
         self.num_queries = None
         self.queries_completed = None
         self.current_query_ref = None
 
     def _pb_determinate(self, coll: Collection[T]) -> Generator[T, None, None]:
-        """Generator for iterating data and updating progress bar status.
+        """Generator for iterating data and updating progress bar.
 
         Parameters
         ----------
@@ -71,9 +88,15 @@ class AbstractScraper(ABC):
         Yields
         ------
         next object of coll
+
+        Raises
+        ------
+        TypeError
+            coll parameter is not iterable.
         """
 
-        assert hasattr(coll, '__iter__'), 'Parameter "coll" must be iterable.'
+        if not hasattr(coll, '__iter__'):
+            raise TypeError('Parameter "coll" must be iterable.')
 
         # Initialize tracking vars
         if not self.num_queries:
@@ -86,7 +109,7 @@ class AbstractScraper(ABC):
             yield item
             self.queries_completed += 1
 
-        # After all items have been yielded, reset tracking vars
+        # Reset tracking vars
         self.num_queries = None
         self.queries_completed = None
         self.current_query_ref = None
@@ -97,7 +120,7 @@ class AbstractScraper(ABC):
             final_dict: QueryResultDict,
             output_format: str
     ) -> None:
-        self.queue.put(
+        self.status_queue.put(
             f'Saving output to "{save_dir}".'
         )
         pycurator.utils.save_results(
@@ -105,12 +128,12 @@ class AbstractScraper(ABC):
             data_dir=save_dir,
             output_format=output_format
         )
-        self.queue.put('Save complete.')
+        self.status_queue.put('Save complete.')
 
     @abstractmethod
     def run(self) -> NoReturn:
         raise NotImplementedError(
-            'Subclass must implement "run()".'
+            'Subclass must override "run()".'
         )
 
     @staticmethod
@@ -137,19 +160,19 @@ class AbstractScraper(ABC):
 
     def terminate(self) -> NoReturn:
         """Handle program execution."""
-        self.queue.put('Requesting program termination.')
+        self.status_queue.put('Requesting program termination.')
         sys.exit()
 
     @staticmethod
     @abstractmethod
     def accepts_user_credentials() -> NoReturn:
         raise NotImplementedError(
-            'Subclass must implement "accepts_user_credentials()".'
+            'Subclass must override "accepts_user_credentials()".'
         )
 
     def _print_progress(self, page: str) -> None:
         """Update queue with current page being searched."""
-        self.queue.put(f'Searching page {page}')
+        self.status_queue.put(f'Searching page {page}')
 
     def _update_query_ref(self, **kwargs: Any) -> None:
         """Combine keywords and update self.current_query_ref."""
@@ -157,12 +180,25 @@ class AbstractScraper(ABC):
 
 
 class WebPathScraperMixin:
+    """Mixin for web scrapers utilizing CSS Selector Paths.
+
+    Attributes
+    ----------
+    path_dict : JSONDict
+
+    See Also
+    --------
+    pycurator.collectors : Module containing data collector classes.
+    """
+
     @property
     def path_dict(self) -> JSONDict:
+        """Getter for path_dict variable."""
         return self._path_dict
 
     @path_dict.setter
     def path_dict(self, path_file: str) -> None:
+        """Set path_dict if the file exists."""
         if not os.path.exists(path_file):
             raise FileNotFoundError(
                 f'Path file \'{path_file}\' does not exist.'
@@ -171,27 +207,37 @@ class WebPathScraperMixin:
             self._path_dict = json.load(f)
 
 
-class AbstractWebScraper(AbstractScraper):
-    """Base class for all repository web scrapers.
+class BaseWebCollector(BaseCollector):
+    """Base for collection classes utilizing web scraping.
 
-    Contains basic functions that are relevant for all derived classes.
+    This base inherits from BaseCollector, which provides general
+    parameters for tracking collection progress.
 
     Parameters
     ----------
     repository_name : str
-        Name of the repository being scraped. Used for providing updates to
-        user and saving output.
+        Name of the repository being scraped. Used for providing updates
+        to user and saving output.
+
+    Attributes
+    ----------
+    driver : selenium.webdriver derivative (default=webdriver.Chrome)
+
+    See Also
+    --------
+    BaseCollector
+    pycurator.collectors.web_scrapers
     """
 
     def __init__(self, repository_name: str) -> None:
-        AbstractScraper.__init__(self, repository_name=repository_name)
+        BaseCollector.__init__(self, repository_name=repository_name)
 
         # Create driver
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         os.environ['WDM_LOG_LEVEL'] = '0'
 
-        self.queue.put('Initializing WebDriver.')
+        self.status_queue.put('Initializing WebDriver.')
         self.driver = webdriver.Chrome(
             ChromeDriverManager(print_first_line=False).install(),
             options=chrome_options
@@ -204,11 +250,11 @@ class AbstractWebScraper(AbstractScraper):
     @abstractmethod
     def run(self) -> NoReturn:
         raise NotImplementedError(
-            'Subclass must implement "run()".'
+            'Subclass must override "run()".'
         )
 
     def _get_soup(self, **kwargs: Any) -> BeautifulSoup:
-        """Return a BeautifulSoup object for the object driver current page."""
+        """Return a BeautifulSoup object for the driver's current page."""
         # If user has requested termination, handle cleanup instead of querying
         # additional results
         if not self.continue_running:
@@ -218,18 +264,31 @@ class AbstractWebScraper(AbstractScraper):
         return BeautifulSoup(html, **kwargs)
 
 
-class AbstractAPIScraper(AbstractScraper):
-    """Base class for all repository API scrapers.
+class BaseAPICollector(BaseCollector):
+    """Base for collection classes utilizing external API.
 
-    Contains basic functions that may be necessary for API scrapers.
+    This base inherits from BaseCollector, which provides general
+    parameters for tracking collection progress.
 
     Parameters
     ----------
     repository_name : str
-        Name of the repository being scraped. Used for providing updates to
-        user, loading credentials, and saving output results.
+        Name of the repository being collected from. Used for providing
+        updates to user, loading credentials, and saving output results.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
+
+    Attributes
+    ----------
+    credentials : str
+        Refer to credentials parameter.
+
+    See Also
+    --------
+    BaseTermCollector
+    BaseTermTypeCollector
+    BaseTypeCollector
     """
 
     def __init__(
@@ -237,9 +296,8 @@ class AbstractAPIScraper(AbstractScraper):
             repository_name: str,
             credentials: Optional[str] = None
     ) -> None:
-        AbstractScraper.__init__(self, repository_name=repository_name)
+        BaseCollector.__init__(self, repository_name=repository_name)
 
-        # Load API credentials
         if credentials:
             self.credentials = self.load_credentials(
                 credential_filepath=credentials
@@ -282,7 +340,7 @@ class AbstractAPIScraper(AbstractScraper):
                 credentials = credential_data.get(self.repository_name)
 
                 if not credentials:
-                    self.queue.put(
+                    self.status_queue.put(
                         'No credentials found, attempting unauthorized run.'
                     )
                 return credentials
@@ -292,7 +350,7 @@ class AbstractAPIScraper(AbstractScraper):
     @staticmethod
     def accepts_user_credentials() -> NoReturn:
         raise NotImplementedError(
-            'Subclass must implement "accepts_user_credentials()".'
+            'Subclass must override "accepts_user_credentials()".'
         )
 
     @staticmethod
@@ -333,7 +391,7 @@ class AbstractAPIScraper(AbstractScraper):
             merge_search_and_metadata_dicts (if applicable)
         """
 
-        self.queue.put(f'Running {self.repository_name}...')
+        self.status_queue.put(f'Running {self.repository_name.title()}...')
 
         # Set save parameters
         save_dir = kwargs.pop('save_dir', None)
@@ -368,19 +426,19 @@ class AbstractAPIScraper(AbstractScraper):
             if save_dir and save_type:
                 self._save_results(save_dir, final_dict, save_type)
         else:
-            self.queue.put('No results found, nothing to save.')
+            self.status_queue.put('No results found, nothing to save.')
 
-        self.queue.put(f'{self.repository_name} run complete.')
+        self.status_queue.put(f'{self.repository_name} run complete.')
         self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs: Any) -> NoReturn:
         raise NotImplementedError(
-            'Scraper subclasses must override "get_all_search_outputs(...)".'
+            'Subclass must override "get_all_search_outputs()".'
         )
 
     def get_all_metadata(self, **kwargs: Any) -> NoReturn:
         raise NotImplementedError(
-            'Scraper subclasses must override "get_all_metadata(...)".'
+            'Subclass must override "get_all_metadata()".'
         )
 
     def get_request_output_and_update_query_ref(
@@ -418,12 +476,13 @@ class AbstractAPIScraper(AbstractScraper):
             params: Optional[Any] = None,
             headers: Optional[Any] = None
     ) -> tuple[requests.Response, JSONDict]:
-        """Performs a requests.get(...) call, returns response and json.
+        """Return Response and JSON from requests.get().
 
         Parameters
         ----------
         url : str
-        params : dict or list of tuples or bytes, optional (default=None)
+        params : dict or list of tuples or bytes, optional
+                (default=None)
             Dictionary, list of types or bytes to send in the query
             string for the Request.
         headers : dict, optional (default=None)
@@ -438,17 +497,13 @@ class AbstractAPIScraper(AbstractScraper):
         Raises
         ------
         RuntimeError
-            Occurs when a query results in an unparsable response. Outputs
-            the parameters provided to the query along with the response
-            status code for further troubleshooting.
+            Occurs when a query results in an unparsable response.
+            Outputs the parameters provided to the query along with the
+            response status code for further troubleshooting.
 
         See Also
         --------
         requests.get : Sends a GET request.
-
-        Examples
-        --------
-        >>> self.get_request_output('')
         """
 
         # If user has requested termination, handle cleanup instead of querying
@@ -462,7 +517,7 @@ class AbstractAPIScraper(AbstractScraper):
         except json.decoder.JSONDecodeError:
             # 429: Rate limiting (wait and then try the request again)
             if r.status_code == 429:
-                self.queue.put('Rate limit hit, waiting for request...')
+                self.status_queue.put('Rate limit hit, waiting for request...')
 
                 # Wait until we can make another request
                 reset_time = int(r.headers['RateLimit-Reset'])
@@ -494,10 +549,11 @@ class AbstractAPIScraper(AbstractScraper):
     ) -> QueryResultDict:
         """Merges together search and metadata DataFrames by 'on' key.
 
-        For multiple DataFrames containing similar search references, combines
-        into one DataFrame. Search and Metadata DataFrames are merged across
-        their respective dictionaries via common keys. For Search DataFrames
-        with no matching Metadata, the Search DataFrame added as-is.
+        For multiple DataFrames containing similar search references,
+        combines into one DataFrame. Search and Metadata DataFrames are
+        merged across their respective dictionaries via common keys.
+        For Search DataFrames with no matching Metadata, the Search
+        DataFrame is added as-is.
 
         Parameters
         ----------
@@ -525,8 +581,8 @@ class AbstractAPIScraper(AbstractScraper):
         TypeError
             search_dict or metadata_dict are not instances of dict.
         ValueError
-            search_dict or metadata_dict contain entries that are not of type
-            pandas.DataFrame.
+            search_dict or metadata_dict contain entries that are not of
+            type pandas.DataFrame.
 
         See Also
         --------
@@ -588,7 +644,19 @@ class AbstractAPIScraper(AbstractScraper):
         return df_dict
 
 
-class TermScraperMixin:
+class TermQueryMixin:
+    """Mixin for API collection classes that utilize search terms.
+
+    Attributes
+    ----------
+    search_terms : list of str
+
+    See Also
+    --------
+    BaseTermCollector
+    BaseTermTypeCollector
+    """
+
     @property
     def search_terms(self) -> Collection[SearchTerm]:
         return self._search_terms
@@ -602,19 +670,32 @@ class TermScraperMixin:
         self._search_terms = search_terms
 
 
-class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
-    """Base Class for scraping repository APIs based on search term.
+class BaseTermCollector(TermQueryMixin, BaseAPICollector):
+    """Base for API collection classes that utilize search terms.
+
+    This base inherits from BaseAPICollector, which provides credential
+    info, as well as general parameters for tracking collection
+    progress, inherited from BaseCollector.
 
     Parameters
     ----------
     repository_name : str
-        Name of the repository being scraped. Used for providing updates to
-        user, loading credentials, and saving output results.
+        Name of the repository being collected from. Used for providing
+        updates to user, loading credentials, and saving output results.
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed
-        in directly to search functions to override set parameter.
+        Terms to search over. Can be (re)set via set_search_terms() or
+        passed in directly to search functions to override set parameter.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
+
+    Attributes
+    ----------
+    search_terms : list of str
+
+    See Also
+    --------
+    pycurator.collectors.term_collectors
     """
 
     def __init__(
@@ -641,8 +722,9 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
         Returns
         -------
         search_dict : dict of pandas.DataFrame
-            Stores the results of each call to get_individual_search_output in
-            the form search_dict[{search_term}] = df.
+            Stores the results of each call to
+            get_individual_search_output in the form
+            search_dict[{search_term}] = df.
         """
 
         # Set method variables if different than default values
@@ -651,11 +733,11 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
         search_dict = dict()
 
         for search_term in search_terms:
-            self.queue.put(f'Searching {search_term}.')
+            self.status_queue.put(f'Searching {search_term}.')
             search_dict[search_term] = self.get_individual_search_output(
                 search_term
             )
-            self.queue.put('Search completed.')
+            self.status_queue.put('Search completed.')
 
         return search_dict
 
@@ -672,7 +754,7 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
         Parameters
         ----------
         object_path_dict : dict
-            Dictionary of the form {query: object_paths} for list of paths.
+            Dictionary of the form {query: object_paths} for path lists.
 
         Returns
         -------
@@ -682,9 +764,9 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
         metadata_dict = dict()
 
         for query, object_paths in object_path_dict.items():
-            self.queue.put(f'Querying {query} metadata.')
+            self.status_queue.put(f'Querying {query} metadata.')
             metadata_dict[query] = self.get_query_metadata(object_paths)
-            self.queue.put('Metadata query complete.')
+            self.status_queue.put('Metadata query complete.')
 
         return metadata_dict
 
@@ -692,16 +774,32 @@ class AbstractTermScraper(TermScraperMixin, AbstractAPIScraper):
             self,
             object_paths: Iterable[Any]
     ) -> NoReturn:
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Subclass must override "get_query_metadata()".'
+        )
 
 
-class TypeScraperMixin:
+class TypeQueryMixin:
+    """Mixin for API collection classes that utilize search types.
+
+    Attributes
+    ----------
+    search_types : list of str
+
+    See Also
+    --------
+    BaseTermTypeCollector
+    BaseTypeCollector
+    """
+
     @property
     def search_types(self) -> tuple[SearchType]:
+        """Getter for search_types."""
         return self._search_types
 
     @search_types.setter
     def search_types(self, search_types: tuple[SearchType]) -> None:
+        """Set search_types if all are allowed by current Collector."""
         if not all(
                 [
                     search_type in self.search_type_options
@@ -717,29 +815,46 @@ class TypeScraperMixin:
     @abstractmethod
     def search_type_options(cls) -> NoReturn:
         """Return the valid search type options for a given repository."""
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Subclass must override "search_type_options()".'
+        )
 
 
-class AbstractTermTypeScraper(
-    TermScraperMixin,
-    TypeScraperMixin,
-    AbstractAPIScraper
+class BaseTermTypeCollector(
+    TermQueryMixin,
+    TypeQueryMixin,
+    BaseAPICollector
 ):
-    """Base Class for scraping repository APIs based on search term and type.
+    """Base for API collection classes that utilize search terms and types.
+
+    This base inherits from BaseAPICollector, which provides credential
+    info, as well as general parameters for tracking collection
+    progress, inherited from BaseCollector.
 
     Parameters
     ----------
     repository_name : str
-        Name of the repository being scraped. Used for providing updates to
-        user, loading credentials, and saving output results.
+        Name of the repository being collected from. Used for providing
+        updates to user, loading credentials, and saving output results.
     search_terms : list-like, optional (default=None)
-        Terms to search over. Can be (re)set via set_search_terms() or passed
-        in directly to search functions to override set parameter.
-    search_types : list-like, optional (default=None)
-        Data types to search over. Can be (re)set via set_search_types() or
+        Terms to search over. Can be (re)set via set_search_terms() or
         passed in directly to search functions to override set parameter.
+    search_types : list-like, optional (default=None)
+        Data types to search over. Can be (re)set via set_search_types()
+        or passed in directly to search functions to override set
+        parameter.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
+
+    Attributes
+    ----------
+    search_terms : list of str
+    search_types : list of str
+
+    See Also
+    --------
+    pycurator.collectors.term_type_collectors
     """
 
     def __init__(
@@ -763,13 +878,15 @@ class AbstractTermTypeScraper(
         Parameters
         ----------
         **kwargs : dict, optional
-            Can temporarily overwrite self search_terms and search_types.
+            Can temporarily overwrite self search_terms and
+            search_types.
 
         Returns
         -------
         search_dict : dict of pandas.DataFrame
-            Stores the results of each call to get_individual_search_output in
-            the form search_dict[(search_term, search_type)] = df.
+            Stores the results of each call to
+            get_individual_search_output in the form
+            search_dict[(search_term, search_type)] = df.
         """
 
         # Set method variables if different than default values.
@@ -781,13 +898,13 @@ class AbstractTermTypeScraper(
         for search_term, search_type in itertools.product(
                 search_terms, search_types
         ):
-            self.queue.put(f'Searching {search_term} {search_type}.')
+            self.status_queue.put(f'Searching {search_term} {search_type}.')
             search_dict[(search_term, search_type)] = \
                 self.get_individual_search_output(
                     search_term=search_term,
                     search_type=search_type
             )
-            self.queue.put('Search completed.')
+            self.status_queue.put('Search completed.')
 
         return search_dict
 
@@ -803,12 +920,12 @@ class AbstractTermTypeScraper(
             self,
             object_path_dict: dict[SearchTuple, Collection[str]]
     ) -> TermTypeResultDict:
-        """Retrieves all metadata that relates to the provided DataFrames.
+        """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
         ----------
         object_path_dict : dict
-            Dictionary of the form {query: object_paths} for list of paths.
+            Dictionary of the form {query: object_paths} for path lists.
 
         Returns
         -------
@@ -819,32 +936,49 @@ class AbstractTermTypeScraper(
 
         for query, object_paths in object_path_dict.items():
             search_term, search_type = query
-            self.queue.put(f'Querying {search_term} {search_type} metadata.')
+            self.status_queue.put(
+                f'Querying {search_term} {search_type} metadata.'
+            )
 
             metadata_dict[query] = self.get_query_metadata(
                 object_paths=object_paths
             )
-            self.queue.put('Metadata query complete.')
+            self.status_queue.put('Metadata query complete.')
 
         return metadata_dict
 
     def get_query_metadata(self, object_paths: Collection[str]) -> NoReturn:
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Subclass must override "get_query_metadata()".'
+        )
 
 
-class AbstractTypeScraper(TypeScraperMixin, AbstractAPIScraper):
-    """Base Class for scraping repository APIs based on search type.
+class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
+    """Base for API collection classes that utilize search types.
+
+    This base inherits from BaseAPICollector, which provides credential
+    info, as well as general parameters for tracking collection
+    progress, inherited from BaseCollector.
 
     Parameters
     ----------
     repository_name : str
-        Name of the repository being scraped. Used for providing updates to
-        user, loading credentials, and saving output results.
+        Name of the repository being collected from. Used for providing
+        updates to user, loading credentials, and saving output results.
     search_types : list-like, optional (default=None)
-        types to search over. Can be (re)set via set_search_types() or passed
-        in directly to search functions to override set parameter.
+        types to search over. Can be (re)set via set_search_types() or
+        passed in directly to search functions to override set parameter.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
+
+    Attributes
+    ----------
+    search_types : list of str
+
+    See Also
+    --------
+    pycurator.collectors.type_collectors
     """
 
     def __init__(
@@ -894,8 +1028,9 @@ class AbstractTypeScraper(TypeScraperMixin, AbstractAPIScraper):
         Returns
         -------
         search_dict : dict of pandas.DataFrame
-            Stores the results of each call to get_individual_search_output in
-            the form search_output_dict[{search_type}] = df.
+            Stores the results of each call to
+            get_individual_search_output in the form
+            search_output_dict[{search_type}] = df.
         """
 
         search_types = kwargs.get('search_types', self.search_types)
@@ -903,11 +1038,11 @@ class AbstractTypeScraper(TypeScraperMixin, AbstractAPIScraper):
         search_dict = dict()
 
         for search_type in search_types:
-            self.queue.put(f'Searching {search_type}.')
+            self.status_queue.put(f'Searching {search_type}.')
             search_dict[search_type] = self.get_individual_search_output(
                 search_type
             )
-            self.queue.put(f'{search_type} search completed.')
+            self.status_queue.put(f'{search_type} search completed.')
 
         return search_dict
 
@@ -920,4 +1055,6 @@ class AbstractTypeScraper(TypeScraperMixin, AbstractAPIScraper):
             object_paths: Collection[str],
             search_type: SearchType,
     ) -> NoReturn:
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Subclass must override "get_query_metadata()".'
+        )

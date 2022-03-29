@@ -7,10 +7,10 @@ import numpy as np
 import pandas as pd
 from selenium.webdriver.support.wait import WebDriverWait
 
-from pycurator.scrapers.base_scrapers import (
-    AbstractScraper,
-    AbstractTermScraper,
-    AbstractWebScraper
+from pycurator.collectors.base import (
+    BaseCollector,
+    BaseTermCollector,
+    BaseWebCollector
 )
 from pycurator.utils import parse_numeric_string, web_utils
 from pycurator.utils.parsing import validate_metadata_parameters
@@ -21,19 +21,24 @@ from pycurator.utils.typing import (
 from pycurator.utils.web_utils import text_to_be_present_on_page
 
 
-class DryadScraper(AbstractTermScraper, AbstractWebScraper):
-    """Scrapes the Dryad API for all data relating to the given search terms.
+class DryadCollector(BaseTermCollector, BaseWebCollector):
+    """DataDryad collector for search term queries.
+
+    This collector allows for both API collection and web scraping for
+    additional attributes only available via the webpage for a given
+    data record.
 
     Parameters
     ----------
     scrape : bool, optional (default=True)
-        Flag for requesting web scraping as a method for additional metadata
-        collection.
+        Flag for requesting web scraping as a method for additional
+        metadata collection.
     search_terms : list-like, optional
-        Terms to search over. Can be (re)set via set_search_terms() or passed
-        in directly to search functions.
+        Terms to search over. Can be (re)set via set_search_terms()
+        or passed in directly to search functions.
     credentials : str, optional (default=None)
-        JSON filepath containing credentials in form {repository_name}: 'key'.
+        JSON filepath containing credentials in form
+        {repository_name}: {key}.
     """
 
     def __init__(
@@ -44,7 +49,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
     ) -> None:
         self.scrape = scrape
 
-        AbstractTermScraper.__init__(
+        BaseTermCollector.__init__(
             self,
             repository_name='dryad',
             search_terms=search_terms,
@@ -52,7 +57,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         )
 
         if self.scrape:
-            AbstractWebScraper.__init__(
+            BaseWebCollector.__init__(
                 self,
                 repository_name='dryad',
             )
@@ -72,7 +77,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
     def accepts_user_credentials() -> bool:
         return True
 
-    @AbstractScraper._pb_indeterminate
+    @BaseCollector._pb_indeterminate
     def _conduct_search_over_pages(
         self,
         search_url: str,
@@ -80,21 +85,21 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         print_progress: bool = False,
         delim: Optional[str] = None
     ) -> pd.DataFrame:
-        """Query paginated results from the Dryad API for given parameters.
+        """Query records from the Dryad API for given parameters.
 
         Parameters
         ----------
         search_url : str
         search_params : dict
-            Contains parameters to pass to requests.get({params}). Most common
-            include search term 'q', and page index 'page'. For full details,
-            see below.
+            Contains parameters to pass to requests.get({params}).
+            Most common include search term 'q', and page index 'page'.
+            For full details, see the Notes.
         print_progress : bool, optional (default=False)
-            If True, updates on query page progress is sent to object queue
-            to be displayed in UI window.
+            If True, updates on query page progress is sent to object
+            queue to be displayed in UI window.
         delim : bool, optional (default=None)
-            Key to grab results from query response JSON. If None, entire JSON
-            return is considered as the data results.
+            Key to grab results from query response JSON. If None,
+            entire JSON return is considered as the data results.
 
         Returns
         -------
@@ -102,7 +107,10 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
 
         Notes
         -----
-        For searching over datasets, Dryad allows the following parameters:
+        Dryad allows the following parameters when querying the noted
+        record type.
+
+        Datasets:
         page : int, optional
             Page to search over.
         per_page : int, optional
@@ -116,7 +124,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         modifiedSince : str, optional
             An ISO 8601 UTC timestamp for limiting results.
 
-        When searching for the files of a dataset version, parameters include:
+        Files of a dataset version:
         id : int
             Version ID of the dataset.
         page : int, optional
@@ -124,7 +132,8 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         per_page : int, optional
             As above.
 
-        When searching for file metadata, only id, as listed above, is allowed.
+        When searching for file metadata, only id, as described above,
+        is allowed.
         """
 
         search_df = pd.DataFrame()
@@ -166,7 +175,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             self,
             search_term: SearchTerm
     ) -> pd.DataFrame:
-        """Returns information about all datasets from Data Dryad.
+        """Returns information about all datasets from DataDryad.
 
         Parameters
         ----------
@@ -221,7 +230,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             object_paths: Union[str, Collection[str]],
             **kwargs: Any
     ) -> pd.DataFrame:
-        """Retrieves the metadata for the file/files listed in object_paths.
+        """Retrieves the metadata for the object_paths objects.
 
         Parameters
         ----------
@@ -262,7 +271,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         return metadata_df
 
     def get_web_output(self, object_urls: Collection[str]) -> pd.DataFrame:
-        """Scrapes the attributes in path_dict for the provided object urls.
+        """Scrapes path_dict attributes for the provided object urls.
 
         Parameters
         ----------
@@ -282,7 +291,9 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
             soup = self._get_soup(features='html.parser')
 
             while 'Request rejected due to rate limits.' in soup.text:
-                self.status_queue.put('Rate limit hit, pausing for one minute...')
+                self.status_queue.put(
+                    'Rate limit hit, pausing for one minute...'
+                )
                 sleep(60)
                 self.driver.get(url)
                 soup = self._get_soup(features='html.parser')
@@ -324,6 +335,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         return search_df
 
     def _extract_version_ids(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Retrieve ids from DataFrame entries."""
         return df['_links'].apply(
             lambda entry: entry.get('stash:version', {})
                                .get('href', '')
@@ -332,7 +344,7 @@ class DryadScraper(AbstractTermScraper, AbstractWebScraper):
         )
 
     def get_all_metadata(self, search_dict: TermResultDict) -> TermResultDict:
-        """Retrieves all metadata that relates to the provided DataFrames.
+        """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
         ----------
