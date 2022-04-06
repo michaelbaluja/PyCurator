@@ -7,17 +7,17 @@ import pandas as pd
 from kaggle import KaggleApi
 from kaggle.rest import ApiException
 
-from pycurator.collectors.base import (
-    BaseCollector,
-    BaseTermTypeCollector
-)
-from pycurator.utils.parsing import validate_metadata_parameters
-from pycurator.utils.typing import (
+from pycurator._typing import (
     JSONDict,
     SearchTerm,
     SearchType,
     TermTypeResultDict
 )
+from pycurator.collectors import (
+    BaseCollector,
+    BaseTermTypeCollector
+)
+from pycurator.utils.parsing import validate_metadata_parameters
 
 
 class KaggleCollector(BaseTermTypeCollector):
@@ -168,7 +168,7 @@ class KaggleCollector(BaseTermTypeCollector):
             self.terminate()
 
         try:
-            self.api.dataset_metadata(object_path, path=data_path)
+            self.api.dataset_metadata(dataset=object_path, path=data_path)
         except (TypeError, ApiException) as e:
             if (isinstance(e, ApiException) and e.status != 404
                     and 'bigquery' not in e.headers['Turbolinks-Location']):
@@ -204,8 +204,10 @@ class KaggleCollector(BaseTermTypeCollector):
         metadata_df = pd.DataFrame()
 
         for object_path in self._pb_determinate(object_paths):
-            json_data = self._retrieve_object_json(object_path)
-            metadata_df = pd.concat([metadata_df, pd.DataFrame(json_data)])
+            json_data = self._retrieve_object_json(object_path=object_path)
+            metadata_df = pd.concat(
+                [metadata_df, pd.DataFrame(json_data)]
+            ).reset_index(drop=True)
 
         metadata_df = metadata_df.convert_dtypes()
 
@@ -238,6 +240,8 @@ class KaggleCollector(BaseTermTypeCollector):
                 object_paths = df.id.values
                 object_path_dict[query] = object_paths
 
-        metadata_dict = super().get_all_metadata(object_path_dict)
+        metadata_dict = super().get_all_metadata(
+            object_path_dict=object_path_dict
+        )
 
         return metadata_dict

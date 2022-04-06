@@ -4,11 +4,8 @@ from typing import Any, Optional, Iterable, NoReturn
 
 import pandas as pd
 
-from pycurator.collectors.base import (
-    BaseCollector,
-    BaseTermCollector
-)
-from pycurator.utils.typing import SearchTerm
+from pycurator._typing import SearchTerm
+from pycurator.collectors import BaseCollector, BaseTermCollector
 
 
 class ZenodoCollector(BaseTermCollector):
@@ -29,7 +26,11 @@ class ZenodoCollector(BaseTermCollector):
         search_terms: Optional[Collection[SearchTerm]] = None,
         credentials: Optional[bool] = None
     ) -> None:
-        super().__init__('zenodo', search_terms, credentials)
+        super().__init__(
+            repository_name='zenodo',
+            search_terms=search_terms,
+            credentials=credentials
+        )
         self.base_url = 'https://zenodo.org/api/records'
 
     @staticmethod

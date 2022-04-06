@@ -33,7 +33,7 @@ def validate_metadata_parameters(
     return object_paths
 
 
-def _validate_save_filename(filename: str) -> str:
+def validate_save_filename(filename: str) -> str:
     """Remove quotations from filename, replace spaces with underscore."""
     return filename.replace('"', '').replace("'", '').replace(' ', '_')
 

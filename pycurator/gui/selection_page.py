@@ -1,3 +1,29 @@
+#
+#  PyCurator LGPL 3.0 <https://www.gnu.org/licenses/lgpl-3.0.txt>
+#  Copyright (c) 2022. Michael Baluja
+#
+#  This file is part of PyCurator.
+#  PyCurator is free software: you can redistribute it and/or modify it under
+#  the terms of version 3 of the GNU Lesser General Public License as published
+#  by the Free Software Foundation.
+#  PyCurator is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+#  details. You should have received a copy of the GNU Lesser General Public
+#  License along with PyCurator. If not, see <https://www.gnu.org/licenses/>.
+
+#
+#
+#  This file is part of PyCurator.
+#  PyCurator is free software: you can redistribute it and/or modify it under
+#  the terms of version 3 of the GNU Lesser General Public License as published
+#  by the Free Software Foundation.
+#  PyCurator is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+#  details. You should have received a copy of the GNU Lesser General Public
+#  License along with PyCurator. If not, see <https://www.gnu.org/licenses/>.
+
 import tkinter as tk
 import tkinter.ttk as ttk
 from collections.abc import Iterable
@@ -35,8 +61,8 @@ class SelectionPage(ViewPage):
         self.current_repository = None
 
         # Create global selection frame/widgets
-        self.selector_frame = ttk.Frame(self)
-        self.repo_listbox = tk.Listbox(self.selector_frame)
+        self.selector_frame = ttk.Frame(master=self)
+        self.repo_listbox = tk.Listbox(master=self.selector_frame)
         self.repo_listbox.bind(
             '<<ListboxSelect>>',
             self.display_repo_params
@@ -45,11 +71,11 @@ class SelectionPage(ViewPage):
         for repo_name in pycurator.collectors.available_repos:
             self.repo_listbox.insert(tk.END, repo_name)
 
-        self.param_frame = ttk.Frame(self)
+        self.param_frame = ttk.Frame(master=self)
 
         self.req_var = tk.StringVar()
         self.req_label = ttk.Label(
-            self.param_frame,
+            master=self.param_frame,
             foreground='#FF0000',
             textvariable=self.req_var
         )
@@ -58,7 +84,7 @@ class SelectionPage(ViewPage):
     def show(self, *args: Any) -> None:
         """Display collector selection widgets."""
         selection_text = ttk.Label(
-            self.selector_frame,
+            master=self.selector_frame,
             text='Select Repository:',
             anchor='center',
             font='helvetica 14 bold'
@@ -107,7 +133,7 @@ class SelectionPage(ViewPage):
         self.repo_listbox.selection_clear(0, tk.END)
 
         label = ttk.Label(
-            self.param_frame,
+            master=self.param_frame,
             text='Parameter Selection:',
             font='helvetica 14 bold'
         )
@@ -115,7 +141,7 @@ class SelectionPage(ViewPage):
 
         # Initialize run button
         self.next_page_button = ttk.Button(
-            self.param_frame,
+            master=self.param_frame,
             text=f'Run {self.controller.model.collector_name}',
             command=self.controller.parse_run_parameters
         )
@@ -131,8 +157,8 @@ class SelectionPage(ViewPage):
                 selection_type='save_dir'
             )
         )
-        save_frame = tk.Frame(self.param_frame)
-        save_label = ttk.Label(save_frame, text='File Type:')
+        save_frame = tk.Frame(master=self.param_frame)
+        save_label = ttk.Label(master=save_frame, text='File Type:')
         save_type_menu = ttk.Combobox(
             master=save_frame,
             textvariable=self.controller.get_run_parameter('save_type'),
@@ -160,18 +186,18 @@ class SelectionPage(ViewPage):
 
         # If repo utilizes web scraping, get path file
         if issubclass(self.controller.model.collector_class, BaseWebCollector):
-            path_dict_frame = ttk.Frame(self.param_frame)
+            path_dict_frame = ttk.Frame(master=self.param_frame)
 
             # Get optional CSS path file if necessary
             if self.controller.model.requirements.get('path_dict'):
                 path_dict_label = ttk.Label(
-                    path_dict_frame,
+                    master=path_dict_frame,
                     text='CSS Selector Path:'
                 )
                 path_dict_label.grid(row=0, column=0)
 
                 path_dict_btn = ttk.Button(
-                    path_dict_frame,
+                    master=path_dict_frame,
                     text='Select File',
                     command=lambda: select_from_files(
                         root=self,
@@ -188,7 +214,7 @@ class SelectionPage(ViewPage):
             if len(self.controller.model.collector_class.__bases__) > 1:
                 self.controller.add_run_parameter('scrape', tk.IntVar())
                 scrape_check_btn = ttk.Checkbutton(
-                    self.param_frame,
+                    master=self.param_frame,
                     text='Web Scrape',
                     variable=self.controller.get_run_parameter('scrape'),
                     state=tk.ACTIVE,
@@ -203,19 +229,19 @@ class SelectionPage(ViewPage):
 
         # Get search terms, if needed
         if self.controller.model.requirements.get('search_terms'):
-            search_term_frame = ttk.Frame(self.param_frame)
+            search_term_frame = ttk.Frame(master=self.param_frame)
             self.controller.add_run_parameter('search_terms', tk.StringVar())
 
             search_term_label = ttk.Label(
-                search_term_frame,
+                master=search_term_frame,
                 text='Search Term(s):'
             )
             search_term_entry = ttk.Entry(
-                search_term_frame,
+                master=search_term_frame,
                 textvariable=self.controller.get_run_parameter('search_terms')
             )
             search_term_req = ttk.Label(
-                search_term_frame,
+                master=search_term_frame,
                 foreground='#FF0000',
                 text='*'
             )
@@ -231,21 +257,21 @@ class SelectionPage(ViewPage):
                 .model \
                 .collector_class. \
                 search_type_options
-            search_type_outer_frame = ttk.Frame(self.param_frame)
-            search_type_inner_frame = ttk.Frame(search_type_outer_frame)
+            search_type_outer_frame = ttk.Frame(master=self.param_frame)
+            search_type_inner_frame = ttk.Frame(master=search_type_outer_frame)
             search_type_label = ttk.Label(
-                search_type_outer_frame,
+                master=search_type_outer_frame,
                 text='Search Type(s):'
             )
             search_type_req = ttk.Label(
-                search_type_outer_frame,
+                master=search_type_outer_frame,
                 foreground='#FF0000',
                 text='*'
             )
 
             self.controller.add_run_parameter(
-                'search_types',
-                {
+                param='search_types',
+                value={
                     search_type: tk.IntVar()
                     for search_type in search_type_options
                 }
@@ -253,7 +279,7 @@ class SelectionPage(ViewPage):
 
             for search_type in search_type_options:
                 search_type_button = ttk.Checkbutton(
-                    search_type_inner_frame,
+                    master=search_type_inner_frame,
                     text=search_type.title(),
                     variable=self.controller.get_run_parameter(
                         'search_types'
@@ -286,7 +312,7 @@ class SelectionPage(ViewPage):
                 f'Missing Requirements:\n{req_list}'
             )
             self.req_label = ttk.Label(
-                self.param_frame,
+                master=self.param_frame,
                 foreground='#FF0000',
                 textvariable=self.req_var
             )

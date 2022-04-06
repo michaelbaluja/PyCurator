@@ -24,7 +24,7 @@ from typing_extensions import ParamSpec
 from webdriver_manager.chrome import ChromeDriverManager
 
 import pycurator.utils
-from pycurator.utils.typing import (
+from pycurator._typing import (
     JSONDict,
     SearchTerm,
     SearchType,
@@ -221,7 +221,7 @@ class BaseWebCollector(BaseCollector):
 
     Attributes
     ----------
-    driver : selenium.webdriver derivative (default=webdriver.Chrome)
+    driver : selenium.webdriver derivative
 
     See Also
     --------
@@ -230,7 +230,7 @@ class BaseWebCollector(BaseCollector):
     """
 
     def __init__(self, repository_name: str) -> None:
-        BaseCollector.__init__(self, repository_name=repository_name)
+        super().__init__(repository_name=repository_name)
 
         # Create driver
         chrome_options = Options()
@@ -239,7 +239,9 @@ class BaseWebCollector(BaseCollector):
 
         self.status_queue.put('Initializing WebDriver.')
         self.driver = webdriver.Chrome(
-            ChromeDriverManager(print_first_line=False).install(),
+            executable_path=ChromeDriverManager(
+                print_first_line=False
+            ).install(),
             options=chrome_options
         )
 
@@ -275,6 +277,8 @@ class BaseAPICollector(BaseCollector):
     repository_name : str
         Name of the repository being collected from. Used for providing
         updates to user, loading credentials, and saving output results.
+    api_url : str
+        Base URL for repository API.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form
         {repository_name}: {key}.
@@ -294,10 +298,12 @@ class BaseAPICollector(BaseCollector):
     def __init__(
             self,
             repository_name: str,
+            api_url: str,
             credentials: Optional[str] = None
     ) -> None:
-        BaseCollector.__init__(self, repository_name=repository_name)
+        super().__init__(repository_name=repository_name)
 
+        self.api_url = api_url
         if credentials:
             self.credentials = self.load_credentials(
                 credential_filepath=credentials
@@ -424,11 +430,15 @@ class BaseAPICollector(BaseCollector):
         # Handle saving if output exists
         if not self._all_empty(final_dict):
             if save_dir and save_type:
-                self._save_results(save_dir, final_dict, save_type)
+                self._save_results(
+                    save_dir=save_dir,
+                    final_dict=final_dict,
+                    output_format=save_type
+                )
         else:
             self.status_queue.put('No results found, nothing to save.')
 
-        self.status_queue.put(f'{self.repository_name} run complete.')
+        self.status_queue.put(f'{self.repository_name.title()} run complete.')
         self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs: Any) -> NoReturn:
@@ -468,7 +478,7 @@ class BaseAPICollector(BaseCollector):
         """
 
         self._update_query_ref(**ref_kwargs)
-        return self.get_request_output(url, params, headers)
+        return self.get_request_output(url=url, params=params, headers=headers)
 
     def get_request_output(
             self,
@@ -511,7 +521,7 @@ class BaseAPICollector(BaseCollector):
         if not self.continue_running:
             self.terminate()
 
-        r = requests.get(url, params=params, headers=headers)
+        r = requests.get(url=url, params=params, headers=headers)
         try:
             output = r.json()
         except json.decoder.JSONDecodeError:
@@ -627,8 +637,8 @@ class BaseAPICollector(BaseCollector):
             if query_key in metadata_dict:
                 metadata_df = metadata_dict[query_key]
                 df_all = pd.merge(
-                    search_df.convert_dtypes(),
-                    metadata_df.convert_dtypes(),
+                    left=search_df.convert_dtypes(),
+                    right=metadata_df.convert_dtypes(),
                     on=on,
                     left_on=left_on,
                     right_on=right_on,
@@ -704,7 +714,10 @@ class BaseTermCollector(TermQueryMixin, BaseAPICollector):
             search_terms: Optional[Collection[SearchTerm]] = None,
             credentials: Optional[str] = None
     ) -> None:
-        super().__init__(repository_name, credentials)
+        super().__init__(
+            repository_name=repository_name,
+            credentials=credentials
+        )
 
         self.search_terms = search_terms
 
@@ -735,7 +748,7 @@ class BaseTermCollector(TermQueryMixin, BaseAPICollector):
         for search_term in search_terms:
             self.status_queue.put(f'Searching {search_term}.')
             search_dict[search_term] = self.get_individual_search_output(
-                search_term
+                search_term=search_term
             )
             self.status_queue.put('Search completed.')
 
@@ -765,7 +778,9 @@ class BaseTermCollector(TermQueryMixin, BaseAPICollector):
 
         for query, object_paths in object_path_dict.items():
             self.status_queue.put(f'Querying {query} metadata.')
-            metadata_dict[query] = self.get_query_metadata(object_paths)
+            metadata_dict[query] = self.get_query_metadata(
+                object_paths=object_paths
+            )
             self.status_queue.put('Metadata query complete.')
 
         return metadata_dict
@@ -864,7 +879,10 @@ class BaseTermTypeCollector(
             search_types: Optional[Collection[SearchType]] = None,
             credentials: Optional[str] = None
     ) -> None:
-        super().__init__(repository_name, credentials)
+        super().__init__(
+            repository_name=repository_name,
+            credentials=credentials
+        )
 
         self.search_terms = search_terms
         self.search_types = search_types
@@ -987,7 +1005,10 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
             search_types: Optional[Collection[SearchType]] = None,
             credentials: Optional[str] = None
     ) -> None:
-        super().__init__(repository_name, credentials)
+        super().__init__(
+            repository_name=repository_name,
+            credentials=credentials
+        )
 
         self.search_types = search_types
 
@@ -1040,7 +1061,7 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
         for search_type in search_types:
             self.status_queue.put(f'Searching {search_type}.')
             search_dict[search_type] = self.get_individual_search_output(
-                search_type
+                search_type=search_type
             )
             self.status_queue.put(f'{search_type} search completed.')
 

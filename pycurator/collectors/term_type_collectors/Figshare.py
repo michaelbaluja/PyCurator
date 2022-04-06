@@ -3,16 +3,16 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from pycurator.collectors.base import (
-    BaseCollector,
-    BaseTermTypeCollector
-)
-from pycurator.utils.parsing import validate_metadata_parameters
-from pycurator.utils.typing import (
+from pycurator._typing import (
     SearchTerm,
     SearchType,
     TermTypeResultDict
 )
+from pycurator.collectors import (
+    BaseCollector,
+    BaseTermTypeCollector
+)
+from pycurator.utils.parsing import validate_metadata_parameters
 
 
 class FigshareCollector(BaseTermTypeCollector):
@@ -76,7 +76,9 @@ class FigshareCollector(BaseTermTypeCollector):
         credentials : str or None
         """
 
-        credentials = super().load_credentials(credential_filepath)
+        credentials = super().load_credentials(
+            credential_filepath=credential_filepath
+        )
         self.headers['Authorization'] = f'token {credentials}'
         return credentials
 
@@ -244,6 +246,8 @@ class FigshareCollector(BaseTermTypeCollector):
 
                 object_path_dict[query] = object_paths
 
-        metadata_dict = super().get_all_metadata(object_path_dict)
+        metadata_dict = super().get_all_metadata(
+            object_path_dict=object_path_dict
+        )
 
         return metadata_dict

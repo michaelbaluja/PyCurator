@@ -7,16 +7,16 @@ import openml
 import pandas as pd
 from selenium.webdriver.remote.errorhandler import InvalidArgumentException
 
-from pycurator.collectors.base import (
-    BaseTypeCollector,
-    BaseWebCollector
-)
-from pycurator.utils import parse_numeric_string, web_utils
-from pycurator.utils.parsing import validate_metadata_parameters
-from pycurator.utils.typing import (
+from pycurator._typing import (
     SearchType,
     TypeResultDict
 )
+from pycurator.collectors import (
+    BaseTypeCollector,
+    BaseWebCollector
+)
+from pycurator.utils import parse_numeric_string, validate_metadata_parameters
+from pycurator.utils import web_utils
 
 
 class OpenMLCollector(BaseTypeCollector, BaseWebCollector):
@@ -308,7 +308,11 @@ class OpenMLCollector(BaseTypeCollector, BaseWebCollector):
 
         if search_type == 'datasets' and self.scrape:
             web_df = self.get_dataset_related_tasks(metadata_df)
-            metadata_df = pd.merge(metadata_df, web_df, on='openml_url')
+            metadata_df = pd.merge(
+                left=metadata_df,
+                right=web_df,
+                on='openml_url'
+            )
 
         self.status_queue.put(f' {search_type} metadata query complete.')
 

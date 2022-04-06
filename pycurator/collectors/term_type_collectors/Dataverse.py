@@ -5,19 +5,26 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from pycurator.collectors.base import (
+from pycurator._typing import (
+    AttributeDict,
+    SearchTerm,
+    SearchType,
+    TermTypeResultDict
+)
+from pycurator.collectors import (
     BaseCollector,
     BaseTermTypeCollector,
     BaseWebCollector,
     WebPathScraperMixin
 )
-from pycurator.utils import parse_numeric_string, web_utils
-from pycurator.utils.parsing import validate_metadata_parameters
-from pycurator.utils.typing import (
-    AttributeDict,
-    SearchTerm,
-    SearchType,
-    TermTypeResultDict
+from pycurator.utils.parsing import (
+    parse_numeric_string,
+    validate_metadata_parameters
+)
+from pycurator.utils.web_utils import (
+    get_single_tag,
+    get_single_tag_from_tag_info,
+    get_tag_value
 )
 
 
@@ -112,7 +119,9 @@ class DataverseCollector(
         credentials : str or None
         """
 
-        credentials = super().load_credentials(credential_filepath)
+        credentials = super().load_credentials(
+            credential_filepath=credential_filepath
+        )
         self.headers['X-Dataverse-key'] = credentials
         return credentials
 
@@ -224,9 +233,9 @@ class DataverseCollector(
         """
 
         soup = self._get_soup(features='html.parser')
-        header_metadata_tag = web_utils.get_single_tag_from_tag_info(
-            soup,
-            'script',
+        header_metadata_tag = get_single_tag_from_tag_info(
+            soup=soup,
+            class_type='script',
             attrs={'type': r'application/ld+json'}
         )
 
@@ -264,8 +273,8 @@ class DataverseCollector(
             soup = self._get_soup(features='html.parser')
 
             landing_attribute_values = {
-                attribute: web_utils.get_tag_value(
-                    web_utils.get_single_tag(soup=soup, path=path)
+                attribute: get_tag_value(
+                    get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in landing_attribute_paths.items()
             }
@@ -279,8 +288,8 @@ class DataverseCollector(
             soup = self._get_soup(features='html.parser')
 
             metadata_attribute_values = {
-                attribute: web_utils.get_tag_value(
-                    web_utils.get_single_tag(soup=soup, path=path)
+                attribute: get_tag_value(
+                    get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in metadata_attribute_paths.items()
             }
@@ -295,8 +304,8 @@ class DataverseCollector(
             soup = self._get_soup(features='html.parser')
 
             terms_attribute_values = {
-                attribute: web_utils.get_tag_value(
-                    web_utils.get_single_tag(soup=soup, path=path)
+                attribute: get_tag_value(
+                    tag=get_single_tag(soup=soup, path=path)
                 )
                 for attribute, path in terms_attribute_paths.items()
             }
@@ -322,7 +331,9 @@ class DataverseCollector(
         num_downloads = results.get('num_downloads')
 
         if num_downloads:
-            results['num_downloads'] = parse_numeric_string(num_downloads)
+            results['num_downloads'] = parse_numeric_string(
+                num_downloads
+            )
 
         return results
 
@@ -415,7 +426,7 @@ class DataverseCollector(
                     )
 
                 metadata_dict[query] = self.get_query_metadata(
-                    object_paths,
+                    object_paths=object_paths,
                     **self.path_dict[search_type]
                 )
 

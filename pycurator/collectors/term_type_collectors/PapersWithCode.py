@@ -3,12 +3,7 @@ from typing import Any, Optional, Union
 
 import pandas as pd
 
-from pycurator.collectors.base import (
-    BaseCollector,
-    BaseTermTypeCollector
-)
-from pycurator.utils.parsing import validate_metadata_parameters
-from pycurator.utils.typing import (
+from pycurator._typing import (
     SearchTerm,
     SearchType,
     SearchQuery,
@@ -16,6 +11,11 @@ from pycurator.utils.typing import (
     TermTypeResultDict,
     TypeResultDict
 )
+from pycurator.collectors import (
+    BaseCollector,
+    BaseTermTypeCollector
+)
+from pycurator.utils.parsing import validate_metadata_parameters
 
 
 class PapersWithCodeCollector(BaseTermTypeCollector):
@@ -264,8 +264,8 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
 
                 # Conduct the search and add supplementary info to DataFrame
                 object_df = self._conduct_search_over_pages(
-                    search_url,
-                    search_params
+                    search_url=search_url,
+                    search_params=search_params
                 )
 
                 if object_df is not None:
@@ -363,8 +363,8 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
             for metadata_type, metadata_df in type_df_dict.items():
                 _search_type = f'{search_type}_{metadata_type}'
                 df_all = pd.merge(
-                    search_df,
-                    metadata_df,
+                    left=search_df,
+                    right=metadata_df,
                     on='id',
                     left_on=left_on,
                     right_on=right_on,

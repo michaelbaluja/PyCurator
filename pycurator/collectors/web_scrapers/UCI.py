@@ -9,20 +9,17 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import By
 from selenium.webdriver.support.wait import WebDriverWait
 
-from pycurator.collectors.base import (
+from pycurator._typing import AttributeDict
+from pycurator.collectors import (
     BaseCollector,
     BaseWebCollector
 )
 from pycurator.utils import (
-    parse_numeric_string,
     find_first_match,
-    save_results,
-    web_utils
+    parse_numeric_string,
+    save_results
 )
-from pycurator.utils.typing import (
-    AttributeDict
-)
-from pycurator.utils.web_utils import text_to_be_present_on_page
+from pycurator.utils import web_utils
 
 
 class UCIScraper(BaseWebCollector):
@@ -127,7 +124,11 @@ class UCIScraper(BaseWebCollector):
 
         if save_dir and save_type:
             self.status_queue.put(f'Saving output to "{save_dir}.')
-            save_results(results_dict, save_dir, save_type)
+            save_results(
+                results=results_dict,
+                data_dir=save_dir,
+                output_format=save_type
+            )
             self.status_queue.put('Save complete.')
 
         self.status_queue.put(f'{self.repository_name} run complete.')
@@ -217,7 +218,7 @@ class UCIScraper(BaseWebCollector):
         dataset_ids = [
             instance.attrs['href'].split('/')[-1]
             for instance in web_utils.get_variable_tags(
-                soup,
+                soup=soup,
                 path=instance_path
             )
         ]
@@ -272,7 +273,9 @@ class UCIScraper(BaseWebCollector):
         for var, attr in self.uncle_attr_dict.items():
             tag_texts = [
                 web_utils.get_tag_value(
-                    tag, separator='~').split('~')
+                    tag=tag,
+                    separator='~'
+                ).split('~')
                 for tag in web_utils.get_parent_sibling_tags(
                     soup=soup,
                     string=attr
@@ -308,7 +311,7 @@ class UCIScraper(BaseWebCollector):
             # Wait for element to load
             try:
                 WebDriverWait(self.driver, 10).until(
-                    text_to_be_present_on_page(wait_path_str)
+                    web_utils.text_to_be_present_on_page(wait_path_str)
                 )
             except TimeoutException:
                 self.status_queue.put(
@@ -323,8 +326,8 @@ class UCIScraper(BaseWebCollector):
         result_dict['url'] = self.driver.current_url
 
         is_external = web_utils.get_single_tag_from_tag_info(
-            soup,
-            'span',
+            soup=soup,
+            class_type='span',
             string='EXTERNAL'
         )
 

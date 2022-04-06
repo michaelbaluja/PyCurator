@@ -8,8 +8,8 @@ from typing import Any, TypeVar
 import pandas
 import pandas as pd
 
-import pycurator.gui.base
-from .parsing import _validate_save_filename
+from pycurator import gui
+from .parsing import validate_save_filename
 
 T = TypeVar('T')
 
@@ -73,7 +73,9 @@ def save_results(results: dict, data_dir: str, output_format: str) -> None:
             search_term, search_type = query
             output_filename = f'{search_term}_{search_type}{extension}'
 
-        output_filename = _validate_save_filename(output_filename)
+        output_filename = validate_save_filename(
+            output_filename
+        )
 
         save_dataframe(
             results=df,
@@ -130,9 +132,13 @@ def button_label_frame(
         button_command: Any
 ) -> None:
     """Create frame containing vertically-aligned button and label."""
-    _frame = ttk.Frame(root)
-    _label = ttk.Label(_frame, text=label_text)
-    _button = ttk.Button(_frame, text=button_text, command=button_command)
+    _frame = ttk.Frame(master=root)
+    _label = ttk.Label(master=_frame, text=label_text)
+    _button = ttk.Button(
+        master=_frame,
+        text=button_text,
+        command=button_command
+    )
 
     _label.grid(row=0, column=0)
     _button.grid(row=0, column=1)
@@ -140,7 +146,7 @@ def button_label_frame(
 
 
 def select_from_files(
-        root: pycurator.gui.base.ViewPage,
+        root: gui.ViewPage,
         selection_type: str,
         filetypes: list[tuple[str, str]] = (('All File Types', '*.*'),)
 ) -> None:

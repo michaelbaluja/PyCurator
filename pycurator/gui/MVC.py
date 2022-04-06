@@ -10,13 +10,13 @@ from typing import Optional, Type, TypeVar, Union
 
 from typing_extensions import ParamSpec
 
+from pycurator._typing import AttributeKey, AttributeValue, TKVarValue
 from pycurator.collectors import BaseCollector
 from pycurator.collectors import (
     TermQueryMixin,
     TypeQueryMixin,
     WebPathScraperMixin
 )
-from pycurator.utils.typing import AttributeKey, AttributeValue, TKVarValue
 from .base import ThreadedRun, ViewPage
 from .landing_page import LandingPage
 from .run_page import RunPage

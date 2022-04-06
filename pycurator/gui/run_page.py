@@ -1,3 +1,29 @@
+#
+#  PyCurator LGPL 3.0 <https://www.gnu.org/licenses/lgpl-3.0.txt>
+#  Copyright (c) 2022. Michael Baluja
+#
+#  This file is part of PyCurator.
+#  PyCurator is free software: you can redistribute it and/or modify it under
+#  the terms of version 3 of the GNU Lesser General Public License as published
+#  by the Free Software Foundation.
+#  PyCurator is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+#  details. You should have received a copy of the GNU Lesser General Public
+#  License along with PyCurator. If not, see <https://www.gnu.org/licenses/>.
+
+#
+#
+#  This file is part of PyCurator.
+#  PyCurator is free software: you can redistribute it and/or modify it under
+#  the terms of version 3 of the GNU Lesser General Public License as published
+#  by the Free Software Foundation.
+#  PyCurator is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+#  details. You should have received a copy of the GNU Lesser General Public
+#  License along with PyCurator. If not, see <https://www.gnu.org/licenses/>.
+
 import sys
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -32,37 +58,35 @@ class RunPage(ViewPage):
         # Create global runtime frames/widgets
         self.output_frame = ttk.Frame(self)
         self.runtime_output = tk.scrolledtext.ScrolledText(
-            self.output_frame,
+            master=self.output_frame,
         )
         self.runtime_output.config(state='disabled')
-        self.progress_bar = ttk.Progressbar(
-            self.output_frame
-        )
+        self.progress_bar = ttk.Progressbar(master=self.output_frame)
 
-        self.progress_text_frame = ttk.Frame(self)
+        self.progress_text_frame = ttk.Frame(master=self)
         self.progress_label_placeholder = ttk.Label(
-            self.progress_text_frame,
+            master=self.progress_text_frame,
             text='Querying:'
         )
         self.progress_determinate_num = ttk.Label(
-            self.progress_text_frame
+            master=self.progress_text_frame
         )
-        self.progress_label = ttk.Label(self.progress_text_frame)
+        self.progress_label = ttk.Label(master=self.progress_text_frame)
 
-        self.button_frame = ttk.Frame(self)
+        self.button_frame = ttk.Frame(master=self)
         self.back_button = ttk.Button(
-            self.button_frame,
+            master=self.button_frame,
             text='Back',
             command=lambda: self.controller.show(SelectionPage),
             state='disabled'
         )
         self.stop_button = ttk.Button(
-            self.button_frame,
+            master=self.button_frame,
             text='Stop',
             command=lambda: self.controller.request_execution()
         )
         self.exit_button = ttk.Button(
-            self.button_frame,
+            master=self.button_frame,
             text='Exit',
             command=sys.exit
         )

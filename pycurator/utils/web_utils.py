@@ -5,7 +5,7 @@ import bs4
 from selenium import webdriver
 from typing_extensions import ParamSpec
 
-from pycurator.utils.typing import Strainable
+from pycurator._typing import Strainable
 
 P = ParamSpec('P')
 
@@ -25,7 +25,7 @@ def get_single_tag_from_path(
         path: str
 ) -> Union[bs4.element.Tag, None]:
     """Extract HTML given a CSS path."""
-    return soup.select_one(path)
+    return soup.select_one(selector=path)
 
 
 def get_single_tag_from_tag_info(
@@ -34,7 +34,7 @@ def get_single_tag_from_tag_info(
         **kwargs: Any
 ) -> Union[bs4.element.Tag, bs4.element.NavigableString, None]:
     """Find and return BeautifulSoup Tag from given specifications."""
-    return soup.find(class_type, **kwargs)
+    return soup.find(name=class_type, **kwargs)
 
 
 def get_parent_tag(
@@ -124,7 +124,7 @@ def get_parent_sibling_tags(
     bs4.element.Tag.find_next_siblings
     """
 
-    parent = get_parent_tag(soup, string)
+    parent = get_parent_tag(soup=soup, string=string)
     return parent.find_next_siblings(**kwargs) if parent else None
 
 
@@ -188,11 +188,11 @@ def get_single_tag(
     """
 
     if path:
-        attr = get_single_tag_from_path(soup, path)
+        attr = get_single_tag_from_path(soup=soup, path=path)
     elif find_kwargs:
         attr = get_single_tag_from_tag_info(
-            soup,
-            class_type,
+            soup=soup,
+            class_type=class_type,
             **find_kwargs
         )
     else:
@@ -235,9 +235,9 @@ def get_variable_tags(
     """
 
     if path:
-        attrs = soup.select(path)
+        attrs = soup.select(selector=path)
     elif find_kwargs:
-        attrs = soup.find_all(class_type, **find_kwargs)
+        attrs = soup.find_all(name=class_type, **find_kwargs)
     else:
         raise ValueError('Must pass a CSS path or find attributes.')
 

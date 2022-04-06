@@ -7,18 +7,16 @@ import numpy as np
 import pandas as pd
 from selenium.webdriver.support.wait import WebDriverWait
 
-from pycurator.collectors.base import (
+from pycurator._typing import (
+    SearchTerm,
+    TermResultDict
+)
+from pycurator.collectors import (
     BaseCollector,
     BaseTermCollector,
     BaseWebCollector
 )
-from pycurator.utils import parse_numeric_string, web_utils
-from pycurator.utils.parsing import validate_metadata_parameters
-from pycurator.utils.typing import (
-    SearchTerm,
-    TermResultDict
-)
-from pycurator.utils.web_utils import text_to_be_present_on_page
+from pycurator.utils import parsing, web_utils
 
 
 class DryadCollector(BaseTermCollector, BaseWebCollector):
@@ -143,7 +141,10 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
                 search_term=search_params['q'],
                 page=search_params['page']
             )
-        _, output = self.get_request_output(search_url, params=search_params)
+        _, output = self.get_request_output(
+            url=search_url,
+            params=search_params
+        )
 
         while output.get('count'):
             output = output['_embedded']
@@ -217,8 +218,8 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
             web_df = self.get_web_output(urls)
 
             search_df = pd.merge(
-                search_df,
-                web_df,
+                left=search_df,
+                right=web_df,
                 how='outer',
                 on='identifier'
             )
@@ -246,7 +247,7 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
             If no object paths are provided.
         """
 
-        object_paths = validate_metadata_parameters(object_paths)
+        object_paths = parsing.validate_metadata_parameters(object_paths)
 
         start_page = 1
         metadata_df = pd.DataFrame()
@@ -256,8 +257,8 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
             search_params = {'page': start_page}
 
             object_df = self._conduct_search_over_pages(
-                search_url,
-                search_params,
+                search_url=search_url,
+                search_params=search_params,
                 delim='stash:files',
                 print_progress=False
             )
@@ -299,7 +300,9 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
                 soup = self._get_soup(features='html.parser')
 
             WebDriverWait(self.driver, 10).until(
-                text_to_be_present_on_page(self.attr_dict['numViews'])
+                web_utils.text_to_be_present_on_page(
+                    self.attr_dict['numViews']
+                )
             )
             soup = self._get_soup(features='html.parser')
 
@@ -315,7 +318,7 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
 
             # Clean results
             for key, value in object_dict.items():
-                object_dict[key] = parse_numeric_string(value)
+                object_dict[key] = parsing.parse_numeric_string(value)
 
             # Add identifier for merging
             object_dict['identifier'] = '/'.join(url.split('/')[-2:])
@@ -357,7 +360,7 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
         """
 
         object_path_dict = {
-            query: self._extract_version_ids(df)
+            query: self._extract_version_ids(df=df)
             for query, df in search_dict.items()
         }
 

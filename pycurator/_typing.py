@@ -8,6 +8,8 @@ from typing import Any, TypeVar, Union
 from bs4.element import Tag
 from pandas import DataFrame
 
+Page = TypeVar('Page', bound='gui.ViewPage')
+
 SearchTerm = TypeVar('SearchTerm', bound=str)
 SearchType = TypeVar('SearchType', bound=str)
 SearchTuple = tuple[SearchTerm, SearchType]
