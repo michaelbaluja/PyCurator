@@ -12,11 +12,7 @@ from typing_extensions import ParamSpec
 
 from pycurator._typing import AttributeKey, AttributeValue, TKVarValue
 from pycurator.collectors import BaseCollector
-from pycurator.collectors import (
-    TermQueryMixin,
-    TypeQueryMixin,
-    WebPathScraperMixin
-)
+from pycurator.collectors import TermQueryMixin, TypeQueryMixin
 from .base import ThreadedRun, ViewPage
 from .landing_page import LandingPage
 from .run_page import RunPage
@@ -98,8 +94,7 @@ class CollectorModel:
 
         self.requirements = {
             'search_terms': issubclass(self.collector_class, TermQueryMixin),
-            'search_types': issubclass(self.collector_class, TypeQueryMixin),
-            'path_dict': issubclass(self.collector_class, WebPathScraperMixin)
+            'search_types': issubclass(self.collector_class, TypeQueryMixin)
         }
 
     def initialize_collector(self, **param_val_kwargs: P.kwargs) -> None:

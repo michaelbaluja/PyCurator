@@ -30,7 +30,6 @@ from collections.abc import Iterable
 from typing import Any, NoReturn
 
 import pycurator.collectors
-from pycurator.collectors import BaseWebCollector
 from pycurator.utils import button_label_frame, select_from_files, save_options
 from .base import ViewPage
 
@@ -183,49 +182,6 @@ class SelectionPage(ViewPage):
                     filetypes=[('JSON Files', '*.json')]
                 )
             )
-
-        # If repo utilizes web scraping, get path file
-        if issubclass(self.controller.model.collector_class, BaseWebCollector):
-            path_dict_frame = ttk.Frame(master=self.param_frame)
-
-            # Get optional CSS path file if necessary
-            if self.controller.model.requirements.get('path_dict'):
-                path_dict_label = ttk.Label(
-                    master=path_dict_frame,
-                    text='CSS Selector Path:'
-                )
-                path_dict_label.grid(row=0, column=0)
-
-                path_dict_btn = ttk.Button(
-                    master=path_dict_frame,
-                    text='Select File',
-                    command=lambda: select_from_files(
-                        root=self,
-                        selection_type='path_file',
-                        filetypes=[('JSON Files', '*.json')]
-                    )
-                )
-                path_dict_btn.grid(row=0, column=1)
-            else:
-                path_dict_btn = None
-
-            # If web scraping is not the primary method of collection, allow
-            # user to decide to scrape
-            if len(self.controller.model.collector_class.__bases__) > 1:
-                self.controller.add_run_parameter('scrape', tk.IntVar())
-                scrape_check_btn = ttk.Checkbutton(
-                    master=self.param_frame,
-                    text='Web Scrape',
-                    variable=self.controller.get_run_parameter('scrape'),
-                    state=tk.ACTIVE,
-                    command=lambda: self._toggle_button_state(
-                        self.controller.get_run_parameter('scrape'),
-                        path_dict_btn
-                    )
-                )
-                scrape_check_btn.grid(column=0, sticky='w')
-
-            path_dict_frame.grid(column=0, sticky='w')
 
         # Get search terms, if needed
         if self.controller.model.requirements.get('search_terms'):

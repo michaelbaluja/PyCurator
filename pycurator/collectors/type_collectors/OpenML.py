@@ -1,36 +1,23 @@
 import ast
-import re
 from collections.abc import Collection
 from typing import Optional, Union
 
 import openml
 import pandas as pd
-from selenium.webdriver.remote.errorhandler import InvalidArgumentException
 
 from pycurator._typing import (
     SearchType,
     TypeResultDict
 )
-from pycurator.collectors import (
-    BaseTypeCollector,
-    BaseWebCollector
-)
-from pycurator.utils import parse_numeric_string, validate_metadata_parameters
-from pycurator.utils import web_utils
+from pycurator.collectors import BaseTypeCollector
+from pycurator.utils import validate_metadata_parameters
 
 
-class OpenMLCollector(BaseTypeCollector, BaseWebCollector):
+class OpenMLCollector(BaseTypeCollector):
     """OpenML collector for search type queries.
-
-    This collector allows for both API collection and web scraping for
-    additional dataset attributes that may take much longer to be
-    queried via API, such as basic task and run information.
 
     Parameters
     ----------
-    scrape : bool, optional (default=True)
-        Flag for requesting web scraping as a method for additional
-        metadata collection.
     search_types : list-like, optional
         Types to search over. Can be (re)set via set_search_types() or
         passed in directly to search functions.
@@ -40,29 +27,14 @@ class OpenMLCollector(BaseTypeCollector, BaseWebCollector):
 
     def __init__(
         self,
-        scrape: bool = True,
         search_types: Optional[Collection[SearchType]] = None,
         credentials: Optional[str] = None
     ) -> None:
 
-        self.scrape = scrape
-
-        BaseTypeCollector.__init__(
-            self,
+        super().__init__(
             repository_name='openml',
             search_types=search_types
         )
-
-        if self.scrape:
-            BaseWebCollector.__init__(
-                self,
-                repository_name='openml',
-            )
-
-            self.attr_dict = {
-                'downloads': r'downloaded by \d+ people',
-                'num_tasks': r'\d+ tasks'
-            }
 
         self.base_url = None
 
@@ -111,100 +83,6 @@ class OpenMLCollector(BaseTypeCollector, BaseWebCollector):
             ).reset_index(drop=True)
 
         return evaluations_df
-
-    def get_dataset_related_tasks(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Queries the task/run information for the provided datasets.
-
-        Parameters
-        ----------
-        df : pandas.DataFrame
-
-        Returns
-        -------
-        data_df : pandas.DataFrame
-            Original input with task and run information appended.
-        """
-
-        err_msg = 'Sorry, this data set does not seem to exist (anymore).'
-        search_df = pd.DataFrame()
-        urls = df['openml_url'].dropna()
-
-        self.status_queue.put('Scraping dataset task/run information...')
-
-        for url in urls:
-            self._update_query_ref(page=url)
-
-            num_runs_list = []
-            task_type_list = []
-            task_id_list = []
-            object_dict = dict()
-
-            try:
-                self.driver.get(url)
-            except InvalidArgumentException:
-                self.status_queue.put(
-                    f'Invalid URL provided for scraping: {url}'
-                )
-            soup = self._get_soup(features='html.parser')
-
-            if err_msg in soup.text:
-                continue
-
-            object_dict['openml_url'] = url
-
-            downloads = web_utils.get_tag_value(
-                web_utils.get_single_tag(
-                    soup=soup,
-                    string=re.compile(self.attr_dict['downloads'])
-                )
-            )
-            downloads = parse_numeric_string(downloads)
-            object_dict['num_downloads'], \
-                object_dict['num_unique_downloads'] = downloads
-
-            num_tasks = web_utils.get_tag_value(
-                web_utils.get_parent_tag(
-                    soup=soup,
-                    string=re.compile(self.attr_dict['num_tasks'])
-                )
-            )
-            num_tasks = parse_numeric_string(num_tasks, cast=True)
-
-            task_tags = web_utils.get_parent_sibling_tags(
-                soup=soup,
-                string=re.compile(self.attr_dict['num_tasks']),
-                limit=num_tasks
-            )
-
-            for task in task_tags:
-                try:
-                    task_link = task.a
-
-                    task_type = task_link.text.split(' on')[0]
-                    task_type_list.append(task_type)
-
-                    task_id = task_link.attrs['href'][2:]
-                    task_id_list.append(task_id)
-
-                    num_runs = task.b.text
-                    num_runs = parse_numeric_string(num_runs, cast=True)
-                    num_runs_list.append(num_runs)
-                except AttributeError:
-                    pass
-
-            # Add data to cumulative df
-            object_dict['num_runs'] = sum(num_runs_list)
-            object_dict['num_tasks'] = num_tasks
-            object_dict['task_types'] = task_type_list
-            object_dict['task_ids'] = task_id_list
-
-            search_df = pd.concat(
-                [search_df, pd.DataFrame([object_dict])]
-            ).reset_index(drop=True)
-
-        self.status_queue.put('Dataset info scraping complete.')
-
-        return search_df
 
     def get_individual_search_output(
             self,
@@ -305,14 +183,6 @@ class OpenMLCollector(BaseTypeCollector, BaseWebCollector):
                 error_queries.append(object_path)
 
         metadata_df = pd.DataFrame(queries)
-
-        if search_type == 'datasets' and self.scrape:
-            web_df = self.get_dataset_related_tasks(metadata_df)
-            metadata_df = pd.merge(
-                left=metadata_df,
-                right=web_df,
-                on='openml_url'
-            )
 
         self.status_queue.put(f' {search_type} metadata query complete.')
 

@@ -17,11 +17,7 @@ from typing import Any, AnyStr, NoReturn, Optional, TypeVar, Union
 
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from typing_extensions import ParamSpec
-from webdriver_manager.chrome import ChromeDriverManager
 
 import pycurator.utils
 from pycurator._typing import (
@@ -66,7 +62,6 @@ class BaseCollector(ABC):
     --------
     queue.Queue : Queue data structure
     BaseAPICollector : Derived Class for API queries.
-    BaseWebCollector : Derived Class for web scraping.
     """
 
     def __init__(self, repository_name: str) -> None:
@@ -179,93 +174,6 @@ class BaseCollector(ABC):
         self.current_query_ref = kwargs
 
 
-class WebPathScraperMixin:
-    """Mixin for web scrapers utilizing CSS Selector Paths.
-
-    Attributes
-    ----------
-    path_dict : JSONDict
-
-    See Also
-    --------
-    pycurator.collectors : Module containing data collector classes.
-    """
-
-    @property
-    def path_dict(self) -> JSONDict:
-        """Getter for path_dict variable."""
-        return self._path_dict
-
-    @path_dict.setter
-    def path_dict(self, path_file: str) -> None:
-        """Set path_dict if the file exists."""
-        if not os.path.exists(path_file):
-            raise FileNotFoundError(
-                f'Path file \'{path_file}\' does not exist.'
-            )
-        with open(path_file) as f:
-            self._path_dict = json.load(f)
-
-
-class BaseWebCollector(BaseCollector):
-    """Base for collection classes utilizing web scraping.
-
-    This base inherits from BaseCollector, which provides general
-    parameters for tracking collection progress.
-
-    Parameters
-    ----------
-    repository_name : str
-        Name of the repository being scraped. Used for providing updates
-        to user and saving output.
-
-    Attributes
-    ----------
-    driver : selenium.webdriver derivative
-
-    See Also
-    --------
-    BaseCollector
-    pycurator.collectors.web_scrapers
-    """
-
-    def __init__(self, repository_name: str) -> None:
-        super().__init__(repository_name=repository_name)
-
-        # Create driver
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        os.environ['WDM_LOG_LEVEL'] = '0'
-
-        self.status_queue.put('Initializing WebDriver.')
-        self.driver = webdriver.Chrome(
-            executable_path=ChromeDriverManager(
-                print_first_line=False
-            ).install(),
-            options=chrome_options
-        )
-
-    @staticmethod
-    def accepts_user_credentials() -> bool:
-        return False
-
-    @abstractmethod
-    def run(self) -> NoReturn:
-        raise NotImplementedError(
-            'Subclass must override "run()".'
-        )
-
-    def _get_soup(self, **kwargs: Any) -> BeautifulSoup:
-        """Return a BeautifulSoup object for the driver's current page."""
-        # If user has requested termination, handle cleanup instead of querying
-        # additional results
-        if not self.continue_running:
-            self.terminate()
-
-        html = self.driver.page_source
-        return BeautifulSoup(html, **kwargs)
-
-
 class BaseAPICollector(BaseCollector):
     """Base for collection classes utilizing external API.
 
@@ -277,8 +185,6 @@ class BaseAPICollector(BaseCollector):
     repository_name : str
         Name of the repository being collected from. Used for providing
         updates to user, loading credentials, and saving output results.
-    api_url : str
-        Base URL for repository API.
     credentials : str, optional (default=None)
         JSON filepath containing credentials in form
         {repository_name}: {key}.
@@ -298,12 +204,10 @@ class BaseAPICollector(BaseCollector):
     def __init__(
             self,
             repository_name: str,
-            api_url: str,
             credentials: Optional[str] = None
     ) -> None:
         super().__init__(repository_name=repository_name)
 
-        self.api_url = api_url
         if credentials:
             self.credentials = self.load_credentials(
                 credential_filepath=credentials

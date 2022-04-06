@@ -19,16 +19,13 @@ AUTHOR = 'Michael Baluja, Stephanie Labou'
 REQUIRES_PYTHON = '>=3.9.2'
 VERSION = '0.1.0'
 REQUIRED = [
-    'bs4',
     'kaggle >= 1.5.5',
     'numpy',
     'openml',
     'openpyxl',
     'pandas',
     'requests',
-    'selenium >= 2.41.0',
     'typing_extensions',
-    'webdriver_manager'
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))

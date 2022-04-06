@@ -1,1 +1,0 @@
-from .UCI import UCIScraper

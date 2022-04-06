@@ -1,11 +1,8 @@
-import re
 from collections.abc import Collection
-from time import sleep
 from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
-from selenium.webdriver.support.wait import WebDriverWait
 
 from pycurator._typing import (
     SearchTerm,
@@ -14,23 +11,15 @@ from pycurator._typing import (
 from pycurator.collectors import (
     BaseCollector,
     BaseTermCollector,
-    BaseWebCollector
 )
-from pycurator.utils import parsing, web_utils
+from pycurator.utils import parsing
 
 
-class DryadCollector(BaseTermCollector, BaseWebCollector):
+class DryadCollector(BaseTermCollector):
     """DataDryad collector for search term queries.
-
-    This collector allows for both API collection and web scraping for
-    additional attributes only available via the webpage for a given
-    data record.
 
     Parameters
     ----------
-    scrape : bool, optional (default=True)
-        Flag for requesting web scraping as a method for additional
-        metadata collection.
     search_terms : list-like, optional
         Terms to search over. Can be (re)set via set_search_terms()
         or passed in directly to search functions.
@@ -41,32 +30,15 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
 
     def __init__(
         self,
-        scrape: bool = True,
         search_terms: Optional[Collection[SearchTerm]] = None,
         credentials: Optional[bool] = None,
     ) -> None:
-        self.scrape = scrape
 
-        BaseTermCollector.__init__(
-            self,
+        super().__init__(
             repository_name='dryad',
             search_terms=search_terms,
             credentials=credentials
         )
-
-        if self.scrape:
-            BaseWebCollector.__init__(
-                self,
-                repository_name='dryad',
-            )
-
-            self.scrape_url = 'https://datadryad.org/stash/dataset'
-
-            self.attr_dict = {
-                'numViews': r'\d+ views',
-                'numDownloads': r'\d+ downloads',
-                'numCitations': r'\d+ citations'
-            }
 
         self.base_url = 'https://datadryad.org/api/v2'
         self.merge_on = 'version'
@@ -211,19 +183,6 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
         # Add dataset-specific version id for metadata querying
         search_df['version'] = self._extract_version_ids(search_df)
 
-        if self.scrape:
-            urls = search_df['identifier'].apply(
-                lambda doi: f'{self.scrape_url}/{doi}'
-            )
-            web_df = self.get_web_output(urls)
-
-            search_df = pd.merge(
-                left=search_df,
-                right=web_df,
-                how='outer',
-                on='identifier'
-            )
-
         return search_df
 
     def get_query_metadata(
@@ -270,72 +229,6 @@ class DryadCollector(BaseTermCollector, BaseWebCollector):
             ).reset_index(drop=True)
 
         return metadata_df
-
-    def get_web_output(self, object_urls: Collection[str]) -> pd.DataFrame:
-        """Scrapes path_dict attributes for the provided object urls.
-
-        Parameters
-        ----------
-        object_urls : collection of str
-
-        Returns
-        -------
-        search_df : pandas.DataFrame
-        """
-
-        self.status_queue.put('Scraping web metadata...')
-
-        search_df = pd.DataFrame()
-
-        for url in self._pb_determinate(object_urls):
-            self.driver.get(url)
-            soup = self._get_soup(features='html.parser')
-
-            while 'Request rejected due to rate limits.' in soup.text:
-                self.status_queue.put(
-                    'Rate limit hit, pausing for one minute...'
-                )
-                sleep(60)
-                self.driver.get(url)
-                soup = self._get_soup(features='html.parser')
-
-            WebDriverWait(self.driver, 10).until(
-                web_utils.text_to_be_present_on_page(
-                    self.attr_dict['numViews']
-                )
-            )
-            soup = self._get_soup(features='html.parser')
-
-            object_dict = {
-                var: web_utils.get_tag_value(
-                    web_utils.get_single_tag(
-                        soup=soup,
-                        string=re.compile(attr)
-                    )
-                )
-                for var, attr in self.attr_dict.items()
-            }
-
-            # Clean results
-            for key, value in object_dict.items():
-                object_dict[key] = parsing.parse_numeric_string(value)
-
-            # Add identifier for merging
-            object_dict['identifier'] = '/'.join(url.split('/')[-2:])
-            object_dict['title'] = web_utils.get_tag_value(
-                web_utils.get_single_tag(
-                    soup=soup,
-                    path='h1.o-heading__level1'
-                )
-            )
-
-            search_df = pd.concat(
-                [search_df, pd.DataFrame([object_dict])]
-            ).reset_index(drop=True)
-
-        self.status_queue.put('Web metadata scraping complete.')
-
-        return search_df
 
     def _extract_version_ids(self, df: pd.DataFrame) -> pd.DataFrame:
         """Retrieve ids from DataFrame entries."""

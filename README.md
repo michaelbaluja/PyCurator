@@ -9,20 +9,18 @@ UI for quickly retrieving data that is built on top of an extensible collection 
 ## Supported Repositories
 PyCurator currently supports the following repositories in the capacities listed. Authentication is only required for Kaggle,
 though may provide runtime benefits for Dryad as rate-limiting is relaxed.
+ 
 
-**Note**: The web-scraping functionality of the supported repositories is experimental. The primary aim of PyCurator is API
-support, so utilize the web aspects at your own discretion. 
-
-| Repository           | API                | Web                | Authentication                                                                               |
-|----------------------|--------------------|--------------------|----------------------------------------------------------------------------------------------|
-| Dataverse            | :white_check_mark: | :white_check_mark: |                                                                                              |
-| Dryad                | :white_check_mark: | :white_check_mark: | [Dryad](https://github.com/CDL-Dryad/dryad-app/blob/main/documentation/apis/api_accounts.md) |
-| Figshare             | :white_check_mark: | :x:                |                                                                                              |
-| Kaggle               | :white_check_mark: | :x:                | [Kaggle](https://www.kaggle.com/docs/api#authentication)                                     |
-| OpenML               | :white_check_mark: | :white_check_mark: |                                                                                              |
-| Papers With Code     | :white_check_mark: | :x:                |                                                                                              |
-| UCI Machine Learning | :x:                | :white_check_mark: |                                                                                              |
-| Zenodo               | :white_check_mark: | :x:                |                                                                                              |
+| Repository           | Authentication                                                                               |
+|----------------------|----------------------------------------------------------------------------------------------|
+| Dataverse            |                                                                                              |
+| Dryad                | [Dryad](https://github.com/CDL-Dryad/dryad-app/blob/main/documentation/apis/api_accounts.md) |
+| Figshare             |                                                                                              |
+| Kaggle               | [Kaggle](https://www.kaggle.com/docs/api#authentication)                                     |
+| OpenML               |                                                                                              |
+| Papers With Code     |                                                                                              |
+| UCI Machine Learning |                                                                                              |
+| Zenodo               |                                                                                              |
 
 If there's a repository that you would like to see added to the list, check out the [Contributions](#contributions) section.
 
@@ -53,16 +51,14 @@ copyright information. Clicking ```Continue``` will bring you to the following p
 Clicking on one of the repositories will bring up the respective parameters used for querying the API and 
 saving your results. Parameters will vary depending on repository selected.
 
-![Parameter Selection](/images/param_selection_1.png "Dataverse Parameter Selection")
-![Parameter Selection](/images/param_selection_2.png "UCI Parameter Selection")
+![Parameter Selection](/images/param_selection.png "Figshare Parameter Selection")
 
 These parameters are outlined as
-| Parameter      | Description                                                                                                                                                                             |
-|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Save Directory | Location to save results. Defaults to "/data/{repo_name}/{search_term}_{search_type}.json" within PyCurator /data sub-directory.                                                                                             |                                                                                                                               |
-| Web Scrape     | Flag for querying additional data via web scraping that is not available through the API.  This is an optional parameter for repositories that are not predominately web-scraper based. See [doc TBD] for full list of fields accessible via API vs web scraping.|
-| Search Terms   | Search term(s) to query. Terms should be separated with a comma, and multi-word terms should be wrapped in quotes.                                                                      |
-| Search Types   | Type of objects to query.                                                                                                                                                               |
+| Parameter      | Description                                                                                                                      |
+|----------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Save Directory | Location to save results. Defaults to "/data/{repo_name}/{search_term}_{search_type}.json" within PyCurator /data sub-directory. |
+| Search Terms   | Search term(s) to query. Terms should be separated with a comma, and multi-word terms should be wrapped in quotes.               |
+| Search Types   | Type of objects to query.                                                                                                        |
 After all required parameters are provided, the ```Run``` button is activated.
 
 #### Run Page
@@ -85,16 +81,13 @@ safely terminate the program.
 [table of time to search for ~1k results from repos]
 
 ### Dependencies
-- bs4
 - kaggle
 - numpy
 - openml
 - openpyxl
 - pandas
 - requests
-- selenium
 - typing_extensions
-- webdriver_manager
 
 ## Contributions
 ### Bugs

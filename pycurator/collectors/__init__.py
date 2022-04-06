@@ -1,13 +1,11 @@
 from .base import (
     BaseCollector,
     BaseAPICollector,
-    BaseWebCollector,
     BaseTermCollector,
     BaseTypeCollector,
     BaseTermTypeCollector,
     TermQueryMixin,
     TypeQueryMixin,
-    WebPathScraperMixin
 )
 from .term_collectors import DryadCollector, ZenodoCollector
 from .term_type_collectors import (
@@ -22,8 +20,6 @@ try:
 except ImportError:
     KaggleScraper = None
 
-from .web_scrapers import UCIScraper
-
 # Create dict of collectors available & sort
 available_repos = {
     'Dryad': DryadCollector,
@@ -32,7 +28,6 @@ available_repos = {
     'Dataverse': DataverseCollector,
     'Figshare': FigshareCollector,
     'Papers With Code': PapersWithCodeCollector,
-    'UCI': UCIScraper
 }
 
 if KaggleCollector:
