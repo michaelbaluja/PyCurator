@@ -2,7 +2,7 @@
 Making data extraction and curation as easy as py.
 
 PyCurator allows users to easily query research repositories without the trouble of reading through API
-documentation. Data curation is now as easy as ```$ python main.py```. Whether you want the ease of clicking
+documentation. Data curation is now as easy as ```$ pycurator```. Whether you want the ease of clicking
 some buttons and getting the data or the flexibility of modifying query format, PyCurator provides a simple
 UI for quickly retrieving data that is built on top of an extensible collection of Web and API scraper classes.
 
@@ -18,8 +18,7 @@ though may provide runtime benefits for Dryad as rate-limiting is relaxed.
 | Figshare             |                                                                                              |
 | Kaggle               | [Kaggle](https://www.kaggle.com/docs/api#authentication)                                     |
 | OpenML               |                                                                                              |
-| Papers With Code     |                                                                                              |
-| UCI Machine Learning |                                                                                              |
+| Papers With Code     |                                                                                              |                
 | Zenodo               |                                                                                              |
 
 If there's a repository that you would like to see added to the list, check out the [Contributions](#contributions) section.
@@ -76,18 +75,16 @@ during runtime, but is activated after completion. The ```Stop``` button is used
 After runtime completion or interruption, the ```Stop``` button is replaced by the ```Exit``` button, allowing you to 
 safely terminate the program.
 
-#### Benchmarking
-
-[table of time to search for ~1k results from repos]
-
 ### Dependencies
-- kaggle
-- numpy
-- openml
-- openpyxl
-- pandas
-- requests
-- typing_extensions
+
+- kaggle==1.5.12
+- numpy==1.22.2
+- openml==0.12.2
+- pandas==1.4.1
+- requests==2.27.1
+- setuptools==57.4.0
+- typing_extensions==4.1.1
+
 
 ## Contributions
 ### Bugs
