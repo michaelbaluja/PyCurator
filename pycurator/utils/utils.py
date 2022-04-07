@@ -16,11 +16,24 @@ T = TypeVar('T')
 
 save_options = {
     'CSV': '.csv',
-    'Excel': '.xlsx',
     'JSON': '.json',
-    'Parquet': '.parquet',
     'Pickle': '.pkl'
 }
+
+try:
+    import openpyxl
+    save_options['Excel'] = '.xlsx'
+    save_options = dict(sorted(save_options.items()))
+except ImportError:
+    pass
+
+try:
+    import pyarrow
+    save_options['Parquet'] = '.parquet'
+    save_options['Feather'] = '.feather'
+    save_options = dict(sorted(save_options.items()))
+except ImportError:
+    pass
 
 
 def save_results(results: dict, data_dir: str, output_format: str) -> None:

@@ -1,0 +1,26 @@
+name: pycurator
+channels:
+  - conda-forge
+dependencies:
+  # required
+  - python>=3.9.2
+  - pandas>=1.4.1
+  - requests>=2.27.1
+  - setupuptools>=57.4.0
+  - typing_extensions>=4.1.1
+
+  # querying OpenML
+  - openml>=0.12.2
+
+  # querying Kaggle
+  - kaggle>=1.5.12
+
+  # testing
+  - pytest
+
+  # docs
+  - sphinx
+
+  # optional
+  # save as excel
+  - openpyxl

@@ -1,1 +1,4 @@
-from .OpenML import OpenMLCollector
+try:
+    from .OpenML import OpenMLCollector
+except ImportError:
+    pass

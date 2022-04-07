@@ -25,7 +25,7 @@ If there's a repository that you would like to see added to the list, check out 
 
 ## Installation and use
 ### Installation
-Required dependencies are listed below in the [Dependencies](#dependencies) section.
+Dependencies are provided in the ```requirements.txt``` file.
 It is recommended to create a virtual environment to ensure there is no conflict with the packages
 in your current work space.
 
@@ -74,17 +74,6 @@ At the bottom are the navigation buttons. To avoid unnecessary queries, the ```B
 during runtime, but is activated after completion. The ```Stop``` button is used to interrupt runtime and stop querying.
 After runtime completion or interruption, the ```Stop``` button is replaced by the ```Exit``` button, allowing you to 
 safely terminate the program.
-
-### Dependencies
-
-- kaggle==1.5.12
-- numpy==1.22.2
-- openml==0.12.2
-- pandas==1.4.1
-- requests==2.27.1
-- setuptools==57.4.0
-- typing_extensions==4.1.1
-
 
 ## Contributions
 ### Bugs

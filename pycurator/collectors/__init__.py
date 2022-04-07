@@ -13,24 +13,25 @@ from .term_type_collectors import (
     FigshareCollector,
     PapersWithCodeCollector
 )
-from .type_collectors import OpenMLCollector
 
-try:
-    from .term_type_collectors import KaggleCollector
-except ImportError:
-    KaggleScraper = None
-
-# Create dict of collectors available & sort
 available_repos = {
     'Dryad': DryadCollector,
     'Zenodo': ZenodoCollector,
-    'OpenML': OpenMLCollector,
     'Dataverse': DataverseCollector,
     'Figshare': FigshareCollector,
     'Papers With Code': PapersWithCodeCollector,
 }
 
-if KaggleCollector:
+try:
+    from .term_type_collectors import KaggleCollector
     available_repos['Kaggle'] = KaggleCollector
+except ImportError:
+    pass
+
+try:
+    from .type_collectors import OpenMLCollector
+    available_repos['OpenML'] = OpenMLCollector
+except ImportError:
+    pass
 
 available_repos = dict(sorted(available_repos.items()))
