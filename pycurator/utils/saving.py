@@ -1,34 +1,39 @@
-from __future__ import annotations
+#
+#  PyCurator LGPL 3.0 <https://www.gnu.org/licenses/lgpl-3.0.txt>
+#  Copyright (c) 2022. Michael Baluja
+#
+#  This file is part of PyCurator.
+#  PyCurator is free software: you can redistribute it and/or modify it under
+#  the terms of version 3 of the GNU Lesser General Public License as published
+#  by the Free Software Foundation.
+#  PyCurator is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+#  details. You should have received a copy of the GNU Lesser General Public
+#  License along with PyCurator. If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import tkinter as tk
-import tkinter.ttk as ttk
-from typing import Any, TypeVar
+from typing import Union
 
-import pandas
 import pandas as pd
 
-from pycurator import gui
 from .parsing import validate_save_filename
-
-T = TypeVar('T')
-
 
 save_options = {
     'CSV': '.csv',
     'JSON': '.json',
     'Pickle': '.pkl'
 }
-
 try:
     import openpyxl
+
     save_options['Excel'] = '.xlsx'
     save_options = dict(sorted(save_options.items()))
 except ImportError:
     pass
-
 try:
     import pyarrow
+
     save_options['Parquet'] = '.parquet'
     save_options['Feather'] = '.feather'
     save_options = dict(sorted(save_options.items()))
@@ -36,13 +41,19 @@ except ImportError:
     pass
 
 
-def save_results(results: dict, data_dir: str, output_format: str) -> None:
+def save_results(
+        results: dict,
+        data_dir: Union[str, os.PathLike[str]],
+        output_format: str
+) -> None:
     """Export DataFrame objects to specified directory.
 
     Parameters
     ----------
     results : dict
-    data_dir : str
+        Dictionary of pandas.DataFrame objects to be saved.
+    data_dir : str or PathLike str
+        Path for parent directory to save files to.
     output_format : str
         Format for saved results. Acceptable options are seen in
         save_options.
@@ -56,6 +67,7 @@ def save_results(results: dict, data_dir: str, output_format: str) -> None:
 
     See Also
     --------
+    os.PathLike : ABC for objects representing a file system path.
     save_options : Output format to extension dict.
     """
 
@@ -99,7 +111,7 @@ def save_results(results: dict, data_dir: str, output_format: str) -> None:
 
 def save_dataframe(
         results: pd.DataFrame,
-        filepath: str,
+        filepath: Union[str, os.PathLike[str]],
         output_format: str
 ) -> None:
     """Saves the specified results to the file provided.
@@ -108,8 +120,8 @@ def save_dataframe(
     ----------
     results : pandas.DataFrame
         If DataFrame, results will be stored in a csv format.
-    filepath : str
-        Location to store file in. Take note of output type as specified
+    filepath : str or PathLike str
+        Path to save file. Take note of output type as specified
         above, as appending the incorrect filetype may result in the
         file being unreadable.
     output_format : str
@@ -121,11 +133,50 @@ def save_dataframe(
     ValueError
         If a non-dataframe object results or an incorrect output_format
         is provided.
+
+    See Also
+
+
+    Examples
+    --------
+    >>> data = {"id": [123, 432, 576, 194], "value": [0, 1, 1, 0]}
+    >>> save_dataframe(
+    ...     results=data,
+    ...     filepath='data/id_vals.json',
+    ...     output_format='JSON'
+    ... )
+    Traceback (most recent call last):
+        ...
+    ValueError: 'results' must be of type pandas.DataFrame, not 'dict'.
+
+    >>> df1 = pd.DataFrame(data)
+    >>> save_dataframe(
+    ...     results=df1,
+    ...     filepath='data/id_vals.json',
+    ...     output_format='JSON'
+    ... )
+
+    >>> df2 = df1
+    >>> df2.loc[:, 'Name'] = ('Jeff', 'Scott', 'Will', 'Dan')
+    >>> save_dataframe(
+    ...     results=df2,
+    ...     filepath='data/updated_id_vals.csv',
+    ...     output_format='CSV'
+    ... )
+
+    >>> save_dataframe(
+    ...     results=df2,
+    ...     filepath='data/full_data.txt',
+    ...     output_format='TXT'
+    ... )
+    Traceback (most recent call last):
+        ...
+    ValueError: 'TXT' is not supported. 'output_format' must be one of ['CSV', 'JSON', 'Pickle'].
     """
 
     if not isinstance(results, pd.DataFrame):
         raise ValueError(
-            f'Input must be of type pandas.DataFrame, not'
+            f'\'results\' must be of type pandas.DataFrame, not'
             f' \'{type(results)}\'.'
         )
 
@@ -133,84 +184,6 @@ def save_dataframe(
         getattr(results, f'to_{output_format.lower()}')(filepath)
     except AttributeError:
         raise ValueError(
-            f'\'{output_format}\' is not supported.'
-            f'Data can only be saved to one of {list(save_options.values())}.'
-        )
-
-
-def button_label_frame(
-        root: tk.Misc,
-        label_text: float | str,
-        button_text: float | str,
-        button_command: Any
-) -> None:
-    """Create frame containing vertically-aligned button and label."""
-    _frame = ttk.Frame(master=root)
-    _label = ttk.Label(master=_frame, text=label_text)
-    _button = ttk.Button(
-        master=_frame,
-        text=button_text,
-        command=button_command
-    )
-
-    _label.grid(row=0, column=0)
-    _button.grid(row=0, column=1)
-    _frame.grid(sticky='w', columnspan=2)
-
-
-def select_from_files(
-        root: gui.ViewPage,
-        selection_type: str,
-        filetypes: list[tuple[str, str]] = (('All File Types', '*.*'),)
-) -> None:
-    """Allows user to select local file/directory.
-
-    Parameters
-    ----------
-    root : Tkinter.Frame
-        Derived Frame class that contains UI.
-        If choosing file, root must contain "files" dict attribute to
-        hold the selected file.
-    selection_type : str
-        Type of selection to be made.
-        Examples include "credentials", "directory", "css_paths" etc.
-    filetypes : list of two-tuples of str,
-            optional (default = [('All File Types', '*.*')])
-        Allows users to input filetype restrictions.
-        Each tuple should be of the form:
-            ('File Type', '{file_name}.{file_format}')
-
-    Raises
-    ------
-    NotImplementedError
-        Occurs when called on a root that does not contain a files
-        attribute.
-
-    Notes
-    -----
-    If repo_name is passed, files are stored in the format
-        root.files[repo_name][filetype] = filename
-    If repo_name is None, files are stored in the format
-        root.files[repo_name] = filename
-    """
-
-    from tkinter import filedialog as fd
-
-    if 'dir' in selection_type:
-        selection = fd.askdirectory(
-            title='Choose Directory',
-            initialdir='.'
-        )
-    else:
-        selection = fd.askopenfilename(
-            title='Choose File',
-            initialdir='.',
-            filetypes=filetypes
-        )
-
-    try:
-        root.controller.add_run_parameter(selection_type, selection)
-    except AttributeError:
-        raise NotImplementedError(
-            f'{root} must contain add_run_parameter() attribute.'
+            f'\'{output_format}\' is not supported. \'output_format\''
+            f' must be one of {list(save_options.values())}.'
         )

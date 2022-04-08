@@ -148,7 +148,7 @@ class SelectionPage(ViewPage):
         # Get save information
         self.controller.add_run_parameter('save_type', tk.StringVar())
         button_label_frame(
-            root=self.param_frame,
+            frame_master=self.param_frame,
             label_text='Save Directory:',
             button_text='Select Directory',
             button_command=lambda: select_from_files(
@@ -173,7 +173,7 @@ class SelectionPage(ViewPage):
         # Get credentials
         if self.controller.model.collector_class.accepts_user_credentials():
             button_label_frame(
-                root=self.param_frame,
+                frame_master=self.param_frame,
                 label_text='Credentials:',
                 button_text='Select File',
                 button_command=lambda: select_from_files(
