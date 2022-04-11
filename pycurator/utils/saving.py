@@ -17,7 +17,7 @@ from typing import Union
 
 import pandas as pd
 
-from .parsing import validate_save_filename
+from .validating import validate_save_filename
 
 save_options = {
     'CSV': '.csv',
