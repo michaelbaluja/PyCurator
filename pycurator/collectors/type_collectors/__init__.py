@@ -1,4 +1,4 @@
 try:
     from .OpenML import OpenMLCollector
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     pass
