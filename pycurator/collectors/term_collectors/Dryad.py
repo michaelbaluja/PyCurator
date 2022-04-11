@@ -12,7 +12,7 @@ from pycurator.collectors import (
     BaseCollector,
     BaseTermCollector,
 )
-from pycurator.utils import parsing
+from pycurator.utils.validating import validate_metadata_parameters
 
 
 class DryadCollector(BaseTermCollector):
@@ -144,6 +144,7 @@ class DryadCollector(BaseTermCollector):
 
         return search_df
 
+    @BaseTermCollector.validate_search_term
     def get_individual_search_output(
             self,
             search_term: SearchTerm
@@ -163,12 +164,6 @@ class DryadCollector(BaseTermCollector):
         TypeError
             Incorrect search_term type.
         """
-
-        if not isinstance(search_term, str):
-            raise TypeError(
-                'search_term must be of type str, not'
-                f' \'{type(search_term)}\'.'
-            )
 
         search_url = f'{self.base_url}/search'
         search_params = {'q': search_term, 'page': 1, 'per_page': 100}
@@ -206,7 +201,7 @@ class DryadCollector(BaseTermCollector):
             If no object paths are provided.
         """
 
-        object_paths = parsing.validate_metadata_parameters(object_paths)
+        object_paths = validate_metadata_parameters(object_paths)
 
         start_page = 1
         metadata_df = pd.DataFrame()

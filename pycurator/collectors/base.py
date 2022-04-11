@@ -29,6 +29,7 @@ from pycurator._typing import (
     TermTypeResultDict,
     QueryResultDict
 )
+from pycurator.utils import extract_parameter
 
 T = TypeVar('T')
 P = ParamSpec('P')
@@ -170,7 +171,7 @@ class BaseCollector(ABC):
         self.status_queue.put(f'Searching page {page}')
 
     def _update_query_ref(self, **kwargs: Any) -> None:
-        """Combine keywords and update self.current_query_ref."""
+        """Combine keywords and update base.current_query_ref."""
         self.current_query_ref = kwargs
 
 
@@ -290,7 +291,7 @@ class BaseAPICollector(BaseCollector):
         Parameters
         ----------
         **kwargs : dict, optional
-            Can temporarily overwrite self attributes.
+            Can temporarily overwrite base attributes.
             Allows users to specify variable save parameters.
 
         Notes
@@ -362,7 +363,7 @@ class BaseAPICollector(BaseCollector):
             headers: Optional[Any] = None,
             **ref_kwargs: Any
     ) -> tuple[requests.Response, JSONDict]:
-        """Return request output and update self.current_query_ref.
+        """Return request output and update base.current_query_ref.
 
         Parameters
         ----------
@@ -373,7 +374,7 @@ class BaseAPICollector(BaseCollector):
 
         Returns
         -------
-        self.get_request_output(url, params, headers)
+        base.get_request_output(url, params, headers)
 
         See Also
         --------
@@ -575,6 +576,20 @@ class TermQueryMixin:
     def search_terms(self) -> Collection[SearchTerm]:
         return self._search_terms
 
+    @staticmethod
+    def validate_search_term(f: Callable[P, T]) -> Callable[P, T]:
+        """Decorator for validating search term object type."""
+        def inner(self, *args, **kwargs):
+            args, kwargs = extract_parameter(
+                base=self,
+                func=f,
+                args=args,
+                kwargs=kwargs,
+                param='search_term'
+            )
+            return f(self, *args, **kwargs)
+        return inner
+
     @search_terms.setter
     def search_terms(self, search_terms: Collection[SearchTerm]) -> None:
         if isinstance(search_terms, str):
@@ -582,6 +597,16 @@ class TermQueryMixin:
         if not all([isinstance(term, str) for term in search_terms]):
             raise TypeError('All search terms must be of type str.')
         self._search_terms = search_terms
+
+    def _validate(self, search_term: SearchTerm) -> SearchTerm:
+        """Validate type of search_term."""
+        if not isinstance(search_term, str):
+            raise TypeError(
+                'search_term must be of type str, not'
+                f' \'{type(search_term)}\'.'
+            )
+        else:
+            return search_term
 
 
 class BaseTermCollector(TermQueryMixin, BaseAPICollector):
@@ -730,6 +755,26 @@ class TypeQueryMixin:
             )
         self._search_types = search_types
 
+    @staticmethod
+    def validate_search_type(f: Callable[P, T]) -> Callable[P, T]:
+        """Decorator for validating search term object type."""
+        def inner(self, *args, **kwargs):
+            args, kwargs = extract_parameter(
+                base=self,
+                func=f,
+                args=args,
+                kwargs=kwargs,
+                param='search_type'
+            )
+            return f(self, *args, **kwargs)
+        return inner
+
+    def _validate(self, search_type: SearchType) -> SearchType:
+        if search_type not in self.search_type_options:
+            raise ValueError(f'Can only search by {self.search_type_options}.')
+        else:
+            return search_type
+
     @classmethod
     @abstractmethod
     def search_type_options(cls) -> NoReturn:
@@ -790,6 +835,16 @@ class BaseTermTypeCollector(
 
         self.search_terms = search_terms
         self.search_types = search_types
+
+    @staticmethod
+    def validate_term_and_type(f: Callable[P, T]) -> Callable[P, T]:
+        """Helper for wrapping function in both term/type validators."""
+        @BaseTermTypeCollector.validate_search_term
+        @BaseTermTypeCollector.validate_search_type
+        def inner(self, *args, **kwargs):
+            return f(self, *args, **kwargs)
+
+        return inner
 
     def get_all_search_outputs(
             self,

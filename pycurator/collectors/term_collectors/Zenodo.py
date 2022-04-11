@@ -37,10 +37,11 @@ class ZenodoCollector(BaseTermCollector):
     def accepts_user_credentials() -> bool:
         return True
 
+    @BaseTermCollector.validate_search_term
     @BaseCollector._pb_indeterminate
     def get_individual_search_output(
             self,
-            search_term: Collection[SearchTerm]
+            search_term: SearchTerm
     ) -> pd.DataFrame:
         """Returns information about all records from Zenodo.
 
@@ -62,12 +63,6 @@ class ZenodoCollector(BaseTermCollector):
         RuntimeWarning
             Unsuccessful query response from the API.
         """
-
-        if not isinstance(search_term, str):
-            raise TypeError(
-                'search_term must be of type str, not'
-                f' \'{type(search_term)}\'.'
-            )
 
         search_year = 2022
         search_df = pd.DataFrame()

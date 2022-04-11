@@ -15,7 +15,7 @@ from pycurator.collectors import (
     BaseCollector,
     BaseTermTypeCollector
 )
-from pycurator.utils.parsing import validate_metadata_parameters
+from pycurator.utils.validating import validate_metadata_parameters
 
 
 class PapersWithCodeCollector(BaseTermTypeCollector):
@@ -149,6 +149,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         else:
             return None
 
+    @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
             self,
             search_term: SearchTerm,
@@ -175,16 +176,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
             Invalid search_type provided.
         """
 
-        search_type_options = self.search_type_options
         search_url = f'{self.base_url}/{search_type}'
-
-        if not isinstance(search_term, str):
-            raise TypeError(
-                'Search term must be of type str, not'
-                f' \'{type(search_term)}\'.'
-            )
-        if search_type not in search_type_options:
-            raise ValueError(f'Can only search {search_type_options}.')
 
         search_params = {
             'q': search_term,
@@ -198,15 +190,11 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
             print_progress=True
         )
 
+    @BaseTermTypeCollector.validate_search_type
     def _get_metadata_types(
             self,
             search_type: SearchType
     ) -> Collection[SearchType]:
-        """Return the metadata categories for a given search_type."""
-        if search_type not in self.search_type_options:
-            raise ValueError(
-                f'Incorrect search type "{search_type}" passed in'
-            )
 
         if search_type == 'conferences':
             return ['proceedings']

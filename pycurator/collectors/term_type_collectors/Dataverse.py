@@ -84,6 +84,7 @@ class DataverseCollector(BaseTermTypeCollector):
         return credentials
 
     @BaseCollector._pb_indeterminate
+    @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
             self,
             search_term: SearchTerm,
@@ -109,15 +110,6 @@ class DataverseCollector(BaseTermTypeCollector):
         """
 
         search_url = f'{self.api_url}/search'
-        search_type_options = self.search_type_options
-
-        if not isinstance(search_term, str):
-            raise TypeError(
-                'search_term must be of type str, not'
-                f' \'{type(search_term)}\'.'
-            )
-        if search_type not in search_type_options:
-            raise ValueError(f'Can only search {search_type_options}.')
 
         # Set search parameters
         start = 0

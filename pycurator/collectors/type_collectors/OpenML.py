@@ -84,6 +84,7 @@ class OpenMLCollector(BaseTypeCollector):
 
         return evaluations_df
 
+    @BaseTypeCollector.validate_search_type
     def get_individual_search_output(
             self,
             search_type: SearchType
@@ -103,11 +104,6 @@ class OpenMLCollector(BaseTypeCollector):
         ValueError
             Incorrect search_type provided.
         """
-
-        search_type_options = self.search_type_options
-
-        if search_type not in search_type_options:
-            raise ValueError(f'Can only search {search_type_options}.')
 
         self.status_queue.put(f'Querying {search_type}...')
 
@@ -141,6 +137,7 @@ class OpenMLCollector(BaseTypeCollector):
 
         return search_df
 
+    @BaseTypeCollector.validate_search_type
     def get_query_metadata(
             self,
             object_paths: Union[str, Collection[str]],
@@ -164,10 +161,6 @@ class OpenMLCollector(BaseTypeCollector):
         """
 
         object_paths = validate_metadata_parameters(object_paths)
-
-        search_type_options = self.search_type_options
-        if search_type not in search_type_options:
-            raise ValueError(f'Can only search {search_type_options}.')
 
         base_command = getattr(openml, search_type)
         get_query = getattr(base_command, f'get_{search_type[:-1:]}')

@@ -17,7 +17,7 @@ from pycurator.collectors import (
     BaseCollector,
     BaseTermTypeCollector
 )
-from pycurator.utils.parsing import validate_metadata_parameters
+from pycurator.utils.validating import validate_metadata_parameters
 
 
 class KaggleCollector(BaseTermTypeCollector):
@@ -65,6 +65,7 @@ class KaggleCollector(BaseTermTypeCollector):
         return ('datasets', 'kernels')
 
     @BaseCollector._pb_indeterminate
+    @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
             self,
             search_term: SearchTerm,
@@ -88,15 +89,6 @@ class KaggleCollector(BaseTermTypeCollector):
         ValueError
             Invalid search_type provided.
         """
-
-        # Validate input
-        if not isinstance(search_term, str):
-            raise TypeError(
-                'search_term must be of type str, not'
-                f' \'{type(search_term)}\'.'
-            )
-        if search_type not in self.search_type_options:
-            raise ValueError(f'Can only search {self.search_type_options}.')
 
         # Use search type to get relevant API function
         list_queries = getattr(self.api, f'{search_type}_list')
