@@ -308,29 +308,32 @@ class BaseAPICollector(BaseCollector):
         save_dir = kwargs.pop('save_dir', None)
         save_type = kwargs.pop('save_type', None)
 
-        # Get search_output
-        search_dict = self.get_all_search_outputs(**kwargs)
-
-        # Set merge parameters
-        merge_on = vars(self).get('merge_on')
-        merge_right_on = vars(self).get('merge_right_on')
-        merge_left_on = vars(self).get('merge_left_on')
-
-        # Try to get metadata (if available)
         try:
-            metadata_dict = self.get_all_metadata(search_dict=search_dict)
-            merged_dict = self.merge_search_and_metadata_dicts(
-                search_dict=search_dict,
-                metadata_dict=metadata_dict,
-                on=merge_on,
-                left_on=merge_left_on,
-                right_on=merge_right_on
-            )
-            final_dict = merged_dict
-        except (AttributeError, TypeError):
-            # Attribute Error: Tries to call a function that does not exist
-            # TypeError: Tries to call function with incorrect arguments
-            final_dict = search_dict
+            # Get search_output
+            search_dict = self.get_all_search_outputs(**kwargs)
+
+            # Set merge parameters
+            merge_on = vars(self).get('merge_on')
+            merge_right_on = vars(self).get('merge_right_on')
+            merge_left_on = vars(self).get('merge_left_on')
+
+            # Try to get metadata (if available)
+            try:
+                metadata_dict = self.get_all_metadata(search_dict=search_dict)
+                merged_dict = self.merge_search_and_metadata_dicts(
+                    search_dict=search_dict,
+                    metadata_dict=metadata_dict,
+                    on=merge_on,
+                    left_on=merge_left_on,
+                    right_on=merge_right_on
+                )
+                final_dict = merged_dict
+            except TypeError:  # Function with incorrect parameters
+                final_dict = search_dict
+        except Exception as e:
+            self.status_queue.put(f'An unexpected error has occurred: \n{e}')
+            self.continue_running = False
+            return
 
         # Handle saving if output exists
         if not self._all_empty(final_dict):
