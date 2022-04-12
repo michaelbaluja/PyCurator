@@ -85,5 +85,7 @@ Know of an API that you think should be included in PyCurator? Create a Pull Req
 the API and why you think it would be beneficial, and make sure to follow the format set out
 through the existing Scraper classes.
 
-## Funding
+## Funding and acknowledgements
 The initial development of this program was funded by the Librarians Association of The University of California (LAUC) and UC San Diego Library Research Data Curation Program (RDCP).
+
+Thank you to Matt Peters, Dan LaSusa, John Chen, Joshua Weimer, and Amy Ly for their feedback during testing of early iterations of PyCurator.
