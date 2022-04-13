@@ -983,7 +983,7 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
             return
         if not all(
             [
-                search_type in self.search_type_options
+                search_type in self.search_type_options()
                 for search_type in search_types
             ]
         ):
