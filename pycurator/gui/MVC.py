@@ -10,9 +10,8 @@ from typing import Optional, Type, TypeVar, Union
 
 from typing_extensions import ParamSpec
 
+from pycurator import collectors
 from pycurator._typing import AttributeKey, AttributeValue, TKVarValue
-from pycurator.collectors import BaseCollector
-from pycurator.collectors import TermQueryMixin, TypeQueryMixin
 from .base import ThreadedRun, ViewPage
 from .landing_page import LandingPage
 from .run_page import RunPage
@@ -84,7 +83,7 @@ class CollectorModel:
 
     def __init__(
             self,
-            collector_class: Type[BaseCollector],
+            collector_class: Type[collectors.BaseCollector],
             collector_name: str
     ) -> None:
         self.collector_class = collector_class
@@ -93,8 +92,14 @@ class CollectorModel:
         self.run_thread = None
 
         self.requirements = {
-            'search_terms': issubclass(self.collector_class, TermQueryMixin),
-            'search_types': issubclass(self.collector_class, TypeQueryMixin)
+            'search_terms': issubclass(
+                self.collector_class,
+                collectors.TermQueryMixin
+            ),
+            'search_types': issubclass(
+                self.collector_class,
+                collectors.TypeQueryMixin
+            )
         }
 
     def initialize_collector(self, **param_val_kwargs: P.kwargs) -> None:
@@ -195,7 +200,7 @@ class CuratorController:
 
     def set_model(
             self,
-            collector: Type[BaseCollector],
+            collector: Type[collectors.BaseCollector],
             collector_name: str
     ) -> None:
         """Dynamically set the model component and helper variables.

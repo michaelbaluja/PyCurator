@@ -30,7 +30,7 @@ from collections.abc import Iterable
 from typing import Any, NoReturn
 
 import pycurator.collectors
-from pycurator.utils import button_label_frame, select_from_files, save_options
+from pycurator import utils
 from .base import ViewPage
 
 
@@ -147,11 +147,11 @@ class SelectionPage(ViewPage):
 
         # Get save information
         self.controller.add_run_parameter('save_type', tk.StringVar())
-        button_label_frame(
+        utils.button_label_frame(
             frame_master=self.param_frame,
             label_text='Save Directory:',
             button_text='Select Directory',
-            button_command=lambda: select_from_files(
+            button_command=lambda: utils.select_from_files(
                 root=self,
                 selection_type='save_dir'
             )
@@ -162,7 +162,7 @@ class SelectionPage(ViewPage):
             master=save_frame,
             textvariable=self.controller.get_run_parameter('save_type'),
             values=[
-                output_format for output_format in save_options.keys()
+                output_format for output_format in utils.save_options.keys()
             ],
             state='readonly'
         )
@@ -172,7 +172,7 @@ class SelectionPage(ViewPage):
 
         # Get credentials
         if self.controller.model.collector_class.accepts_user_credentials():
-            button_label_frame(
+            utils.button_label_frame(
                 frame_master=self.param_frame,
                 label_text='Credentials:',
                 button_text='Select File',

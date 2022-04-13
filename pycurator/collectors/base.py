@@ -19,7 +19,7 @@ import pandas as pd
 import requests
 from typing_extensions import ParamSpec
 
-import pycurator.utils
+from pycurator import utils
 from pycurator._typing import (
     JSONDict,
     SearchTerm,
@@ -29,7 +29,6 @@ from pycurator._typing import (
     TermTypeResultDict,
     QueryResultDict
 )
-from pycurator.utils import extract_parameter
 
 T = TypeVar('T')
 P = ParamSpec('P')
@@ -119,7 +118,7 @@ class BaseCollector(ABC):
         self.status_queue.put(
             f'Saving output to "{save_dir}".'
         )
-        pycurator.utils.save_results(
+        utils.save_results(
             results=final_dict,
             data_dir=save_dir,
             output_format=output_format
@@ -432,7 +431,7 @@ class BaseAPICollector(BaseCollector):
         r = requests.get(url=url, params=params, headers=headers)
         try:
             output = r.json()
-        except json.decoder.JSONDecodeError:
+        except json.JSONDecodeError:
             # 429: Rate limiting (wait and then try the request again)
             if r.status_code == 429:
                 self.status_queue.put('Rate limit hit, waiting for request...')
@@ -583,7 +582,7 @@ class TermQueryMixin:
     def validate_search_term(f: Callable[P, T]) -> Callable[P, T]:
         """Decorator for validating search term object type."""
         def inner(self, *args, **kwargs):
-            args, kwargs = extract_parameter(
+            args, kwargs = utils.extract_parameter(
                 base=self,
                 func=f,
                 args=args,
@@ -762,7 +761,7 @@ class TypeQueryMixin:
     def validate_search_type(f: Callable[P, T]) -> Callable[P, T]:
         """Decorator for validating search term object type."""
         def inner(self, *args, **kwargs):
-            args, kwargs = extract_parameter(
+            args, kwargs = utils.extract_parameter(
                 base=self,
                 func=f,
                 args=args,
@@ -980,6 +979,8 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
 
     @search_types.setter
     def search_types(self, search_types: Collection[SearchType]) -> None:
+        if not search_types:
+            return
         if not all(
             [
                 search_type in self.search_type_options
