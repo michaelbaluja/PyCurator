@@ -3,7 +3,7 @@
 
 import logging
 from collections.abc import Callable, Collection
-from typing import Any, Union, TypeVar
+from typing import Any, Optional, TypeVar, Union
 
 from typing_extensions import ParamSpec
 
@@ -11,16 +11,35 @@ T = TypeVar('T')
 P = ParamSpec('P')
 
 
-def extract_parameter(
+def validate_from_arguments(
         base,
+        param: str,
         func: Callable[P, T],
-        args: tuple[Any, ...],
-        kwargs: dict[str, Any],
-        param: str
+        args: Optional[tuple[Any, ...]] = None,
+        kwargs: Optional[dict[str, Any]] = None,
 ):
-    if param in kwargs:
-        kwargs[param] = base._validate(kwargs.get(param))
+    if not (args or kwargs):
+        raise ValueError('args or kwargs must be provided to extract.')
+
+    # Checking for param in kwargs
+    if kwargs:
+        if not isinstance(kwargs, dict):
+            raise TypeError(
+                'kwargs parameter must be of type \'dict\', not'
+                f' \'{type(kwargs)}\'.'
+            )
+        if param in kwargs:
+            kwargs[param] = base._validate(kwargs.get(param))
     else:
+        kwargs = dict()
+
+    # Checking for param in args
+    if args:
+        if not isinstance(args, tuple):
+            raise TypeError(
+                'args parameter must be of type \'set\', not' 
+                ' \'{type(args)}\'.'
+            )
         try:
             func_params = func.__code__.co_varnames
             idx = func_params.index(param)
@@ -29,11 +48,14 @@ def extract_parameter(
             args = list(args)
             args[idx] = base._validate(args[idx])
             args = tuple(args)
-        except ValueError:
+        except (IndexError, ValueError):
             logging.debug(
                 f'Attempting to validate \'{param}\' where one does not'
                 ' appear to be present.'
             )
+    else:
+        args = set()
+
     return args, kwargs
 
 
@@ -49,7 +71,6 @@ def validate_metadata_parameters(
     Returns
     -------
     object_paths : str or Collection of str
-
     Raises
     ------
     TypeError
