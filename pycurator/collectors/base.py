@@ -276,13 +276,7 @@ class BaseAPICollector(BaseCollector):
         all_empty : bool
         """
 
-        all_empty = False
-
-        for df in data_dict.values():
-            if df is None or df.empty:
-                all_empty = True
-
-        return all_empty
+        return all([df is None or df.empty for df in data_dict.values()])
 
     def run(self, **kwargs: Any) -> None:
         """Queries all data from the implemented API.
