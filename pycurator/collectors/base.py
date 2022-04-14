@@ -576,7 +576,7 @@ class TermQueryMixin:
     def validate_search_term(f: Callable[P, T]) -> Callable[P, T]:
         """Decorator for validating search term object type."""
         def inner(self, *args, **kwargs):
-            args, kwargs = utils.extract_parameter(
+            args, kwargs = utils.validate_from_arguments(
                 base=self,
                 func=f,
                 args=args,
@@ -755,7 +755,7 @@ class TypeQueryMixin:
     def validate_search_type(f: Callable[P, T]) -> Callable[P, T]:
         """Decorator for validating search term object type."""
         def inner(self, *args, **kwargs):
-            args, kwargs = utils.extract_parameter(
+            args, kwargs = utils.validate_from_arguments(
                 base=self,
                 func=f,
                 args=args,
@@ -767,7 +767,9 @@ class TypeQueryMixin:
 
     def _validate(self, search_type: SearchType) -> SearchType:
         if search_type not in self.search_type_options:
-            raise ValueError(f'Can only search by {self.search_type_options}.')
+            raise ValueError(
+                f'Can only search by {self.search_type_options}.'
+            )
         else:
             return search_type
 
@@ -977,7 +979,7 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
             return
         if not all(
             [
-                search_type in self.search_type_options()
+                search_type in self.search_type_options
                 for search_type in search_types
             ]
         ):

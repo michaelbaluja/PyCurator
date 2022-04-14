@@ -176,7 +176,7 @@ class SelectionPage(ViewPage):
                 frame_master=self.param_frame,
                 label_text='Credentials:',
                 button_text='Select File',
-                button_command=lambda: select_from_files(
+                button_command=lambda: utils.select_from_files(
                     root=self,
                     selection_type='credentials',
                     filetypes=[('JSON Files', '*.json')]
