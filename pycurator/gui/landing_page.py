@@ -1,6 +1,6 @@
-import os
 import tkinter as tk
 import tkinter.ttk as ttk
+from textwrap import dedent
 from typing import Any, NoReturn
 
 from .base import ViewPage
@@ -36,9 +36,24 @@ class LandingPage(ViewPage):
             font='helvetica 16 bold'
         )
 
-        msg_path = os.path.join('pycurator', 'gui', 'landing_msg.txt')
-        with open(msg_path) as f:
-            message = tk.StringVar(value=f.read())
+        message = tk.StringVar(
+            value=dedent(
+                """  
+                Making repository research curation as easy as py.
+    
+                PyCurator Copyright (C) 2022  Michael Baluja
+                This program comes with ABSOLUTELY NO WARRANTY.
+                This is free software, and you are welcome to redistribute
+                it under certain conditions.
+                For additional information, including full licensing terms,
+                visit the link at the bottom of this page.
+                
+                The initial development of this program was funded by the
+                Librarians Association of the University of California (LAUC)
+                and UC San Diego Library Research Data Curation Program (RDCP).
+                """
+            )
+        )
 
         message_box = tk.Message(self, textvariable=message)
 
