@@ -1,6 +1,3 @@
-#   PyCurator LGPL 3.0 <https://www.gnu.org/licenses/lgpl-3.0.txt>
-#   Copyright (c) 2022. Michael Baluja
-
 import logging
 from collections.abc import Callable, Collection
 from typing import Any, Optional, TypeVar, Union
