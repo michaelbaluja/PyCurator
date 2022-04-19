@@ -1,3 +1,6 @@
+#
+#  This software is Copyright © 2021-2022 The Regents of the University of California.
+
 import tkinter as tk
 import tkinter.ttk as ttk
 from textwrap import dedent
@@ -41,12 +44,11 @@ class LandingPage(ViewPage):
                 """  
                 Making repository research curation as easy as py.
     
-                PyCurator Copyright (C) 2022  Michael Baluja
-                This program comes with ABSOLUTELY NO WARRANTY.
-                This is free software, and you are welcome to redistribute
-                it under certain conditions.
-                For additional information, including full licensing terms,
-                visit the link at the bottom of this page.
+                This software is Copyright © 2021-2022 
+                The Regents of the University of California.
+                All Rights Reserved.
+                For full licensing information, reference the LICENSE present
+                in the PyCurator repository.
                 
                 The initial development of this program was funded by the
                 Librarians Association of the University of California (LAUC)

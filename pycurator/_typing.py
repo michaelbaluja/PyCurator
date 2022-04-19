@@ -1,5 +1,5 @@
-#   PyCurator LGPL 3.0 <https://www.gnu.org/licenses/lgpl-3.0.txt>
-#   Copyright (c) 2022. Michael Baluja
+#
+#  This software is Copyright © 2021-2022 The Regents of the University of California.
 
 from typing import Any, TypeVar, Union
 
