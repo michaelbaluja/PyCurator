@@ -121,11 +121,12 @@ class SelectionPage(ViewPage):
 
         # Get save information
         self.controller.add_run_parameter('save_type', tk.StringVar())
-        utils.button_label_frame(
+        save_dir_selection = utils.widget_label_frame(
             frame_master=self.param_frame,
             label_text='Save Directory:',
-            button_text='Select Directory',
-            button_command=lambda: utils.select_from_files(
+            widget_cls=ttk.Button,
+            text='Select Directory',
+            command=lambda: utils.select_from_files(
                 root=self,
                 selection_type='save_dir'
             )
@@ -141,21 +142,24 @@ class SelectionPage(ViewPage):
             state='readonly'
         )
         save_label.grid(row=0, column=0)
+        save_dir_selection.grid(row=0, columnspan=2, sticky='w')
         save_type_menu.grid(row=0, column=1)
         save_frame.grid()
 
         # Get credentials
         if self.controller.model.collector_class.accepts_user_credentials():
-            utils.button_label_frame(
+            user_credential_selection = utils.widget_label_frame(
                 frame_master=self.param_frame,
                 label_text='Credentials:',
-                button_text='Select File',
-                button_command=lambda: utils.select_from_files(
+                widget_cls=ttk.Button,
+                text='Select File',
+                command=lambda: utils.select_from_files(
                     root=self,
                     selection_type='credentials',
                     filetypes=[('JSON Files', '*.json')]
                 )
             )
+            user_credential_selection.grid(columnspan=2, sticky='w')
 
         # Get search terms, if needed
         if self.controller.model.requirements.get('search_terms'):

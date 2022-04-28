@@ -2,62 +2,52 @@ from __future__ import annotations
 
 import tkinter as tk
 import tkinter.ttk as ttk
-from typing import Any, TypeVar
+from typing import Type, TypeVar
+
+from typing_extensions import ParamSpec
 
 from pycurator import gui
 
+P = ParamSpec('P')
 T = TypeVar('T')
 
 
-def button_label_frame(
+def widget_label_frame(
         frame_master: tk.Misc,
         label_text: float | str,
-        button_text: float | str,
-        button_command: Any
+        widget_cls: Type[tk.Widget],
+        **widget_kwargs: P.kwargs
 ) -> None:
-    """Create frame containing vertically-aligned button and label.
+    """Create frame containing vertically-aligned widget and label.
 
     Parameters
     ----------
     frame_master : tk.Misc
     label_text : float or str
-    button_text : float or str
-    button_command
+    widget_cls : tk.Widget
+    **widget_kwargs
 
     Examples
     --------
     >>> root = tk.Tk()
-    >>> button_label_frame(
-    ...     frame_master=root,
-    ...     label_text="Don't click this button:",
-    ...     button_text='Click me!',
-    ...     button_command=sys.exit
-    ... )
-
-    >>> from pycurator.gui import ViewPage
-    >>> page_frame = ViewPage()
-    >>> button_label_frame(
-    ...     frame_master=root,
-    ...     label_text='File Selector:',
-    ...     button_text='Select File',
-    ...     button_command=select_from_files(
-    ...         root=page_frame,
-    ...         selection_type='file',
-    ...         filetypes=[('CSV', '*.csv'), ('TXT', '*.txt')]
-    ...     )
-    ... )
+    >>> widget_label_frame(
+        frame_master=root,
+        label_text="Don't click this button:",
+        widget_cls=ttk.Button,
+        widget_text='Click me!',
+        widget_command=sys.exit
+    )
     """
 
     _frame = ttk.Frame(master=frame_master)
     _label = ttk.Label(master=_frame, text=label_text)
-    _button = ttk.Button(
+    _widget = widget_cls(
         master=_frame,
-        text=button_text,
-        command=button_command
+        **widget_kwargs
     )
 
     _label.grid(row=0, column=0)
-    _button.grid(row=0, column=1)
+    _widget.grid(row=0, column=1)
     _frame.grid(sticky='w', columnspan=2)
 
 
