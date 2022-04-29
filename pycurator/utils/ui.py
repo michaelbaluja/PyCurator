@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import tkinter as tk
 import tkinter.ttk as ttk
-from typing import Type, TypeVar
+from typing import ParamSpec, Type, TypeVar
 
-from typing_extensions import ParamSpec
 
 from pycurator import gui
 
@@ -17,7 +16,7 @@ def widget_label_frame(
         label_text: float | str,
         widget_cls: Type[tk.Widget],
         **widget_kwargs: P.kwargs
-) -> None:
+) -> ttk.Frame:
     """Create frame containing vertically-aligned widget and label.
 
     Parameters
@@ -26,6 +25,10 @@ def widget_label_frame(
     label_text : float or str
     widget_cls : tk.Widget
     **widget_kwargs
+
+    Returns
+    -------
+    _frame : ttk.Frame
 
     Examples
     --------
@@ -48,7 +51,7 @@ def widget_label_frame(
 
     _label.grid(row=0, column=0)
     _widget.grid(row=0, column=1)
-    _frame.grid(sticky='w', columnspan=2)
+    return _frame
 
 
 def select_from_files(
