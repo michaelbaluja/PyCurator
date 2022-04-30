@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   # required
-  - python>=3.9.2
+  - python>=3.10
   - pandas>=1.4.1
   - requests>=2.27.1
   - setupuptools>=57.4.0

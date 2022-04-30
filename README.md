@@ -29,7 +29,7 @@ Dependencies are provided in the ```requirements.txt``` file.
 It is recommended to create a virtual environment to ensure there is no conflict with the packages
 in your current work space.
 
-PyCurator requires a Python version >= 3.9.2.
+PyCurator requires a Python version >= 3.10.
 
 To run, simply paste the following commands into your terminal
 ```bash

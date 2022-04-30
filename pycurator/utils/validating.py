@@ -1,8 +1,7 @@
 import logging
 from collections.abc import Callable, Collection
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, Optional, ParamSpec, TypeVar, Union
 
-from typing_extensions import ParamSpec
 
 T = TypeVar('T')
 P = ParamSpec('P')

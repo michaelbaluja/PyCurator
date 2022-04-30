@@ -13,11 +13,10 @@ from collections.abc import (
     Hashable,
     Sequence
 )
-from typing import Any, AnyStr, NoReturn, Optional, TypeVar, Union
+from typing import Any, AnyStr, NoReturn, Optional, ParamSpec, TypeVar, Union
 
 import pandas as pd
 import requests
-from typing_extensions import ParamSpec
 
 from pycurator import utils
 from pycurator._typing import (
