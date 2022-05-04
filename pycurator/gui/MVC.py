@@ -6,9 +6,7 @@ import queue
 import tkinter
 import tkinter as tk
 import tkinter.ttk as ttk
-from typing import Optional, Type, TypeVar, Union
-
-from typing_extensions import ParamSpec
+from typing import Optional, ParamSpec, Type, TypeVar, Union
 
 from pycurator import collectors
 from pycurator._typing import AttributeKey, AttributeValue, TKVarValue
