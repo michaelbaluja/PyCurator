@@ -8,8 +8,8 @@ authors:
   given-names: "Stephanie"
   orcid: "https://orcid.org/0000-0001-5633-5983"
 title: "PyCurator"
-version: "0.1"
+version: 0.1
 doi: [tbd]
-date-released: "2022-05-16"
+date-released: 2022-05-16
 repository-code: "https://pypi.org/project/pycurator/"
 url: "https://github.com/michaelbaluja/PyCurator"
