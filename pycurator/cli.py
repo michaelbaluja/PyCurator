@@ -1,4 +1,4 @@
-from pycurator.gui import PyCuratorUI
+from .gui import PyCuratorUI
 
 
 def main():

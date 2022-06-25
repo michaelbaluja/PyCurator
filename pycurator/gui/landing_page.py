@@ -1,13 +1,9 @@
-#
-#  This software is Copyright © 2021-2022 The Regents of the University of California.
-
 import tkinter as tk
 import tkinter.ttk as ttk
 from textwrap import dedent
 from typing import Any, NoReturn
 
 from .base import ViewPage
-from .selection_page import SelectionPage
 
 
 class LandingPage(ViewPage):
@@ -62,7 +58,7 @@ class LandingPage(ViewPage):
         self.next_page_button = ttk.Button(
             self,
             text='Continue',
-            command=lambda: self.controller.show(SelectionPage)
+            command=lambda: self.controller.show(self.next_page)
         )
 
         label.grid(row=0, pady=7)

@@ -1,19 +1,21 @@
 from __future__ import annotations
 
 import _tkinter
+import itertools as it
 import os
 import queue
 import tkinter
 import tkinter as tk
 import tkinter.ttk as ttk
-from typing import Optional, ParamSpec, Type, TypeVar, Union
+from typing import Any, Optional, ParamSpec, Type, TypeVar, Union
 
-from pycurator import collectors
-from pycurator._typing import AttributeKey, AttributeValue, TKVarValue
+from .. import collectors, utils
+from .._typing import AttributeKey, AttributeValue, TKVarValue
 from .base import ThreadedRun, ViewPage
 from .landing_page import LandingPage
 from .run_page import RunPage
 from .selection_page import SelectionPage
+from .settings_page import SettingsPage
 
 Page = TypeVar('Page', bound=ViewPage)
 P = ParamSpec('P')
@@ -25,6 +27,8 @@ class CuratorView(ttk.Frame):
     Parameters
     ----------
     parent : tk.Tk
+    show_settings : bool
+        Flag for indicating if user needs to fill settings.
 
     Attributes
     ----------
@@ -38,17 +42,23 @@ class CuratorView(ttk.Frame):
     tk.Tk
     """
 
-    def __init__(self, parent: tk.Tk) -> None:
+    def __init__(self, parent: tk.Tk, show_settings: bool) -> None:
         super().__init__(parent)
-        self.pages = dict()
         self.current_page = None
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid(row=0, column=0, sticky='nsew')
 
-        for F in (LandingPage, SelectionPage, RunPage):
-            self.pages[F] = F(self)
+        if show_settings:
+            pages = (LandingPage, SettingsPage, SelectionPage, RunPage)
+        else:
+            pages = (LandingPage, SelectionPage, RunPage)
+
+        self.pages = {
+            C: C(self, next_page=N)
+            for C, N in it.pairwise(pages + (None,))
+        }
 
     def set_controller(self, controller: CuratorController) -> None:
         """Setter for UI Controller of View object."""
@@ -171,6 +181,17 @@ class CuratorController:
         self._runtime_requirements = None
 
         self.runtime_param_vars = dict()
+
+    def setup_config(self, configs: dict[str, Any]) -> None:
+        """Set up config file from user options.
+
+        Parameters
+        ----------
+        configs : dict
+        """
+
+        utils.write_config(configs)
+        self.request_next_page()
 
     def request_next_page(self, *args: P.args) -> None:
         """Trigger the UI button corresponding to advancing pages."""

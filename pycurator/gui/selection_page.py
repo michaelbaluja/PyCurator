@@ -3,8 +3,7 @@ import tkinter.ttk as ttk
 from collections.abc import Iterable
 from typing import Any, NoReturn
 
-import pycurator.collectors
-from pycurator import utils
+from .. import collectors, utils
 from .base import ViewPage
 
 
@@ -41,7 +40,7 @@ class SelectionPage(ViewPage):
             self.display_repo_params
         )
 
-        for repo_name in pycurator.collectors.available_repos:
+        for repo_name in collectors.available_repos:
             self.repo_listbox.insert(tk.END, repo_name)
 
         self.param_frame = ttk.Frame(master=self)
@@ -76,7 +75,7 @@ class SelectionPage(ViewPage):
 
     def _set_model_from_name(self, repo_name) -> None:
         """Update Model element via Controller."""
-        repo_class = pycurator.collectors.available_repos[repo_name]
+        repo_class = collectors.available_repos[repo_name]
         self.controller.set_model(repo_class, repo_name)
 
     def _clear_frame(self, frame: tk.Frame):
