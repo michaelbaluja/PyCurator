@@ -3,11 +3,11 @@ from typing import Optional, Union, NoReturn
 
 import pandas as pd
 
-from pycurator._typing import (
+from ..._typing import (
     SearchTerm,
     SearchType,
 )
-from pycurator.collectors import (
+from ..base import (
     BaseCollector,
     BaseTermTypeCollector,
 )

@@ -4,8 +4,8 @@ from typing import Any, Optional, Iterable, NoReturn
 
 import pandas as pd
 
-from pycurator._typing import SearchTerm
-from pycurator.collectors import BaseCollector, BaseTermCollector
+from ..._typing import SearchTerm
+from ..base import BaseCollector, BaseTermCollector
 
 
 class ZenodoCollector(BaseTermCollector):

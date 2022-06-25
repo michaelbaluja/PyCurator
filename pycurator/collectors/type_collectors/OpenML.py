@@ -5,12 +5,12 @@ from typing import Optional, Union
 import openml
 import pandas as pd
 
-from pycurator._typing import (
+from ..._typing import (
     SearchType,
     TypeResultDict
 )
-from pycurator.collectors import BaseTypeCollector
-from pycurator.utils import validate_metadata_parameters
+from ..base import BaseTypeCollector
+from ...utils import validate_metadata_parameters
 
 
 class OpenMLCollector(BaseTypeCollector):

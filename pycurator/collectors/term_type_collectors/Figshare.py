@@ -3,16 +3,16 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from pycurator._typing import (
+from ..._typing import (
     SearchTerm,
     SearchType,
     TermTypeResultDict
 )
-from pycurator.collectors import (
+from ..base import (
     BaseCollector,
     BaseTermTypeCollector
 )
-from pycurator.utils.validating import validate_metadata_parameters
+from ...utils.validating import validate_metadata_parameters
 
 
 class FigshareCollector(BaseTermTypeCollector):

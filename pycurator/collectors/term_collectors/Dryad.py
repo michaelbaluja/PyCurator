@@ -4,15 +4,15 @@ from typing import Any, Optional, Union
 import numpy as np
 import pandas as pd
 
-from pycurator._typing import (
+from ..._typing import (
     SearchTerm,
     TermResultDict
 )
-from pycurator.collectors import (
+from ..base import (
     BaseCollector,
     BaseTermCollector,
 )
-from pycurator.utils.validating import validate_metadata_parameters
+from ...utils.validating import validate_metadata_parameters
 
 
 class DryadCollector(BaseTermCollector):
