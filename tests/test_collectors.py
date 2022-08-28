@@ -1,26 +1,25 @@
 import pandas as pd
 import pytest
 
-from pycurator import collectors
-from .fixtures import api_collector, type_collector
+from pycurator.collectors import available_repos
 
 
 def test_kaggle_availability():
     try:
         import kaggle
     except (ImportError, OSError):
-        assert 'Kaggle' not in collectors.available_repos
+        assert 'Kaggle' not in available_repos
     else:
-        assert 'Kaggle' in collectors.available_repos
+        assert 'Kaggle' in available_repos
 
 
 def test_openml_availability():
     try:
         import openml
     except ImportError:
-        assert 'OpenML' not in collectors.available_repos
+        assert 'OpenML' not in available_repos
     else:
-        assert 'OpenML' in collectors.available_repos
+        assert 'OpenML' in available_repos
 
 
 def test_valid_request_output(api_collector):

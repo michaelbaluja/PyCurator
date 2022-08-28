@@ -1,14 +1,18 @@
+"""
+Module for creating base classes of UI.
+"""
+
 from __future__ import annotations
 
 import threading
 import tkinter as tk
-import tkinter.ttk as ttk
 from abc import abstractmethod
 from collections.abc import Callable
+from tkinter import ttk
 from typing import Any, NoReturn
 
-import pycurator.collectors
-import pycurator.gui
+from . import MVC
+from ..collectors import base as collector_base
 
 
 class PyCuratorUI(tk.Tk):
@@ -26,15 +30,15 @@ class PyCuratorUI(tk.Tk):
         Module containing the Model, View, and Controller classes.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-        self.title('PyCurator')
+        self.title("PyCurator")
 
-        view = pycurator.gui.CuratorView(self)
-        controller = pycurator.gui.CuratorController(view=view)
+        view = MVC.CuratorView(self)
+        controller = MVC.CuratorController(view=view)
 
-        self.bind('<Return>', controller.request_next_page)
+        self.bind("<Return>", controller.request_next_page)
 
         view.set_controller(controller)
         view.show()
@@ -59,11 +63,7 @@ class ThreadedRun(threading.Thread):
         repository Collector classes for more concrete details.
     """
 
-    def __init__(
-            self,
-            collector: pycurator.collectors.BaseCollector,
-            **kwargs: Any
-    ) -> None:
+    def __init__(self, collector: collector_base.BaseCollector, **kwargs: Any) -> None:
         self.collector = collector
         super().__init__(target=self.collector.run, **kwargs)
 
@@ -99,22 +99,21 @@ class ViewPage(ttk.Frame):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.next_page = kwargs.pop("next_page", None)
         ttk.Frame.__init__(self, *args, **kwargs)
 
         self.controller = None
         self.is_initialized = False
         self.next_page_button = None
 
-    def set_controller(
-            self,
-            controller: pycurator.gui.MVC.CuratorController
-    ) -> None:
+    def set_controller(self, controller: MVC.CuratorController) -> None:
         """Setter for Controller element of PyCurator UI."""
         self.controller = controller
 
     @staticmethod
     def no_overwrite(show_func: Callable[[Any], Any]) -> Callable[[Any], Any]:
         """Wrapper for page display without element overwrite."""
+
         def display(self) -> None:
             raised = self.attempt_raise()
             if not raised:
@@ -125,6 +124,7 @@ class ViewPage(ttk.Frame):
 
     @abstractmethod
     def reset_frame(self) -> NoReturn:
+        """Abstract placeholder method for resetting page frame."""
         raise NotImplementedError
 
     def attempt_raise(self) -> bool:

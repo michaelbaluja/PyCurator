@@ -1,3 +1,7 @@
+"""
+CLI for running PyCurator user interface.
+"""
+
 from .gui import PyCuratorUI
 
 
@@ -6,5 +10,5 @@ def main():
     root.mainloop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

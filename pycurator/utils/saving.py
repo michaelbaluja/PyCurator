@@ -1,36 +1,34 @@
+"""
+Module for extending functionality for saving results.
+"""
+
 import os
 from typing import Union
 
 import pandas as pd
 
-from .validating import validate_save_filename
+from . import validating
 
-save_options = {
-    'CSV': '.csv',
-    'JSON': '.json',
-    'Pickle': '.pkl'
-}
+save_options = {"CSV": ".csv", "JSON": ".json", "Pickle": ".pkl"}
 try:
     import openpyxl
 
-    save_options['Excel'] = '.xlsx'
-    save_options = dict(sorted(save_options.items()))
+    save_options["Excel"] = ".xlsx"
 except ImportError:
     pass
 try:
     import pyarrow
 
-    save_options['Parquet'] = '.parquet'
-    save_options['Feather'] = '.feather'
-    save_options = dict(sorted(save_options.items()))
+    save_options["Parquet"] = ".parquet"
+    save_options["Feather"] = ".feather"
 except ImportError:
     pass
 
+save_options = validating.sort_dict_by_keys(save_options)
+
 
 def save_results(
-        results: dict,
-        data_dir: Union[str, os.PathLike[str]],
-        output_format: str
+        results: dict, data_dir: Union[str, os.PathLike[str]], output_format: str
 ) -> None:
     """Export DataFrame objects to specified directory.
 
@@ -47,7 +45,7 @@ def save_results(
     Raises
     ------
     TypeError
-        "results" not of type dict or "datadir" not of type str.
+        "results" not of type dict or "data_dir" not of type str.
     ValueError
         Incorrect output_format provided.
 
@@ -58,47 +56,39 @@ def save_results(
     """
 
     if not isinstance(results, dict):
-        raise TypeError(
-            f'results must be of type dict, not \'{type(results)}\'.'
-        )
+        raise TypeError(f"results must be of type dict, not '{type(results)}'.")
     if not isinstance(data_dir, str):
-        raise TypeError(
-            f'data_dir must of type str, not \'{type(data_dir)}\'.'
-        )
+        raise TypeError(f"data_dir must of type str, not '{type(data_dir)}'.")
 
     try:
         extension = save_options[output_format]
-    except KeyError:
+    except KeyError as invalid_format:
         raise ValueError(
-            f'output_format must be one of {list(save_options.keys())}, '
-            f'not \'{output_format}\'.'
-        )
+            f"output_format must be one of {list(save_options.keys())}, "
+            f"not '{output_format}'."
+        ) from invalid_format
 
     if not os.path.isdir(data_dir):
         os.makedirs(data_dir)
 
-    for query, df in results.items():
+    for query, query_df in results.items():
         if isinstance(query, str):
-            output_filename = f'{query}{extension}'
+            output_filename = f"{query}{extension}"
         else:
             search_term, search_type = query
-            output_filename = f'{search_term}_{search_type}{extension}'
+            output_filename = f"{search_term}_{search_type}{extension}"
 
-        output_filename = validate_save_filename(
-            output_filename
-        )
+        output_filename = validating.validate_save_filename(output_filename)
 
         save_dataframe(
-            results=df,
+            results=query_df,
             filepath=os.path.join(data_dir, output_filename),
-            output_format=output_format
+            output_format=output_format,
         )
 
 
 def save_dataframe(
-        results: pd.DataFrame,
-        filepath: Union[str, os.PathLike[str]],
-        output_format: str
+        results: pd.DataFrame, filepath: Union[str, os.PathLike[str]], output_format: str
 ) -> None:
     """Saves the specified results to the file provided.
 
@@ -162,14 +152,13 @@ def save_dataframe(
 
     if not isinstance(results, pd.DataFrame):
         raise ValueError(
-            f'\'results\' must be of type pandas.DataFrame, not'
-            f' \'{type(results)}\'.'
+            f"'results' must be of type pandas.DataFrame, not" f" '{type(results)}'."
         )
 
     try:
-        getattr(results, f'to_{output_format.lower()}')(filepath)
-    except AttributeError:
+        getattr(results, f"to_{output_format.lower()}")(filepath)
+    except AttributeError as invalid_format:
         raise ValueError(
-            f'\'{output_format}\' is not supported. \'output_format\''
-            f' must be one of {list(save_options.values())}.'
-        )
+            f"'{output_format}' is not supported. 'output_format'"
+            f" must be one of {list(save_options.values())}."
+        ) from invalid_format

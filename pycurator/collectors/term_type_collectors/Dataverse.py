@@ -1,15 +1,19 @@
+"""
+Module for collecting data from Dataverse repository.
+"""
+
 from collections.abc import Collection
 from typing import Optional, Union, NoReturn
 
 import pandas as pd
 
-from ..._typing import (
-    SearchTerm,
-    SearchType,
-)
 from ..base import (
     BaseCollector,
     BaseTermTypeCollector,
+)
+from ..._typing import (
+    SearchTerm,
+    SearchType,
 )
 
 
@@ -34,25 +38,23 @@ class DataverseCollector(BaseTermTypeCollector):
         pass
 
     def __init__(
-        self,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None,
+            self,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
 
         super().__init__(
-            repository_name='dataverse',
+            repository_name="dataverse",
             search_terms=search_terms,
-            search_types=search_types
+            search_types=search_types,
         )
 
-        self.api_url = 'https://dataverse.harvard.edu/api'
-        self.headers = dict()
+        self.api_url = "https://dataverse.harvard.edu/api"
+        self.headers = {}
 
         if credentials:
-            self.credentials = self.load_credentials(
-                credential_filepath=credentials
-            )
+            self.credentials = self.load_credentials(credential_filepath=credentials)
 
     @staticmethod
     def accepts_user_credentials() -> bool:
@@ -61,7 +63,7 @@ class DataverseCollector(BaseTermTypeCollector):
     @classmethod
     @property
     def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ('dataset', 'file')
+        return ("dataset", "file")
 
     def load_credentials(self, credential_filepath: str) -> Union[str, None]:
         """Load the credentials given filepath or token.
@@ -77,18 +79,14 @@ class DataverseCollector(BaseTermTypeCollector):
         credentials : str or None
         """
 
-        credentials = super().load_credentials(
-            credential_filepath=credential_filepath
-        )
-        self.headers['X-Dataverse-key'] = credentials
+        credentials = super().load_credentials(credential_filepath=credential_filepath)
+        self.headers["X-Dataverse-key"] = credentials
         return credentials
 
     @BaseCollector._pb_indeterminate
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
-            self,
-            search_term: SearchTerm,
-            search_type: SearchType
+            self, search_term: SearchTerm, search_type: SearchType
     ) -> pd.DataFrame:
         """Queries Dataverse API for the specified search term and type.
 
@@ -109,7 +107,7 @@ class DataverseCollector(BaseTermTypeCollector):
             Invalid search_type provided.
         """
 
-        search_url = f'{self.api_url}/search'
+        search_url = f"{self.api_url}/search"
 
         # Set search parameters
         start = 0
@@ -118,10 +116,10 @@ class DataverseCollector(BaseTermTypeCollector):
         page_idx = 0
 
         search_params = {
-            'q': search_term,
-            'per_page': page_size,
-            'start': start,
-            'type': search_type
+            "q": search_term,
+            "per_page": page_size,
+            "start": start,
+            "type": search_type,
         }
 
         # Conduct initial search & extract results
@@ -131,23 +129,19 @@ class DataverseCollector(BaseTermTypeCollector):
             headers=self.headers,
             search_term=search_term,
             search_type=search_type,
-            page=page_idx
+            page=page_idx,
         )
-        output = output['data']
+        output = output["data"]
 
-        while output.get('items'):
-            output = output['items']
+        while output.get("items"):
+            output = output["items"]
 
             output_df = pd.DataFrame(output)
-            output_df['page'] = (
-                search_params['start'] // search_params['per_page'] + 1
-            )
+            output_df["page"] = search_params["start"] // search_params["per_page"] + 1
 
-            search_df = pd.concat(
-                [search_df, output_df]
-            ).reset_index(drop=True)
+            search_df = pd.concat([search_df, output_df]).reset_index(drop=True)
 
-            search_params['start'] += search_params['per_page']
+            search_params["start"] += search_params["per_page"]
             page_idx += 1
 
             _, output = self.get_request_output_and_update_query_ref(
@@ -156,8 +150,8 @@ class DataverseCollector(BaseTermTypeCollector):
                 headers=self.headers,
                 search_term=search_term,
                 search_type=search_type,
-                page=page_idx
+                page=page_idx,
             )
-            output = output['data']
+            output = output["data"]
 
         return search_df

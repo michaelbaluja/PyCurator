@@ -1,3 +1,7 @@
+"""
+Load GUI methods into parent package.
+"""
+
 from .MVC import CuratorView, CuratorController, CollectorModel
 from .base import PyCuratorUI, ThreadedRun, ViewPage
 from .landing_page import LandingPage

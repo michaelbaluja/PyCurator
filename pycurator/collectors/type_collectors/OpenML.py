@@ -1,3 +1,7 @@
+"""
+Module for collecting data from OpenML repository.
+"""
+
 import ast
 from collections.abc import Collection
 from typing import Optional, Union
@@ -5,12 +9,9 @@ from typing import Optional, Union
 import openml
 import pandas as pd
 
-from ..._typing import (
-    SearchType,
-    TypeResultDict
-)
 from ..base import BaseTypeCollector
-from ...utils import validate_metadata_parameters
+from ..._typing import SearchType, TypeResultDict
+from ...utils import validating
 
 
 class OpenMLCollector(BaseTypeCollector):
@@ -26,15 +27,12 @@ class OpenMLCollector(BaseTypeCollector):
     """
 
     def __init__(
-        self,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None
+            self,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
 
-        super().__init__(
-            repository_name='openml',
-            search_types=search_types
-        )
+        super().__init__(repository_name="openml", search_types=search_types)
 
         self.base_url = None
 
@@ -48,47 +46,40 @@ class OpenMLCollector(BaseTypeCollector):
     @classmethod
     @property
     def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ('datasets', 'runs', 'tasks', 'evaluations')
+        return ("datasets", "runs", "tasks", "evaluations")
 
-    def _get_evaluations_search_output(self) -> pd.DataFrame:
+    @staticmethod
+    def _get_evaluations_search_output() -> pd.DataFrame:
         """Retrieve information on OpenML Evaluations."""
         evaluations_measures = openml.evaluations.list_evaluation_measures()
         evaluations_df = pd.DataFrame()
 
         # Get evaluation data for each available measure
         for measure in evaluations_measures:
-            evaluations_dict = dict(
-                openml.evaluations.list_evaluations(measure)
-            )
+            evaluations_dict = dict(openml.evaluations.list_evaluations(measure))
 
             # Convert string list array_data to list
-            if evaluations_dict.get('array_data'):
+            if evaluations_dict.get("array_data"):
                 try:
-                    evaluations_dict['array_data'] = ast.literal_eval(
-                        evaluations_dict['array_data']
+                    evaluations_dict["array_data"] = ast.literal_eval(
+                        evaluations_dict["array_data"]
                     )
                 # Occurs if 'array_data' is already a list
                 except ValueError:
                     pass
 
             measure_df = pd.DataFrame(
-                map(
-                    lambda evaluation: evaluation.__dict__,
-                    evaluations_dict.values()
-                )
+                map(lambda evaluation: evaluation.__dict__, evaluations_dict.values())
             )
 
-            evaluations_df = pd.concat(
-                [evaluations_df, measure_df]
-            ).reset_index(drop=True)
+            evaluations_df = pd.concat([evaluations_df, measure_df]).reset_index(
+                drop=True
+            )
 
         return evaluations_df
 
     @BaseTypeCollector.validate_search_type
-    def get_individual_search_output(
-            self,
-            search_type: SearchType
-    ) -> pd.DataFrame:
+    def get_individual_search_output(self, search_type: SearchType) -> pd.DataFrame:
         """Queries OpenML API for the specified search type.
 
         Parameters
@@ -105,14 +96,14 @@ class OpenMLCollector(BaseTypeCollector):
             Incorrect search_type provided.
         """
 
-        self.status_queue.put(f'Querying {search_type}...')
+        self.status_queue.put(f"Querying {search_type}...")
 
-        if search_type == 'evaluations':
+        if search_type == "evaluations":
             return self._get_evaluations_search_output()
 
         # Use query type to get necessary openml api functions
         base_command = getattr(openml, search_type)
-        list_queries = getattr(base_command, f'list_{search_type}')
+        list_queries = getattr(base_command, f"list_{search_type}")
 
         index = 0
         size = 10000
@@ -123,25 +114,21 @@ class OpenMLCollector(BaseTypeCollector):
 
         while search_results:
             output_df = pd.DataFrame(search_results).transpose()
-            output_df['page'] = index + 1
-            search_df = pd.concat(
-                [search_df, output_df]
-            ).reset_index(drop=True)
+            output_df["page"] = index + 1
+            search_df = pd.concat([search_df, output_df]).reset_index(drop=True)
 
             index += 1
 
             self._update_query_ref(page=index)
             search_results = list_queries(offset=(index * size), size=size)
 
-        self.status_queue.put(f'{search_type} search complete.')
+        self.status_queue.put(f"{search_type} search complete.")
 
         return search_df
 
     @BaseTypeCollector.validate_search_type
     def get_query_metadata(
-            self,
-            object_paths: Union[str, Collection[str]],
-            search_type: SearchType
+            self, object_paths: Union[str, Collection[str]], search_type: SearchType
     ) -> pd.DataFrame:
         """Retrieves the metadata for the object_paths objects.
 
@@ -160,10 +147,10 @@ class OpenMLCollector(BaseTypeCollector):
             Invalid search_type provided.
         """
 
-        object_paths = validate_metadata_parameters(object_paths)
+        object_paths = validating.validate_metadata_parameters(object_paths)
 
         base_command = getattr(openml, search_type)
-        get_query = getattr(base_command, f'get_{search_type[:-1:]}')
+        get_query = getattr(base_command, f"get_{search_type[:-1:]}")
 
         queries = []
         error_queries = []
@@ -177,14 +164,11 @@ class OpenMLCollector(BaseTypeCollector):
 
         metadata_df = pd.DataFrame(queries)
 
-        self.status_queue.put(f' {search_type} metadata query complete.')
+        self.status_queue.put(f" {search_type} metadata query complete.")
 
         return metadata_df
 
-    def get_all_metadata(
-            self,
-            search_dict: TypeResultDict
-    ) -> TypeResultDict:
+    def get_all_metadata(self, search_dict: TypeResultDict) -> TypeResultDict:
         """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
@@ -197,28 +181,25 @@ class OpenMLCollector(BaseTypeCollector):
         metadata_dict : dict
         """
 
-        metadata_dict = dict()
+        metadata_dict = {}
 
-        for query, df in search_dict.items():
-            self.status_queue.put(f'Querying {query} metadata...')
-            if query == 'datasets':
-                id_name = 'did'
-            elif query == 'runs':
-                id_name = 'run_id'
-            elif query == 'tasks':
-                id_name = 'tid'
+        for query, query_df in search_dict.items():
+            self.status_queue.put(f"Querying {query} metadata...")
+            if query == "datasets":
+                id_name = "did"
+            elif query == "runs":
+                id_name = "run_id"
+            elif query == "tasks":
+                id_name = "tid"
             else:
-                raise ValueError(
-                    f'Query \'{query}\' is not a valid search_type.'
-                )
+                raise ValueError(f"Query '{query}' is not a valid search_type.")
 
-            object_paths = df[id_name].values
+            object_paths = query_df[id_name].values
 
             metadata_dict[query] = self.get_query_metadata(
-                object_paths=object_paths,
-                search_type=query
+                object_paths=object_paths, search_type=query
             )
 
-        self.status_queue.put('Metadata query complete.')
+        self.status_queue.put("Metadata query complete.")
 
         return metadata_dict

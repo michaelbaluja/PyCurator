@@ -1,3 +1,7 @@
+"""
+Module containing abstract base for PyCurator collector classes.
+"""
+
 import itertools
 import json
 import os
@@ -6,19 +10,18 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from collections.abc import (
-    Iterable,
     Collection,
     Callable,
     Generator,
     Hashable,
-    Sequence
+    Iterable,
+    Sequence,
 )
 from typing import Any, AnyStr, NoReturn, Optional, ParamSpec, TypeVar, Union
 
 import pandas as pd
 import requests
 
-from pycurator import utils
 from pycurator._typing import (
     JSONDict,
     SearchTerm,
@@ -26,11 +29,12 @@ from pycurator._typing import (
     SearchTuple,
     TermResultDict,
     TermTypeResultDict,
-    QueryResultDict
+    QueryResultDict,
 )
+from ..utils import saving, validating
 
-T = TypeVar('T')
-P = ParamSpec('P')
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 class BaseCollector(ABC):
@@ -89,7 +93,7 @@ class BaseCollector(ABC):
             coll parameter is not iterable.
         """
 
-        if not hasattr(coll, '__iter__'):
+        if not hasattr(coll, "__iter__"):
             raise TypeError('Parameter "coll" must be iterable.')
 
         # Initialize tracking vars
@@ -109,38 +113,24 @@ class BaseCollector(ABC):
         self.current_query_ref = None
 
     def _save_results(
-            self,
-            save_dir: str,
-            final_dict: QueryResultDict,
-            output_format: str
+            self, save_dir: str, final_dict: QueryResultDict, output_format: str
     ) -> None:
-        self.status_queue.put(
-            f'Saving output to "{save_dir}".'
+        """Helper function for saving results and reporting status to UI."""
+        self.status_queue.put(f'Saving output to "{save_dir}".')
+        saving.save_results(
+            results=final_dict, data_dir=save_dir, output_format=output_format
         )
-        utils.save_results(
-            results=final_dict,
-            data_dir=save_dir,
-            output_format=output_format
-        )
-        self.status_queue.put('Save complete.')
+        self.status_queue.put("Save complete.")
 
     @abstractmethod
     def run(self) -> NoReturn:
-        raise NotImplementedError(
-            'Subclass must override "run()".'
-        )
+        raise NotImplementedError('Subclass must override "run()".')
 
     @staticmethod
-    def _pb_indeterminate(
-            indeterminate_query_func: Callable[P, T]
-    ) -> Callable[P, T]:
+    def _pb_indeterminate(indeterminate_query_func: Callable[P, T]) -> Callable[P, T]:
         """Progress bar wrapper for indeterminate-length queries."""
 
-        def update_pb(
-                self,
-                *args: P.args,
-                **kwargs: P.kwargs
-        ) -> Iterable[Any]:
+        def update_pb(self, *args: P.args, **kwargs: P.kwargs) -> Iterable[Any]:
             self.num_queries = True
             results = indeterminate_query_func(self, *args, **kwargs)
             self.num_queries = False
@@ -154,19 +144,20 @@ class BaseCollector(ABC):
 
     def terminate(self) -> NoReturn:
         """Handle program execution."""
-        self.status_queue.put('Requesting program termination.')
+        self.status_queue.put("Requesting program termination.")
         sys.exit()
 
     @staticmethod
     @abstractmethod
     def accepts_user_credentials() -> NoReturn:
+        """Abstract placeholder method for repository credential requirements."""
         raise NotImplementedError(
             'Subclass must override "accepts_user_credentials()".'
         )
 
     def _print_progress(self, page: str) -> None:
         """Update queue with current page being searched."""
-        self.status_queue.put(f'Searching page {page}')
+        self.status_queue.put(f"Searching page {page}")
 
     def _update_query_ref(self, **kwargs: Any) -> None:
         """Combine keywords and update base.current_query_ref."""
@@ -200,17 +191,11 @@ class BaseAPICollector(BaseCollector):
     BaseTypeCollector
     """
 
-    def __init__(
-            self,
-            repository_name: str,
-            credentials: Optional[str] = None
-    ) -> None:
+    def __init__(self, repository_name: str, credentials: Optional[str] = None) -> None:
         super().__init__(repository_name=repository_name)
 
         if credentials:
-            self.credentials = self.load_credentials(
-                credential_filepath=credentials
-            )
+            self.credentials = self.load_credentials(credential_filepath=credentials)
 
     def load_credentials(self, credential_filepath: str) -> Union[str, None]:
         """Load the credential file from the given filepath.
@@ -237,8 +222,10 @@ class BaseAPICollector(BaseCollector):
 
         if not isinstance(credential_filepath, str):
             raise TypeError(
-                (f'Credential value must be of type str, '
-                    f'not \'{type(credential_filepath)}\'.')
+                (
+                    f"Credential value must be of type str, "
+                    f"not '{type(credential_filepath)}'."
+                )
             )
 
         # Try to load credentials from file
@@ -250,11 +237,11 @@ class BaseAPICollector(BaseCollector):
 
                 if not credentials:
                     self.status_queue.put(
-                        'No credentials found, attempting unauthorized run.'
+                        "No credentials found, attempting unauthorized run."
                     )
                 return credentials
         else:
-            raise FileNotFoundError(f'{credential_filepath} does not exist.')
+            raise FileNotFoundError(f"{credential_filepath} does not exist.")
 
     @staticmethod
     def accepts_user_credentials() -> NoReturn:
@@ -275,7 +262,7 @@ class BaseAPICollector(BaseCollector):
         all_empty : bool
         """
 
-        return all([df is None or df.empty for df in data_dict.values()])
+        return all(df is None or df.empty for df in data_dict.values())
 
     def run(self, **kwargs: Any) -> None:
         """Queries all data from the implemented API.
@@ -294,20 +281,20 @@ class BaseAPICollector(BaseCollector):
             merge_search_and_metadata_dicts (if applicable)
         """
 
-        self.status_queue.put(f'Running {self.repository_name.title()}...')
+        self.status_queue.put(f"Running {self.repository_name.title()}...")
 
         # Set save parameters
-        save_dir = kwargs.pop('save_dir', None)
-        save_type = kwargs.pop('save_type', None)
+        save_dir = kwargs.pop("save_dir", None)
+        save_type = kwargs.pop("save_type", None)
 
         try:
             # Get search_output
             search_dict = self.get_all_search_outputs(**kwargs)
 
             # Set merge parameters
-            merge_on = vars(self).get('merge_on')
-            merge_right_on = vars(self).get('merge_right_on')
-            merge_left_on = vars(self).get('merge_left_on')
+            merge_on = vars(self).get("merge_on")
+            merge_right_on = vars(self).get("merge_right_on")
+            merge_left_on = vars(self).get("merge_left_on")
 
             # Try to get metadata (if available)
             try:
@@ -317,13 +304,13 @@ class BaseAPICollector(BaseCollector):
                     metadata_dict=metadata_dict,
                     on=merge_on,
                     left_on=merge_left_on,
-                    right_on=merge_right_on
+                    right_on=merge_right_on,
                 )
                 final_dict = merged_dict
             except TypeError:  # Function with incorrect parameters
                 final_dict = search_dict
-        except Exception as e:
-            self.status_queue.put(f'An unexpected error has occurred: \n{e}')
+        except Exception as unexpected_error:
+            self.status_queue.put(f"An unexpected error has occurred: \n{unexpected_error}")
             self.continue_running = False
             return
 
@@ -331,32 +318,28 @@ class BaseAPICollector(BaseCollector):
         if not self._all_empty(final_dict):
             if save_dir and save_type:
                 self._save_results(
-                    save_dir=save_dir,
-                    final_dict=final_dict,
-                    output_format=save_type
+                    save_dir=save_dir, final_dict=final_dict, output_format=save_type
                 )
         else:
-            self.status_queue.put('No results found, nothing to save.')
+            self.status_queue.put("No results found, nothing to save.")
 
-        self.status_queue.put(f'{self.repository_name.title()} run complete.')
+        self.status_queue.put(f"{self.repository_name.title()} run complete.")
         self.continue_running = False
 
     def get_all_search_outputs(self, **kwargs: Any) -> NoReturn:
-        raise NotImplementedError(
-            'Subclass must override "get_all_search_outputs()".'
-        )
+        """Abstract placeholder method for returning search outputs."""
+        raise NotImplementedError('Subclass must override "get_all_search_outputs()".')
 
     def get_all_metadata(self, **kwargs: Any) -> NoReturn:
-        raise NotImplementedError(
-            'Subclass must override "get_all_metadata()".'
-        )
+        """Abstract placeholder method for returning metadata."""
+        raise NotImplementedError('Subclass must override "get_all_metadata()".')
 
     def get_request_output_and_update_query_ref(
             self,
             url: AnyStr,
             params: Optional[Any] = None,
             headers: Optional[Any] = None,
-            **ref_kwargs: Any
+            **ref_kwargs: Any,
     ) -> tuple[requests.Response, JSONDict]:
         """Return request output and update base.current_query_ref.
 
@@ -381,10 +364,7 @@ class BaseAPICollector(BaseCollector):
         return self.get_request_output(url=url, params=params, headers=headers)
 
     def get_request_output(
-            self,
-            url: AnyStr,
-            params: Optional[Any] = None,
-            headers: Optional[Any] = None
+            self, url: AnyStr, params: Optional[Any] = None, headers: Optional[Any] = None
     ) -> tuple[requests.Response, JSONDict]:
         """Return Response and JSON from requests.get().
 
@@ -407,7 +387,7 @@ class BaseAPICollector(BaseCollector):
         Raises
         ------
         RuntimeError
-            Occurs when a query results in an unparsable response.
+            Occurs when a query results in an un-parsable response.
             Outputs the parameters provided to the query along with the
             response status code for further troubleshooting.
 
@@ -421,32 +401,32 @@ class BaseAPICollector(BaseCollector):
         if not self.continue_running:
             self.terminate()
 
-        r = requests.get(url=url, params=params, headers=headers)
+        request_obj = requests.get(url=url, params=params, headers=headers)
         try:
-            output = r.json()
-        except json.JSONDecodeError:
+            output = request_obj.json()
+        except json.JSONDecodeError as invalid_json:
             # 429: Rate limiting (wait and then try the request again)
-            if r.status_code == 429:
-                self.status_queue.put('Rate limit hit, waiting for request...')
+            if request_obj.status_code == 429:
+                self.status_queue.put("Rate limit hit, waiting for request...")
 
                 # Wait until we can make another request
-                reset_time = int(r.headers['RateLimit-Reset'])
+                reset_time = int(request_obj.headers["RateLimit-Reset"])
                 current_time = int(time.time())
                 time.sleep(reset_time - current_time)
 
-                r, output = self.get_request_output(
-                    url=url,
-                    params=params,
-                    headers=headers
+                request_obj, output = self.get_request_output(
+                    url=url, params=params, headers=headers
                 )
             else:
                 raise RuntimeError(
-                    (f'Query to {url} with {params} params and {headers}'
-                     f' headers fails unexpectedly with status'
-                     f' code {r.status_code} and full output {vars(r)}')
-                )
+                    (
+                        f"Query to {url} with {params} params and {headers}"
+                        f" headers fails unexpectedly with status"
+                        f" code {request_obj.status_code} and full output {vars(request_obj)}"
+                    )
+                ) from invalid_json
 
-        return r, output
+        return request_obj, output
 
     def merge_search_and_metadata_dicts(
             self,
@@ -455,7 +435,7 @@ class BaseAPICollector(BaseCollector):
             on: Optional[Union[Hashable, Sequence[Hashable]]] = None,
             left_on: Optional[Union[Hashable, Sequence[Hashable]]] = None,
             right_on: Optional[Union[Hashable, Sequence[Hashable]]] = None,
-            **kwargs: Any
+            **kwargs: Any,
     ) -> QueryResultDict:
         """Merges together search and metadata DataFrames by 'on' key.
 
@@ -501,35 +481,23 @@ class BaseAPICollector(BaseCollector):
 
         if not isinstance(search_dict, dict):
             raise TypeError(
-                ('search_dict must be of type dict, not'
-                 f'\'{type(search_dict)}\'.')
+                f"search_dict must be of type dict, not '{type(search_dict)}'."
             )
         if not isinstance(metadata_dict, dict):
             raise TypeError(
-                ('metadata_dict must be of type dict, not'
-                 f' \'{type(metadata_dict)}\'.')
+                f"metadata_dict must be of type dict, not '{type(metadata_dict)}'."
             )
 
-        if not all(
-                [
-                    isinstance(df, pd.DataFrame) or df is None
-                    for df in search_dict.values()
-                ]
-        ):
+        if not validating.is_all_type(search_dict.values(), (pd.DataFrame, None)):
             raise ValueError(
-                'All search_dict entries must be of type pandas.DataFrame.'
+                "All search_dict entries must be of type pandas.DataFrame."
             )
-        if not all(
-                [
-                    isinstance(df, pd.DataFrame) or df is None
-                    for df in metadata_dict.values()
-                ]
-        ):
+        if not validating.is_all_type(metadata_dict.values(), (pd.DataFrame, None)):
             raise ValueError(
-                'All metadata_dict entries must be of type pandas.DataFrame.'
+                "All metadata_dict entries must be of type pandas.DataFrame."
             )
 
-        df_dict = dict()
+        df_dict = {}
         for query_key in search_dict.keys():
             search_df = search_dict[query_key]
 
@@ -542,8 +510,8 @@ class BaseAPICollector(BaseCollector):
                     on=on,
                     left_on=left_on,
                     right_on=right_on,
-                    how='outer',
-                    suffixes=('_search', '_metadata')
+                    how="outer",
+                    suffixes=("_search", "_metadata"),
                 )
             # If no metadata, just add the search_df
             else:
@@ -557,51 +525,47 @@ class BaseAPICollector(BaseCollector):
 class TermQueryMixin:
     """Mixin for API collection classes that utilize search terms.
 
-    Attributes
-    ----------
-    search_terms : list of str
-
     See Also
     --------
     BaseTermCollector
     BaseTermTypeCollector
     """
 
+    _search_terms: Collection[SearchTerm]
+
     @property
     def search_terms(self) -> Collection[SearchTerm]:
+        """Property method for search terms."""
         return self._search_terms
 
     @staticmethod
-    def validate_search_term(f: Callable[P, T]) -> Callable[P, T]:
+    def validate_search_term(func: Callable[P, T]) -> Callable[P, T]:
         """Decorator for validating search term object type."""
+
         def inner(self, *args, **kwargs):
-            args, kwargs = utils.validate_from_arguments(
-                base=self,
-                func=f,
-                args=args,
-                kwargs=kwargs,
-                param='search_term'
+            args, kwargs = validating.validate_from_arguments(
+                base=self, func=func, args=args, kwargs=kwargs, param="search_term"
             )
-            return f(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
+
         return inner
 
     @search_terms.setter
     def search_terms(self, search_terms: Collection[SearchTerm]) -> None:
         if isinstance(search_terms, str):
             search_terms = [search_terms]
-        if not all([isinstance(term, str) for term in search_terms]):
-            raise TypeError('All search terms must be of type str.')
+        if not validating.is_all_type(search_terms, str):
+            raise TypeError("All search terms must be of type str.")
         self._search_terms = search_terms
 
-    def _validate(self, search_term: SearchTerm) -> SearchTerm:
+    @staticmethod
+    def _validate(search_term: SearchTerm) -> SearchTerm:
         """Validate type of search_term."""
         if not isinstance(search_term, str):
             raise TypeError(
-                'search_term must be of type str, not'
-                f' \'{type(search_term)}\'.'
+                "search_term must be of type str, not" f" '{type(search_term)}'."
             )
-        else:
-            return search_term
+        return search_term
 
 
 class BaseTermCollector(TermQueryMixin, BaseAPICollector):
@@ -636,19 +600,13 @@ class BaseTermCollector(TermQueryMixin, BaseAPICollector):
             self,
             repository_name: str,
             search_terms: Optional[Collection[SearchTerm]] = None,
-            credentials: Optional[str] = None
+            credentials: Optional[str] = None,
     ) -> None:
-        super().__init__(
-            repository_name=repository_name,
-            credentials=credentials
-        )
+        super().__init__(repository_name=repository_name, credentials=credentials)
 
         self.search_terms = search_terms
 
-    def get_all_search_outputs(
-            self,
-            **kwargs: Any
-    ) -> TermResultDict:
+    def get_all_search_outputs(self, **kwargs: Any) -> TermResultDict:
         """Queries the API for each search term.
 
         Parameters
@@ -665,26 +623,26 @@ class BaseTermCollector(TermQueryMixin, BaseAPICollector):
         """
 
         # Set method variables if different than default values
-        search_terms = kwargs.get('search_terms', self.search_terms)
+        search_terms = kwargs.get("search_terms", self.search_terms)
 
-        search_dict = dict()
+        search_dict = {}
 
         for search_term in search_terms:
-            self.status_queue.put(f'Searching {search_term}.')
+            self.status_queue.put(f"Searching {search_term}.")
             search_dict[search_term] = self.get_individual_search_output(
                 search_term=search_term
             )
-            self.status_queue.put('Search completed.')
+            self.status_queue.put("Search completed.")
 
         return search_dict
 
     @abstractmethod
     def get_individual_search_output(self, search_term: SearchTerm) -> None:
+        """Abstract placeholder method for search output."""
         pass
 
     def get_all_metadata(
-            self,
-            object_path_dict: dict[SearchTerm, pd.DataFrame]
+            self, object_path_dict: dict[SearchTerm, pd.DataFrame]
     ) -> TermResultDict:
         """Retrieves all metadata related to the provided DataFrames.
 
@@ -698,38 +656,30 @@ class BaseTermCollector(TermQueryMixin, BaseAPICollector):
         metadata_dict : dict of {SearchTerm: pd.DataFrame}
         """
 
-        metadata_dict = dict()
+        metadata_dict = {}
 
         for query, object_paths in object_path_dict.items():
-            self.status_queue.put(f'Querying {query} metadata.')
-            metadata_dict[query] = self.get_query_metadata(
-                object_paths=object_paths
-            )
-            self.status_queue.put('Metadata query complete.')
+            self.status_queue.put(f"Querying {query} metadata.")
+            metadata_dict[query] = self.get_query_metadata(object_paths=object_paths)
+            self.status_queue.put("Metadata query complete.")
 
         return metadata_dict
 
-    def get_query_metadata(
-            self,
-            object_paths: Iterable[Any]
-    ) -> NoReturn:
-        raise NotImplementedError(
-            'Subclass must override "get_query_metadata()".'
-        )
+    def get_query_metadata(self, object_paths: Iterable[Any]) -> NoReturn:
+        """Placeholder method for query metadata retrieval."""
+        raise NotImplementedError('Subclass must override "get_query_metadata()".')
 
 
 class TypeQueryMixin:
     """Mixin for API collection classes that utilize search types.
-
-    Attributes
-    ----------
-    search_types : list of str
 
     See Also
     --------
     BaseTermTypeCollector
     BaseTypeCollector
     """
+
+    _search_types: tuple[SearchType]
 
     @property
     def search_types(self) -> tuple[SearchType]:
@@ -740,52 +690,36 @@ class TypeQueryMixin:
     def search_types(self, search_types: tuple[SearchType]) -> None:
         """Set search_types if all are allowed by current Collector."""
         if not all(
-                [
-                    search_type in self.search_type_options
-                    for search_type in search_types
-                ]
+                search_type in self.search_type_options for search_type in search_types
         ):
-            raise ValueError(
-                f'Only {self.search_type_options} search types are valid.'
-            )
+            raise ValueError(f"Only {self.search_type_options} search types are valid.")
         self._search_types = search_types
 
     @staticmethod
-    def validate_search_type(f: Callable[P, T]) -> Callable[P, T]:
+    def validate_search_type(func: Callable[P, T]) -> Callable[P, T]:
         """Decorator for validating search term object type."""
+
         def inner(self, *args, **kwargs):
-            args, kwargs = utils.validate_from_arguments(
-                base=self,
-                func=f,
-                args=args,
-                kwargs=kwargs,
-                param='search_type'
+            args, kwargs = validating.validate_from_arguments(
+                base=self, func=func, args=args, kwargs=kwargs, param="search_type"
             )
-            return f(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
+
         return inner
 
     def _validate(self, search_type: SearchType) -> SearchType:
         if search_type not in self.search_type_options:
-            raise ValueError(
-                f'Can only search by {self.search_type_options}.'
-            )
-        else:
-            return search_type
+            raise ValueError(f"Can only search by {self.search_type_options}.")
+        return search_type
 
     @classmethod
     @abstractmethod
     def search_type_options(cls) -> NoReturn:
         """Return the valid search type options for a given repository."""
-        raise NotImplementedError(
-            'Subclass must override "search_type_options()".'
-        )
+        raise NotImplementedError('Subclass must override "search_type_options()".')
 
 
-class BaseTermTypeCollector(
-    TermQueryMixin,
-    TypeQueryMixin,
-    BaseAPICollector
-):
+class BaseTermTypeCollector(TermQueryMixin, TypeQueryMixin, BaseAPICollector):
     """Base for API collection classes that utilize search terms and types.
 
     This base inherits from BaseAPICollector, which provides credential
@@ -823,12 +757,9 @@ class BaseTermTypeCollector(
             repository_name: str,
             search_terms: Optional[Collection[SearchTerm]] = None,
             search_types: Optional[Collection[SearchType]] = None,
-            credentials: Optional[str] = None
+            credentials: Optional[str] = None,
     ) -> None:
-        super().__init__(
-            repository_name=repository_name,
-            credentials=credentials
-        )
+        super().__init__(repository_name=repository_name, credentials=credentials)
 
         self.search_terms = search_terms
         self.search_types = search_types
@@ -836,6 +767,7 @@ class BaseTermTypeCollector(
     @staticmethod
     def validate_term_and_type(f: Callable[P, T]) -> Callable[P, T]:
         """Helper for wrapping function in both term/type validators."""
+
         @BaseTermTypeCollector.validate_search_term
         @BaseTermTypeCollector.validate_search_type
         def inner(self, *args, **kwargs):
@@ -843,10 +775,7 @@ class BaseTermTypeCollector(
 
         return inner
 
-    def get_all_search_outputs(
-            self,
-            **kwargs: Any
-    ) -> TermTypeResultDict:
+    def get_all_search_outputs(self, **kwargs: Any) -> TermTypeResultDict:
         """Queries the API for each search term/type combination.
 
         Parameters
@@ -864,35 +793,28 @@ class BaseTermTypeCollector(
         """
 
         # Set method variables if different than default values.
-        search_terms = kwargs.get('search_terms', self.search_terms)
-        search_types = kwargs.get('search_types', self.search_types)
+        search_terms = kwargs.get("search_terms", self.search_terms)
+        search_types = kwargs.get("search_types", self.search_types)
 
-        search_dict = dict()
+        search_dict = {}
 
-        for search_term, search_type in itertools.product(
-                search_terms, search_types
-        ):
-            self.status_queue.put(f'Searching {search_term} {search_type}.')
-            search_dict[(search_term, search_type)] = \
-                self.get_individual_search_output(
-                    search_term=search_term,
-                    search_type=search_type
+        for search_term, search_type in itertools.product(search_terms, search_types):
+            self.status_queue.put(f"Searching {search_term} {search_type}.")
+            search_dict[(search_term, search_type)] = self.get_individual_search_output(
+                search_term=search_term, search_type=search_type
             )
-            self.status_queue.put('Search completed.')
+            self.status_queue.put("Search completed.")
 
         return search_dict
 
     @abstractmethod
     def get_individual_search_output(
-            self,
-            search_term: SearchTerm,
-            search_type: SearchType
+            self, search_term: SearchTerm, search_type: SearchType
     ) -> None:
         pass
 
     def get_all_metadata(
-            self,
-            object_path_dict: dict[SearchTuple, Collection[str]]
+            self, object_path_dict: dict[SearchTuple, Collection[str]]
     ) -> TermTypeResultDict:
         """Retrieves metadata for records contained in input DataFrames.
 
@@ -906,25 +828,20 @@ class BaseTermTypeCollector(
         metadata_dict : dict of {(SearchTerm, SearchType): pd.DataFrame}
         """
 
-        metadata_dict = dict()
+        metadata_dict = {}
 
         for query, object_paths in object_path_dict.items():
             search_term, search_type = query
-            self.status_queue.put(
-                f'Querying {search_term} {search_type} metadata.'
-            )
+            self.status_queue.put(f"Querying {search_term} {search_type} metadata.")
 
-            metadata_dict[query] = self.get_query_metadata(
-                object_paths=object_paths
-            )
-            self.status_queue.put('Metadata query complete.')
+            metadata_dict[query] = self.get_query_metadata(object_paths=object_paths)
+            self.status_queue.put("Metadata query complete.")
 
         return metadata_dict
 
     def get_query_metadata(self, object_paths: Collection[str]) -> NoReturn:
-        raise NotImplementedError(
-            'Subclass must override "get_query_metadata()".'
-        )
+        """Placeholder method for query metadata retrieval."""
+        raise NotImplementedError('Subclass must override "get_query_metadata()".')
 
 
 class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
@@ -959,32 +876,25 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
             self,
             repository_name: str,
             search_types: Optional[Collection[SearchType]] = None,
-            credentials: Optional[str] = None
+            credentials: Optional[str] = None,
     ) -> None:
-        super().__init__(
-            repository_name=repository_name,
-            credentials=credentials
-        )
+        super().__init__(repository_name=repository_name, credentials=credentials)
 
         self.search_types = search_types
 
     @property
     def search_types(self) -> Collection[SearchType]:
+        """Getter for search_types."""
         return self._search_types
 
     @search_types.setter
-    def search_types(self, search_types: Collection[SearchType]) -> None:
+    def search_types(self, search_types: tuple[SearchType]) -> None:
         if not search_types:
             return
         if not all(
-            [
-                search_type in self.search_type_options
-                for search_type in search_types
-            ]
+                search_type in self.search_type_options for search_type in search_types
         ):
-            raise ValueError(
-                f'Only {self.search_type_options} search types are valid.'
-            )
+            raise ValueError(f"Only {self.search_type_options} search types are valid.")
         self._search_types = search_types
 
     @classmethod
@@ -993,10 +903,7 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
         """Return the valid search type options for a given repository."""
         pass
 
-    def get_all_search_outputs(
-            self,
-            **kwargs: Any
-    ) -> TermResultDict:
+    def get_all_search_outputs(self, **kwargs: Any) -> TermResultDict:
         """Queries the API for each search type.
 
         Parameters
@@ -1012,16 +919,16 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
             search_output_dict[{search_type}] = df.
         """
 
-        search_types = kwargs.get('search_types', self.search_types)
+        search_types = kwargs.get("search_types", self.search_types)
 
-        search_dict = dict()
+        search_dict = {}
 
         for search_type in search_types:
-            self.status_queue.put(f'Searching {search_type}.')
+            self.status_queue.put(f"Searching {search_type}.")
             search_dict[search_type] = self.get_individual_search_output(
                 search_type=search_type
             )
-            self.status_queue.put(f'{search_type} search completed.')
+            self.status_queue.put(f"{search_type} search completed.")
 
         return search_dict
 
@@ -1034,6 +941,4 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
             object_paths: Collection[str],
             search_type: SearchType,
     ) -> NoReturn:
-        raise NotImplementedError(
-            'Subclass must override "get_query_metadata()".'
-        )
+        raise NotImplementedError('Subclass must override "get_query_metadata()".')

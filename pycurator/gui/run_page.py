@@ -1,6 +1,10 @@
+"""
+Module for creating UI Run Page.
+"""
+
 import sys
 import tkinter as tk
-import tkinter.ttk as ttk
+from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from typing import Any
 
@@ -34,35 +38,30 @@ class RunPage(ViewPage):
         self.runtime_output = tk.scrolledtext.ScrolledText(
             master=self.output_frame,
         )
-        self.runtime_output.config(state='disabled')
+        self.runtime_output.config(state="disabled")
         self.progress_bar = ttk.Progressbar(master=self.output_frame)
 
         self.progress_text_frame = ttk.Frame(master=self)
         self.progress_label_placeholder = ttk.Label(
-            master=self.progress_text_frame,
-            text='Querying:'
+            master=self.progress_text_frame, text="Querying:"
         )
-        self.progress_determinate_num = ttk.Label(
-            master=self.progress_text_frame
-        )
+        self.progress_determinate_num = ttk.Label(master=self.progress_text_frame)
         self.progress_label = ttk.Label(master=self.progress_text_frame)
 
         self.button_frame = ttk.Frame(master=self)
         self.back_button = ttk.Button(
             master=self.button_frame,
-            text='Back',
+            text="Back",
             command=lambda: self.controller.show(SelectionPage),
-            state='disabled'
+            state="disabled",
         )
         self.stop_button = ttk.Button(
             master=self.button_frame,
-            text='Stop',
-            command=lambda: self.controller.request_execution()
+            text="Stop",
+            command=lambda: self.controller.request_execution(),
         )
         self.exit_button = ttk.Button(
-            master=self.button_frame,
-            text='Exit',
-            command=sys.exit
+            master=self.button_frame, text="Exit", command=sys.exit
         )
 
     @ViewPage.no_overwrite
@@ -98,26 +97,21 @@ class RunPage(ViewPage):
         """
 
         # Arrange elements
-        self.runtime_output.pack(side='top', expand=True, fill='both')
+        self.runtime_output.pack(side="top", expand=True, fill="both")
 
-        self.progress_label_placeholder.pack(side='left', anchor='w')
-        self.progress_determinate_num.pack(side='left', anchor='w')
-        self.progress_label.pack(side='left', fill='x')
-        self.progress_bar.pack(
-            side='bottom',
-            anchor='s',
-            fill='x',
-            expand=True
-        )
+        self.progress_label_placeholder.pack(side="left", anchor="w")
+        self.progress_determinate_num.pack(side="left", anchor="w")
+        self.progress_label.pack(side="left", fill="x")
+        self.progress_bar.pack(side="bottom", anchor="s", fill="x", expand=True)
 
-        self.back_button.pack(side='left', fill='both')
-        self.stop_button.pack(side='left', fill='both')
+        self.back_button.pack(side="left", fill="both")
+        self.stop_button.pack(side="left", fill="both")
 
-        self.button_frame.pack(side='bottom', expand=True)
-        self.progress_text_frame.pack(side='bottom', fill='x')
-        self.output_frame.pack(side='bottom')
+        self.button_frame.pack(side="bottom", expand=True)
+        self.progress_text_frame.pack(side="bottom", fill="x")
+        self.output_frame.pack(side="bottom")
 
-        self.grid(row=0, column=0, sticky='nsew')
+        self.grid(row=0, column=0, sticky="nsew")
         self.tkraise()
 
         self.controller.run_collector()
@@ -125,9 +119,9 @@ class RunPage(ViewPage):
     def reset_frame(self) -> None:
         """Modify frame widgets for reuse."""
         # Deactivate back button
-        self.back_button.config(state='disabled')
+        self.back_button.config(state="disabled")
 
         # Replace Exit button with Stop button
         self.exit_button.pack_forget()
-        self.stop_button.pack(side='left')
+        self.stop_button.pack(side="left")
         self.controller.run_collector()

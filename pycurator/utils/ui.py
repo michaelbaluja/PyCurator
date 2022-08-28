@@ -1,21 +1,24 @@
+"""
+Module for utility functions for UI.
+"""
+
 from __future__ import annotations
 
 import tkinter as tk
-import tkinter.ttk as ttk
+from tkinter import ttk
 from typing import ParamSpec, Type, TypeVar
-
 
 from pycurator import gui
 
-P = ParamSpec('P')
-T = TypeVar('T')
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 def widget_label_frame(
         frame_master: tk.Misc,
         label_text: float | str,
         widget_cls: Type[tk.Widget],
-        **widget_kwargs: P.kwargs
+        **widget_kwargs: P.kwargs,
 ) -> ttk.Frame:
     """Create frame containing vertically-aligned widget and label.
 
@@ -44,10 +47,7 @@ def widget_label_frame(
 
     _frame = ttk.Frame(master=frame_master)
     _label = ttk.Label(master=_frame, text=label_text)
-    _widget = widget_cls(
-        master=_frame,
-        **widget_kwargs
-    )
+    _widget = widget_cls(master=_frame, **widget_kwargs)
 
     _label.grid(row=0, column=0)
     _widget.grid(row=0, column=1)
@@ -57,7 +57,7 @@ def widget_label_frame(
 def select_from_files(
         root: gui.ViewPage,
         selection_type: str,
-        filetypes: list[tuple[str, str]] = (('All File Types', '*.*'),)
+        filetypes: list[tuple[str, str]] = (("All File Types", "*.*"),),
 ) -> None:
     """Allows user to select local file/directory.
 
@@ -103,21 +103,16 @@ def select_from_files(
 
     from tkinter import filedialog as fd
 
-    if 'dir' in selection_type:
-        selection = fd.askdirectory(
-            title='Choose Directory',
-            initialdir='.'
-        )
+    if "dir" in selection_type:
+        selection = fd.askdirectory(title="Choose Directory", initialdir=".")
     else:
         selection = fd.askopenfilename(
-            title='Choose File',
-            initialdir='.',
-            filetypes=filetypes
+            title="Choose File", initialdir=".", filetypes=filetypes
         )
 
     try:
         root.controller.add_run_parameter(selection_type, selection)
-    except AttributeError:
+    except AttributeError as no_run_param_method:
         raise NotImplementedError(
-            '\'root\' must include add_run_parameter() method.'
-        )
+            "'root' must include add_run_parameter() method."
+        ) from no_run_param_method

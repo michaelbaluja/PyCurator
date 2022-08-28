@@ -1,6 +1,6 @@
 import pytest
 
-from pycurator import collectors
+from pycurator.collectors import base
 
 
 @pytest.fixture
@@ -23,12 +23,12 @@ def sample_kwargs(metadata_params):
 
 @pytest.fixture
 def api_collector():
-    return collectors.BaseAPICollector('reqres')
+    return base.BaseAPICollector('reqres')
 
 
 @pytest.fixture
 def type_collector():
-    class TestTypeCollector(collectors.BaseTypeCollector):
+    class TestTypeCollector(base.BaseTypeCollector):
         def __init__(self):
             super().__init__(repository_name='base_term_type')
             self.base_url = 'https://reqres.in/api'

@@ -1,17 +1,14 @@
+"""
+Module for collecting data from Figshare repository.
+"""
+
 from collections.abc import Collection
 from typing import Optional, Union
 
 import pandas as pd
 
-from ..._typing import (
-    SearchTerm,
-    SearchType,
-    TermTypeResultDict
-)
-from ..base import (
-    BaseCollector,
-    BaseTermTypeCollector
-)
+from ..base import BaseCollector, BaseTermTypeCollector
+from ..._typing import SearchTerm, SearchType, TermTypeResultDict
 from ...utils.validating import validate_metadata_parameters
 
 
@@ -33,25 +30,23 @@ class FigshareCollector(BaseTermTypeCollector):
     """
 
     def __init__(
-        self,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None
+            self,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
         super().__init__(
-            repository_name='figshare',
+            repository_name="figshare",
             search_terms=search_terms,
             search_types=search_types,
-            credentials=None
+            credentials=None,
         )
-        self.base_url = 'https://api.figshare.com/v2'
-        self.merge_on = 'id'
-        self.headers = dict()
+        self.base_url = "https://api.figshare.com/v2"
+        self.merge_on = "id"
+        self.headers = {}
 
         if credentials:
-            self.credentials = self.load_credentials(
-                credential_filepath=credentials
-            )
+            self.credentials = self.load_credentials(credential_filepath=credentials)
 
     @staticmethod
     def accepts_user_credentials() -> bool:
@@ -60,7 +55,7 @@ class FigshareCollector(BaseTermTypeCollector):
     @classmethod
     @property
     def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ('articles', 'collections', 'projects')
+        return ("articles", "collections", "projects")
 
     def load_credentials(self, credential_filepath: str) -> Union[str, None]:
         """Load the credentials given filepath or token.
@@ -76,10 +71,8 @@ class FigshareCollector(BaseTermTypeCollector):
         credentials : str or None
         """
 
-        credentials = super().load_credentials(
-            credential_filepath=credential_filepath
-        )
-        self.headers['Authorization'] = f'token {credentials}'
+        credentials = super().load_credentials(credential_filepath=credential_filepath)
+        self.headers["Authorization"] = f"token {credentials}"
         return credentials
 
     @BaseCollector._pb_indeterminate
@@ -111,18 +104,18 @@ class FigshareCollector(BaseTermTypeCollector):
         start_page = 1
         page_size = 1000
         search_year = 1950
-        search_date = f'{search_year}-01-01'
-        search_url = f'{self.base_url}/{search_type}'
+        search_date = f"{search_year}-01-01"
+        search_url = f"{self.base_url}/{search_type}"
 
         search_df = pd.DataFrame()
         output_df = None
 
         search_params = {
-            'search_for': search_term,
-            'published_since': search_date,
-            'order_direction': 'asc',
-            'page': start_page,
-            'page_size': page_size
+            "search_for": search_term,
+            "published_since": search_date,
+            "order_direction": "asc",
+            "page": start_page,
+            "page_size": page_size,
         }
 
         response, output = self.get_request_output_and_update_query_ref(
@@ -130,45 +123,44 @@ class FigshareCollector(BaseTermTypeCollector):
             params=search_params,
             headers=self.headers,
             published_since=search_date,
-            page=start_page
+            page=start_page,
         )
 
         while response.status_code == 200:
             while response.status_code == 200 and output:
                 output_df = pd.DataFrame(output)
-                output_df['search_page'] = search_params['page']
-                output_df['publish_query'] = search_params['published_since']
+                output_df["search_page"] = search_params["page"]
+                output_df["publish_query"] = search_params["published_since"]
 
-                search_df = pd.concat(
-                    [search_df, output_df]
-                ).reset_index(drop=True)
+                search_df = pd.concat([search_df, output_df]).reset_index(drop=True)
 
-                search_params['page'] += 1
-                response, output = \
-                    self.get_request_output_and_update_query_ref(
-                        url=search_url,
-                        params=search_params,
-                        headers=self.headers,
-                        published_since=search_params['published_since'],
-                        page=search_params['page']
-                    )
+                search_params["page"] += 1
+                response, output = self.get_request_output_and_update_query_ref(
+                    url=search_url,
+                    params=search_params,
+                    headers=self.headers,
+                    published_since=search_params["published_since"],
+                    page=search_params["page"],
+                )
 
-            if (output_df is not None
-                    and output_df.shape[0] < search_params['page_size']):
+            if (
+                    output_df is not None
+                    and output_df.shape[0] < search_params["page_size"]
+            ):
                 return search_df
 
             # Get new date to search
-            search_date = search_df['published_date'].values[-1].split('T')[0]
-            search_params['published_since'] = search_date
-            search_params['page'] = start_page
+            search_date = search_df["published_date"].values[-1].split("T")[0]
+            search_params["published_since"] = search_date
+            search_params["page"] = start_page
 
             # Conduct search
             response, output = self.get_request_output_and_update_query_ref(
                 url=search_url,
                 params=search_params,
                 headers=self.headers,
-                published_since=search_params['published_since'],
-                page=search_params['page']
+                published_since=search_params["published_since"],
+                page=search_params["page"],
             )
 
         return search_df
@@ -197,8 +189,7 @@ class FigshareCollector(BaseTermTypeCollector):
 
         for object_path in self._pb_determinate(object_paths):
             _, json_data = self.get_request_output(
-                url=object_path,
-                headers=self.headers
+                url=object_path, headers=self.headers
             )
 
             metadata_df = pd.concat(
@@ -207,10 +198,7 @@ class FigshareCollector(BaseTermTypeCollector):
 
         return metadata_df
 
-    def get_all_metadata(
-            self,
-            search_dict: TermTypeResultDict
-    ) -> TermTypeResultDict:
+    def get_all_metadata(self, search_dict: TermTypeResultDict) -> TermTypeResultDict:
         """Retrieves metadata for records contained in input DataFrames.
 
         Parameters
@@ -223,21 +211,19 @@ class FigshareCollector(BaseTermTypeCollector):
         metadata_dict : dict of tuple of str to dataframe
         """
 
-        object_path_dict = dict()
+        object_path_dict = {}
 
-        for query, df in search_dict.items():
-            if df is not None:
+        for query, query_df in search_dict.items():
+            if query_df is not None:
                 _, search_type = query
-                object_ids = df.id.convert_dtypes().tolist()
+                object_ids = query_df.id.convert_dtypes().tolist()
                 object_paths = [
-                    f'{self.base_url}/{search_type}/{object_id}'
+                    f"{self.base_url}/{search_type}/{object_id}"
                     for object_id in object_ids
                 ]
 
                 object_path_dict[query] = object_paths
 
-        metadata_dict = super().get_all_metadata(
-            object_path_dict=object_path_dict
-        )
+        metadata_dict = super().get_all_metadata(object_path_dict=object_path_dict)
 
         return metadata_dict

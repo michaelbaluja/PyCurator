@@ -1,19 +1,20 @@
+"""
+Module for collecting data from Papers With Code repository.
+"""
+
 from collections.abc import Collection
 from typing import Any, Optional, Union
 
 import pandas as pd
 
+from ..base import BaseCollector, BaseTermTypeCollector
 from ..._typing import (
     SearchTerm,
     SearchType,
     SearchQuery,
     TermResultDict,
     TermTypeResultDict,
-    TypeResultDict
-)
-from ..base import (
-    BaseCollector,
-    BaseTermTypeCollector
+    TypeResultDict,
 )
 from ...utils.validating import validate_metadata_parameters
 
@@ -36,18 +37,18 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
     """
 
     def __init__(
-        self,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None
+            self,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
         super().__init__(
-            repository_name='paperswithcode',
+            repository_name="paperswithcode",
             search_terms=search_terms,
             search_types=search_types,
-            credentials=credentials
+            credentials=credentials,
         )
-        self.base_url = 'https://paperswithcode.com/api/v1'
+        self.base_url = "https://paperswithcode.com/api/v1"
 
     @staticmethod
     def accepts_user_credentials() -> bool:
@@ -56,14 +57,14 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
     @classmethod
     @property
     def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ('conferences', 'datasets', 'evaluations', 'papers', 'tasks')
+        return ("conferences", "datasets", "evaluations", "papers", "tasks")
 
     @BaseCollector._pb_indeterminate
     def _conduct_search_over_pages(
-        self,
-        search_url: str,
-        search_params: Optional[Any] = None,
-        print_progress: bool = False
+            self,
+            search_url: str,
+            search_params: Optional[Any] = None,
+            print_progress: bool = False,
     ) -> Union[pd.DataFrame, None]:
         """Query paginated results from the Papers With Code API.
 
@@ -88,7 +89,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         q : str, optional
             Term to query for.
         page : int, optional
-            Page number to request.
+            Number for page to request.
         items_per_page : int, optional
             Number of results to return.
         ordering : str, optional
@@ -101,30 +102,24 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         search_df = pd.DataFrame()
 
         if print_progress:
-            self._update_query_ref(page=search_params['page'])
-        _, output = self.get_request_output(
-            url=search_url,
-            params=search_params
-        )
+            self._update_query_ref(page=search_params["page"])
+        _, output = self.get_request_output(url=search_url, params=search_params)
 
-        while output.get('results'):
-            output = output['results']
+        while output.get("results"):
+            output = output["results"]
 
             output_df = pd.DataFrame(output)
-            output_df['page'] = search_params['page']
+            output_df["page"] = search_params["page"]
 
-            search_df = pd.concat(
-                [search_df, output_df]
-            ).reset_index(drop=True)
+            search_df = pd.concat([search_df, output_df]).reset_index(drop=True)
 
-            search_params['page'] += 1
+            search_params["page"] += 1
 
             if print_progress:
-                self._update_query_ref(page=search_params['page'])
+                self._update_query_ref(page=search_params["page"])
 
             response, output = self.get_request_output(
-                url=search_url,
-                params=search_params
+                url=search_url, params=search_params
             )
 
             # Ensure we've received results if they exist
@@ -134,26 +129,21 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
                     f'Search error "{response.status_code}" on '
                     f'page {search_params["page"]}'
                 )
-                search_params['page'] += 1
+                search_params["page"] += 1
 
                 if print_progress:
-                    self._update_query_ref(page=search_params['page'])
+                    self._update_query_ref(page=search_params["page"])
 
                 response, output = self.get_request_output(
-                    url=search_url,
-                    params=search_params
+                    url=search_url, params=search_params
                 )
 
         if not search_df.empty:
             return search_df
-        else:
-            return None
 
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
-            self,
-            search_term: SearchTerm,
-            search_type: SearchType
+            self, search_term: SearchTerm, search_type: SearchType
     ) -> pd.DataFrame:
         """Queries Papers With Code API for the specified search term and type.
 
@@ -176,41 +166,31 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
             Invalid search_type provided.
         """
 
-        search_url = f'{self.base_url}/{search_type}'
+        search_url = f"{self.base_url}/{search_type}"
 
-        search_params = {
-            'q': search_term,
-            'page': 1,
-            'items_per_page': 500
-        }
+        search_params = {"q": search_term, "page": 1, "items_per_page": 500}
 
         return self._conduct_search_over_pages(
-            search_url=search_url,
-            search_params=search_params,
-            print_progress=True
+            search_url=search_url, search_params=search_params, print_progress=True
         )
 
     @BaseTermTypeCollector.validate_search_type
-    def _get_metadata_types(
-            self,
-            search_type: SearchType
-    ) -> Collection[SearchType]:
+    def _get_metadata_types(self, search_type: SearchType) -> Collection[SearchType]:
+        if search_type == "conferences":
+            metadata_types = ["proceedings"]
+        elif search_type == "datasets":
+            metadata_types = ["evaluations"]
+        elif search_type == "evaluations":
+            metadata_types = ["metrics", "results"]
+        elif search_type == "papers":
+            metadata_types = ["datasets", "methods", "repositories", "results", "tasks"]
+        elif search_type == "tasks":
+            metadata_types = ["children", "evaluations", "papers", "parents"]
 
-        if search_type == 'conferences':
-            return ['proceedings']
-        elif search_type == 'datasets':
-            return ['evaluations']
-        elif search_type == 'evaluations':
-            return ['metrics', 'results']
-        elif search_type == 'papers':
-            return ['datasets', 'methods', 'repositories', 'results', 'tasks']
-        elif search_type == 'tasks':
-            return ['children', 'evaluations', 'papers', 'parents']
+        return metadata_types
 
     def get_query_metadata(
-            self,
-            object_paths: Collection[str],
-            **kwargs: Any
+            self, object_paths: Collection[str], **kwargs: Any
     ) -> TypeResultDict:
         """Retrieves metadata for the object_paths objects.
 
@@ -231,38 +211,36 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         """
 
         try:
-            search_type = kwargs['search_type']
-        except KeyError:
+            search_type = kwargs["search_type"]
+        except KeyError as no_search_type:
             raise AttributeError(
-                'search_type must be passed to get_query_metadata.'
-            )
+                "search_type must be passed to get_query_metadata."
+            ) from no_search_type
         object_paths = validate_metadata_parameters(object_paths)
 
         metadata_types = self._get_metadata_types(search_type)
-        metadata_dict = dict()
+        metadata_dict = {}
 
         for metadata_type in metadata_types:
             search_df = pd.DataFrame()
-            self.status_queue.put(f'Querying {metadata_type}.')
+            self.status_queue.put(f"Querying {metadata_type}.")
 
             for object_path in self._pb_determinate(object_paths):
-                search_url = f'{self.base_url}/{search_type}/{object_path}/' \
-                             f'{metadata_type}'
-                search_params = {'page': 1}
+                search_url = (
+                    f"{self.base_url}/{search_type}/{object_path}/" f"{metadata_type}"
+                )
+                search_params = {"page": 1}
 
                 # Conduct the search and add supplementary info to DataFrame
                 object_df = self._conduct_search_over_pages(
-                    search_url=search_url,
-                    search_params=search_params
+                    search_url=search_url, search_params=search_params
                 )
 
                 if object_df is not None:
-                    object_df['id'] = object_path
-                    object_df['page'] = search_params['page']
+                    object_df["id"] = object_path
+                    object_df["page"] = search_params["page"]
 
-                search_df = pd.concat(
-                    [search_df, object_df]
-                ).reset_index(drop=True)
+                search_df = pd.concat([search_df, object_df]).reset_index(drop=True)
 
             if not search_df.empty:
                 metadata_dict[metadata_type] = search_df
@@ -270,8 +248,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         return metadata_dict
 
     def get_all_metadata(
-            self,
-            search_dict: TermTypeResultDict
+            self, search_dict: TermTypeResultDict
     ) -> dict[SearchQuery, TermResultDict]:
         """Retrieves metadata for records contained in input DataFrames.
 
@@ -285,36 +262,27 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         metadata_dict : dict
         """
 
-        metadata_dict = dict()
+        metadata_dict = {}
 
-        for query, df in search_dict.items():
-            if df is not None:
+        for query, query_df in search_dict.items():
+            if query_df is not None:
                 search_term, search_type = query
-                self.status_queue.put(
-                    f'Querying {search_term} {search_type} metadata.'
-                )
+                self.status_queue.put(f"Querying {search_term} {search_type} metadata.")
 
-                object_paths = df.id.values
+                object_paths = query_df.id.values
 
                 metadata_dict[query] = self.get_query_metadata(
-                    object_paths=object_paths,
-                    search_type=search_type
+                    object_paths=object_paths, search_type=search_type
                 )
 
                 self.status_queue.put(
-                    f'{search_term} {search_type} metadata query complete.'
+                    f"{search_term} {search_type} metadata query complete."
                 )
 
         return metadata_dict
 
     def merge_search_and_metadata_dicts(
-        self,
-        search_dict,
-        metadata_dict,
-        on=None,
-        left_on=None,
-        right_on=None,
-        **kwargs
+            self, search_dict, metadata_dict, on=None, left_on=None, right_on=None, **kwargs
     ):
         """Merges together search and metadata DataFrames by 'on' value.
 
@@ -342,22 +310,22 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         pandas.merge
         """
 
-        merged_dict = dict()
+        merged_dict = {}
 
         for query_key, type_df_dict in metadata_dict.items():
             search_term, search_type = query_key
             search_df = search_dict[query_key]
 
             for metadata_type, metadata_df in type_df_dict.items():
-                _search_type = f'{search_type}_{metadata_type}'
+                _search_type = f"{search_type}_{metadata_type}"
                 df_all = pd.merge(
                     left=search_df,
                     right=metadata_df,
-                    on='id',
+                    on="id",
                     left_on=left_on,
                     right_on=right_on,
-                    how='outer',
-                    suffixes=('_search', '_metadata')
+                    how="outer",
+                    suffixes=("_search", "_metadata"),
                 )
 
                 merged_dict[(search_term, _search_type)] = df_all
