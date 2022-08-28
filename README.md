@@ -2,9 +2,8 @@
 Making data extraction and curation as easy as py.
 
 PyCurator allows users to easily query research repositories without the trouble of reading through API
-documentation. Data curation is now as easy as ```$ pycurator```. Whether you want the ease of clicking
-some buttons and getting the data or the flexibility of modifying query format, PyCurator provides a simple
-UI for quickly retrieving data that is built on top of an extensible collection of Web and API scraper classes.
+documentation. Whether you want the ease of clicking some buttons and getting the data or the flexibility of modifying query format, PyCurator provides a simple
+UI for quickly retrieving metadata that is built on top of an extensible collection of Web and API scraper classes.
 
 ## Supported Repositories
 PyCurator currently supports the following repositories in the capacities listed. Authentication is only required for Kaggle,
@@ -77,7 +76,7 @@ safely terminate the program.
 
 ## Contributions
 ### Bugs
-Please note that as of Spring 2022, PyCurator is still undergoing active development. For any bugs or problems that you come across, open an issue that details the problem that 
+For any bugs or problems that you come across, open an issue that details the problem that 
 you're experiencing.
 
 ### Extension
