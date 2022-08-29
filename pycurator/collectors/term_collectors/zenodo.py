@@ -26,9 +26,9 @@ class ZenodoCollector(BaseTermCollector):
     """
 
     def __init__(
-            self,
-            search_terms: Optional[Collection[SearchTerm]] = None,
-            credentials: Optional[bool] = None,
+        self,
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        credentials: Optional[bool] = None,
     ) -> None:
         super().__init__(
             repository_name="zenodo", search_terms=search_terms, credentials=credentials

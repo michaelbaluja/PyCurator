@@ -5,6 +5,8 @@ Module for validating general function inputs.
 from collections.abc import Callable, Collection, Iterable
 from typing import Any, Optional, ParamSpec, Type, TypeVar, Union
 
+from ..._typing import SearchQuery
+
 T = TypeVar("T")
 P = ParamSpec("P")
 Key = TypeVar("Key")
@@ -17,7 +19,9 @@ def sort_dict_by_keys(unsorted_dict: dict[Key, Value]) -> dict[Key, Value]:
     return dict(map(tuple, sorted(unsorted_dict.items())))
 
 
-def is_all_type(objects: Iterable[Any], types: Union[Type[Any], tuple[Union[Type[Any], None], ...]]) -> bool:
+def is_all_type(
+    objects: Iterable[Any], types: Union[Type[Any], tuple[Union[Type[Any], None], ...]]
+) -> bool:
     """Validate that iterable only contains objects of a given type or types.
 
     Parameters
@@ -42,11 +46,11 @@ def is_all_type(objects: Iterable[Any], types: Union[Type[Any], tuple[Union[Type
 
 
 def validate_from_arguments(
-        base,
-        param: str,
-        func: Callable[P, T],
-        args: Optional[tuple[Any, ...]] = None,
-        kwargs: Optional[dict[str, Any]] = None,
+    param: str,
+    func: Callable[P, T],
+    validator: Callable[P, T],
+    args: Optional[tuple[Any, ...]] = None,
+    kwargs: Optional[dict[str, Any]] = None,
 ):
     """Validate arguments for wrapper functions."""
 
@@ -60,7 +64,7 @@ def validate_from_arguments(
                 f"kwargs parameter must be of type 'dict', not '{type(kwargs)}'."
             )
         if param in kwargs:
-            kwargs[param] = base._validate(kwargs.get(param))
+            kwargs[param] = validator(kwargs.get(param))
     else:
         kwargs = {}
 
@@ -76,7 +80,7 @@ def validate_from_arguments(
             if "self" in func_params:
                 idx -= 1
             args = list(args)
-            args[idx] = base._validate(args[idx])
+            args[idx] = validator(args[idx])
             args = tuple(args)
         except (IndexError, ValueError):
             pass
@@ -87,7 +91,7 @@ def validate_from_arguments(
 
 
 def validate_metadata_parameters(
-        object_paths: Union[str, Collection[str]]
+    object_paths: Union[str, Collection[str]]
 ) -> Collection[str]:
     """Ensures that the metadata object paths are of the proper form.
 

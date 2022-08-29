@@ -37,10 +37,10 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
     """
 
     def __init__(
-            self,
-            search_terms: Optional[Collection[SearchTerm]] = None,
-            search_types: Optional[Collection[SearchType]] = None,
-            credentials: Optional[str] = None,
+        self,
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        search_types: Optional[Collection[SearchType]] = None,
+        credentials: Optional[str] = None,
     ) -> None:
         super().__init__(
             repository_name="paperswithcode",
@@ -61,10 +61,10 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
 
     @BaseCollector.track_indeterminate_progress
     def _conduct_search_over_pages(
-            self,
-            search_url: str,
-            search_params: Optional[Any] = None,
-            print_progress: bool = False,
+        self,
+        search_url: str,
+        search_params: Optional[Any] = None,
+        print_progress: bool = False,
     ) -> Union[pd.DataFrame, None]:
         """Query paginated results from the Papers With Code API.
 
@@ -143,7 +143,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
 
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
-            self, search_term: SearchTerm, search_type: SearchType
+        self, search_term: SearchTerm, search_type: SearchType
     ) -> pd.DataFrame:
         """Queries Papers With Code API for the specified search term and type.
 
@@ -190,7 +190,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         return metadata_types
 
     def get_query_metadata(
-            self, object_paths: Collection[str], **kwargs: Any
+        self, object_paths: Collection[str], **kwargs: Any
     ) -> TypeResultDict:
         """Retrieves metadata for the object_paths objects.
 
@@ -225,7 +225,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
             search_df = pd.DataFrame()
             self.status_queue.put(f"Querying {metadata_type}.")
 
-            for object_path in self._pb_determinate(object_paths):
+            for object_path in self.track_determinate_progress(object_paths):
                 search_url = (
                     f"{self.base_url}/{search_type}/{object_path}/" f"{metadata_type}"
                 )
@@ -248,7 +248,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         return metadata_dict
 
     def get_all_metadata(
-            self, search_dict: TermTypeResultDict
+        self, search_dict: TermTypeResultDict
     ) -> dict[SearchQuery, TermResultDict]:
         """Retrieves metadata for records contained in input DataFrames.
 
@@ -281,9 +281,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
 
         return metadata_dict
 
-    def merge_search_and_metadata_dicts(
-            self, search_dict, metadata_dict, on=None, left_on=None, right_on=None, **kwargs
-    ):
+    def merge_search_and_metadata_dicts(self, search_dict, metadata_dict, **kwargs):
         """Merges together search and metadata DataFrames by 'on' value.
 
         Parameters
@@ -292,14 +290,8 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
             Dictionary of search output results.
         metadata_dict : dict
             Dictionary of metadata results.
-        on : str or list-like, optional (default=None)
-            Column name(s) to merge the two dicts on.
-        left_on : str or list-like, optional (default=None)
-            Column name(s) to merge the left dict on.
-        right_on : str or list-like, optional (default=None)
-            Column name(s) to merge the right dict on.
         **kwargs : dict, optional
-            Allow users to add save value.
+            Additional keyword arguments to pass to pandas.merge.
 
         Returns
         -------
@@ -321,11 +313,9 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
                 df_all = pd.merge(
                     left=search_df,
                     right=metadata_df,
-                    on="id",
-                    left_on=left_on,
-                    right_on=right_on,
                     how="outer",
                     suffixes=("_search", "_metadata"),
+                    **kwargs,
                 )
 
                 merged_dict[(search_term, _search_type)] = df_all
