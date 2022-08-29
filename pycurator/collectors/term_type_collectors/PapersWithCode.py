@@ -8,6 +8,7 @@ from typing import Any, Optional, Union
 import pandas as pd
 
 from ..base import BaseCollector, BaseTermTypeCollector
+from ..utils.validating import validate_metadata_parameters
 from ..._typing import (
     SearchTerm,
     SearchType,
@@ -16,7 +17,6 @@ from ..._typing import (
     TermTypeResultDict,
     TypeResultDict,
 )
-from ...utils.validating import validate_metadata_parameters
 
 
 class PapersWithCodeCollector(BaseTermTypeCollector):

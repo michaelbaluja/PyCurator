@@ -22,7 +22,9 @@ from typing import Any, AnyStr, NoReturn, Optional, ParamSpec, TypeVar, Union
 import pandas as pd
 import requests
 
-from pycurator._typing import (
+from .utils.saving import save_results
+from .utils.validating import is_all_type, validate_from_arguments
+from .._typing import (
     JSONDict,
     SearchTerm,
     SearchType,
@@ -31,7 +33,6 @@ from pycurator._typing import (
     TermTypeResultDict,
     QueryResultDict,
 )
-from ..utils import saving, validating
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -117,7 +118,7 @@ class BaseCollector(ABC):
     ) -> None:
         """Helper function for saving results and reporting status to UI."""
         self.status_queue.put(f'Saving output to "{save_dir}".')
-        saving.save_results(
+        save_results(
             results=final_dict, data_dir=save_dir, output_format=output_format
         )
         self.status_queue.put("Save complete.")
@@ -488,11 +489,11 @@ class BaseAPICollector(BaseCollector):
                 f"metadata_dict must be of type dict, not '{type(metadata_dict)}'."
             )
 
-        if not validating.is_all_type(search_dict.values(), (pd.DataFrame, None)):
+        if not is_all_type(search_dict.values(), (pd.DataFrame, None)):
             raise ValueError(
                 "All search_dict entries must be of type pandas.DataFrame."
             )
-        if not validating.is_all_type(metadata_dict.values(), (pd.DataFrame, None)):
+        if not is_all_type(metadata_dict.values(), (pd.DataFrame, None)):
             raise ValueError(
                 "All metadata_dict entries must be of type pandas.DataFrame."
             )
@@ -543,7 +544,7 @@ class TermQueryMixin:
         """Decorator for validating search term object type."""
 
         def inner(self, *args, **kwargs):
-            args, kwargs = validating.validate_from_arguments(
+            args, kwargs = validate_from_arguments(
                 base=self, func=func, args=args, kwargs=kwargs, param="search_term"
             )
             return func(self, *args, **kwargs)
@@ -554,7 +555,7 @@ class TermQueryMixin:
     def search_terms(self, search_terms: Collection[SearchTerm]) -> None:
         if isinstance(search_terms, str):
             search_terms = [search_terms]
-        if not validating.is_all_type(search_terms, str):
+        if not is_all_type(search_terms, str):
             raise TypeError("All search terms must be of type str.")
         self._search_terms = search_terms
 
@@ -700,7 +701,7 @@ class TypeQueryMixin:
         """Decorator for validating search term object type."""
 
         def inner(self, *args, **kwargs):
-            args, kwargs = validating.validate_from_arguments(
+            args, kwargs = validate_from_arguments(
                 base=self, func=func, args=args, kwargs=kwargs, param="search_type"
             )
             return func(self, *args, **kwargs)

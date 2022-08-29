@@ -2,11 +2,11 @@
 CLI for running PyCurator user interface.
 """
 
-from .gui import PyCuratorUI
+from . import gui
 
 
 def main():
-    root = PyCuratorUI()
+    root = gui.interface.PyCuratorUI()
     root.mainloop()
 
 

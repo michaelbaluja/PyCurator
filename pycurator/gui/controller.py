@@ -5,130 +5,16 @@ Module for UI Model View Controller structure.
 from __future__ import annotations
 
 import _tkinter
-import itertools as it
 import os
 import queue
-import tkinter
 import tkinter as tk
-from tkinter import ttk
-from typing import Optional, ParamSpec, Type, TypeVar, Union
+from typing import Optional, ParamSpec, Type, Union
 
-from .base import ThreadedRun, ViewPage
-from .landing_page import LandingPage
-from .run_page import RunPage
-from .selection_page import SelectionPage
+from . import view, model
 from .._typing import AttributeKey, AttributeValue, TKVarValue
 from ..collectors import base as collector_base
 
-Page = TypeVar("Page", bound=ViewPage)
 P = ParamSpec("P")
-
-
-class CuratorView(ttk.Frame):
-    """View for the PyCurator UI.
-
-    Parameters
-    ----------
-    parent : tk.Tk
-
-    Attributes
-    ----------
-    pages : dict[str, ViewPage]
-        Map from page name to page object.
-    current_page : ViewPage
-
-    See Also
-    --------
-    tk.Frame
-    tk.Tk
-    """
-
-    def __init__(self, parent: tk.Tk) -> None:
-        super().__init__(parent)
-        self.current_page = None
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid(row=0, column=0, sticky="nsew")
-
-        pages = (LandingPage, SelectionPage, RunPage)
-
-        self.pages = {C: C(self, next_page=N) for C, N in it.pairwise(pages + (None,))}
-
-    def set_controller(self, controller: CuratorController) -> None:
-        """Setter for UI Controller of View object."""
-        for page in self.pages.values():
-            page.set_controller(controller)
-
-    def show(self, page: Type[Page] = LandingPage) -> None:
-        """Display the provided page on the UI."""
-        self.current_page = self.pages[page]
-        self.current_page.show()
-
-
-class CollectorModel:
-    """Model for the PyCurator UI. Extends the Collector class.
-
-    Parameters
-    ----------
-    collector_class : Inherited BaseCollector class
-    collector_name : str
-
-    Attributes
-    ----------
-    collector_class : Inherited BaseCollector class
-    collector_name : str
-    collector : Inherited BaseCollector instance
-    run_thread : threading.Thread
-        Separate thread for data collection so that UI functionality
-        is not interrupted.
-    """
-
-    def __init__(
-            self, collector_class: Type[collector_base.BaseCollector], collector_name: str
-    ) -> None:
-        self.collector_class = collector_class
-        self.collector_name = collector_name
-        self.collector = None
-        self.run_thread = None
-
-        self.requirements = {
-            "search_terms": issubclass(self.collector_class, collector_base.TermQueryMixin),
-            "search_types": issubclass(self.collector_class, collector_base.TypeQueryMixin),
-        }
-
-    def initialize_collector(self, **param_val_kwargs: P.kwargs) -> None:
-        """Instantiate Collector object from class and provided kwargs.
-
-        Parameters
-        ----------
-        **param_val_kwargs : dict, optional
-            Parameters for Collector initialization. See individual
-            Collector classes for specifics.
-
-        See Also
-        --------
-        pycurator.collectors : Classes for repository date collection.
-        """
-
-        self.collector = self.collector_class(**param_val_kwargs)
-
-    def initialize_thread(self, thread_kwargs: P.kwargs) -> None:
-        """Instantiate Collector Thread with runtime arguments.
-
-        Parameters
-        ----------
-        thread_kwargs : dict, optional
-            Parameters to provide to run function of collector.
-
-        See Also
-        -------
-        pycurator.gui.base.ThreadedRun :
-            Collector wrapper allowing for seamless UI performance by
-            shifting collector actions to separate thread.
-        """
-
-        self.run_thread = ThreadedRun(collector=self.collector, kwargs=thread_kwargs)
 
 
 class CuratorController:
@@ -136,9 +22,9 @@ class CuratorController:
 
     Parameters
     ----------
-    model : CollectorModel, optional (default=None)
+    model_ : CollectorModel, optional
         Model for the PyCurator UI.
-    view : CuratorView, optional (default=None)
+    view_ : CuratorView, optional
         View for the PyCurator UI.
 
     Attributes
@@ -154,10 +40,11 @@ class CuratorController:
     """
 
     def __init__(
-            self, model: Optional[CollectorModel] = None, view: Optional[CuratorView] = None
+            self, model_: Optional[model.CollectorModel] = None,
+            view_: Optional[view.view.CuratorView] = None
     ) -> None:
-        self.model = model
-        self.view = view
+        self.model = model_
+        self.view = view_
 
         # Create placeholder for runtime_requirements property attribute
         self._runtime_requirements = None
@@ -175,7 +62,7 @@ class CuratorController:
         """Propagate Collector execution from UI to Collector."""
         self.model.collector.request_execution()
 
-    def show(self, page: Type[Page]) -> None:
+    def show(self, page_: Type[view.page.ViewPage]) -> None:
         """Show the provided page.
 
         Helper function for UI elements to request a page be shown
@@ -183,10 +70,10 @@ class CuratorController:
 
         Parameters
         ----------
-        page : ViewPage
+        page_ : ViewPage
         """
 
-        self.view.show(page)
+        self.view.show(page_)
 
     def set_model(
             self, collector: Type[collector_base.BaseCollector], collector_name: str
@@ -199,7 +86,7 @@ class CuratorController:
         collector_name : str
         """
 
-        self.model = CollectorModel(collector, collector_name)
+        self.model = model.CollectorModel(collector, collector_name)
         self.runtime_requirements = self.model.requirements
         self.runtime_param_vars[collector_name] = {}
 
@@ -254,7 +141,7 @@ class CuratorController:
 
         if isinstance(param_var, dict):
             param_name = [key for key, val in param_var.items() if val.get()]
-        elif isinstance(param_var, tkinter.Variable):
+        elif isinstance(param_var, tk.Variable):
             param_name = param_var.get()
         else:
             param_name = param_var
@@ -288,7 +175,7 @@ class CuratorController:
         ]
 
         if missing_reqs:
-            self.view.pages[SelectionPage].alert_missing_reqs(missing_reqs)
+            self.view.pages[view.selection_page.SelectionPage].alert_missing_reqs(missing_reqs)
         else:
             self.initialize_run(**param_val_kwargs)
 
@@ -321,7 +208,7 @@ class CuratorController:
             }
         )
 
-        self.view.show(RunPage)
+        self.view.show(view.run_page.RunPage)
 
     def run_collector(self) -> None:
         """Start collection and propagate updates to UI."""

@@ -1,4 +1,4 @@
-from pycurator.utils import saving
+from pycurator.collectors.utils import saving
 
 
 def test_openpyxl_save_options():

@@ -1,6 +1,6 @@
 import pytest
 
-from pycurator.utils import validating
+from pycurator.collectors.utils import validating
 
 
 def test_validate_save_filename():

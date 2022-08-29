@@ -7,10 +7,10 @@ from textwrap import dedent
 from tkinter import ttk
 from typing import NoReturn
 
-from .base import ViewPage
+from . import page
 
 
-class LandingPage(ViewPage):
+class LandingPage(page.ViewPage):
     """Landing Page of the PyCurator View component.
 
     See Also
@@ -18,7 +18,7 @@ class LandingPage(ViewPage):
     pycurator.gui.base.ViewPage
     """
 
-    @ViewPage.no_overwrite
+    @page.ViewPage.no_overwrite
     def show(self) -> None:
         """Arrange and display Landing Page of PyCurator UI."""
         label = ttk.Label(self, text="PyCurator", font="helvetica 16 bold")

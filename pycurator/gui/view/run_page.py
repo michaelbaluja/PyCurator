@@ -8,11 +8,10 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from typing import Any
 
-from .base import ViewPage
-from .selection_page import SelectionPage
+from . import page, selection_page
 
 
-class RunPage(ViewPage):
+class RunPage(page.ViewPage):
     """Run Page of the PyCurator View component.
 
     Parameters
@@ -52,7 +51,7 @@ class RunPage(ViewPage):
         self.back_button = ttk.Button(
             master=self.button_frame,
             text="Back",
-            command=lambda: self.controller.show(SelectionPage),
+            command=lambda: self.controller.show(selection_page.SelectionPage),
             state="disabled",
         )
         self.stop_button = ttk.Button(
@@ -64,7 +63,7 @@ class RunPage(ViewPage):
             master=self.button_frame, text="Exit", command=sys.exit
         )
 
-    @ViewPage.no_overwrite
+    @page.ViewPage.no_overwrite
     def show(self) -> None:
         """Display runtime status updates and navigation buttons.
 

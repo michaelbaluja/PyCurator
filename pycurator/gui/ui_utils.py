@@ -6,9 +6,10 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
-from typing import ParamSpec, Type, TypeVar
+from typing import ParamSpec, Type, TypeVar, TYPE_CHECKING
 
-from pycurator import gui
+if TYPE_CHECKING:
+    from . import view
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -55,7 +56,7 @@ def widget_label_frame(
 
 
 def select_from_files(
-        root: gui.ViewPage,
+        root: view.page.ViewPage,
         selection_type: str,
         filetypes: list[tuple[str, str]] = (("All File Types", "*.*"),),
 ) -> None:
@@ -93,10 +94,10 @@ def select_from_files(
         ...
     NotImplementedError: 'root' must include add_run_parameter() method.'
 
-    >>> from pycurator.gui import ViewPage
-    >>> view = ViewPage()
+    >>> from pycurator.gui import view
+    >>> view_page = view.page.ViewPage()
     >>> select_from_files(
-    ...     root=view,
+    ...     root=view_page,
     ...     selection_type='dir',
     ... )
     """

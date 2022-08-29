@@ -12,8 +12,8 @@ from kaggle import KaggleApi
 from kaggle.rest import ApiException
 
 from ..base import BaseCollector, BaseTermTypeCollector
+from ..utils.validating import validate_metadata_parameters
 from ..._typing import JSONDict, SearchTerm, SearchType, TermTypeResultDict
-from ...utils.validating import validate_metadata_parameters
 
 
 class KaggleCollector(BaseTermTypeCollector):

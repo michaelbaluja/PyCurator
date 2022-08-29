@@ -10,8 +10,8 @@ import openml
 import pandas as pd
 
 from ..base import BaseTypeCollector
+from ..utils import validating
 from ..._typing import SearchType, TypeResultDict
-from ...utils import validating
 
 
 class OpenMLCollector(BaseTypeCollector):

@@ -12,8 +12,8 @@ from ..base import (
     BaseCollector,
     BaseTermCollector,
 )
+from ..utils.validating import validate_metadata_parameters
 from ..._typing import SearchTerm, TermResultDict
-from ...utils.validating import validate_metadata_parameters
 
 
 class DryadCollector(BaseTermCollector):

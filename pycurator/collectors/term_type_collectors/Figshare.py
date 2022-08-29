@@ -8,8 +8,8 @@ from typing import Optional, Union
 import pandas as pd
 
 from ..base import BaseCollector, BaseTermTypeCollector
+from ..utils.validating import validate_metadata_parameters
 from ..._typing import SearchTerm, SearchType, TermTypeResultDict
-from ...utils.validating import validate_metadata_parameters
 
 
 class FigshareCollector(BaseTermTypeCollector):

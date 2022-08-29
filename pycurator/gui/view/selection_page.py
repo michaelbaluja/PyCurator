@@ -7,11 +7,13 @@ from collections.abc import Iterable
 from tkinter import ttk
 from typing import Any, NoReturn
 
-from .base import ViewPage
-from .. import collectors, utils
+from . import page
+from ..ui_utils import widget_label_frame, select_from_files
+from ... import collectors
+from ...collectors.utils import saving
 
 
-class SelectionPage(ViewPage):
+class SelectionPage(page.ViewPage):
     """Selection Page of the PyCurator View component.
 
     Parameters
@@ -51,7 +53,7 @@ class SelectionPage(ViewPage):
             master=self.param_frame, foreground="#FF0000", textvariable=self.req_var
         )
 
-    @ViewPage.no_overwrite
+    @page.ViewPage.no_overwrite
     def show(self, *args: Any) -> None:
         """Display collector selection widgets."""
         selection_text = ttk.Label(
@@ -116,12 +118,12 @@ class SelectionPage(ViewPage):
 
         # Get save information
         self.controller.add_run_parameter("save_type", tk.StringVar())
-        save_dir_selection = utils.ui.widget_label_frame(
+        save_dir_selection = widget_label_frame(
             frame_master=self.param_frame,
             label_text="Save Directory:",
             widget_cls=ttk.Button,
             text="Select Directory",
-            command=lambda: utils.ui.select_from_files(
+            command=lambda: select_from_files(
                 root=self, selection_type="save_dir"
             ),
         )
@@ -130,7 +132,7 @@ class SelectionPage(ViewPage):
         save_type_menu = ttk.Combobox(
             master=save_frame,
             textvariable=self.controller.get_run_parameter("save_type"),
-            values=list(utils.saving.save_options.keys()),
+            values=list(saving.save_options.keys()),
             state="readonly",
         )
         save_label.grid(row=0, column=0)
@@ -140,12 +142,12 @@ class SelectionPage(ViewPage):
 
         # Get credentials
         if self.controller.model.collector_class.accepts_user_credentials():
-            user_credential_selection = utils.ui.widget_label_frame(
+            user_credential_selection = widget_label_frame(
                 frame_master=self.param_frame,
                 label_text="Credentials:",
                 widget_cls=ttk.Button,
                 text="Select File",
-                command=lambda: utils.ui.select_from_files(
+                command=lambda: select_from_files(
                     root=self,
                     selection_type="credentials",
                     filetypes=[("JSON Files", "*.json")],

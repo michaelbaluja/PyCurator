@@ -1,5 +1,4 @@
-from pycurator.gui import PyCuratorUI
-
+from pycurator.gui.interface import PyCuratorUI
 
 if __name__ == '__main__':
     main = PyCuratorUI()

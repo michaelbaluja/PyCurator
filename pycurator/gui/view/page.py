@@ -1,71 +1,10 @@
 """
-Module for creating base classes of UI.
+Module for UI page base class.
 """
 
-from __future__ import annotations
-
-import threading
-import tkinter as tk
 from abc import abstractmethod
-from collections.abc import Callable
 from tkinter import ttk
-from typing import Any, NoReturn
-
-from . import MVC
-from ..collectors import base as collector_base
-
-
-class PyCuratorUI(tk.Tk):
-    """UI for PyCurator Application.
-
-    The UI is structured in a Model-View-Controller format. The View
-    is separated into a Landing Page with license information, a
-    Selection Page with repository options and related runtime
-    parameters, and a Run Page providing real-time updates on the status
-    of the data collection task.
-
-    See Also
-    --------
-    pycurator.gui.MVC :
-        Module containing the Model, View, and Controller classes.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.title("PyCurator")
-
-        view = MVC.CuratorView(self)
-        controller = MVC.CuratorController(view=view)
-
-        self.bind("<Return>", controller.request_next_page)
-
-        view.set_controller(controller)
-        view.show()
-
-
-class ThreadedRun(threading.Thread):
-    """Wrapper for concrete Collector object to allow threading.
-
-    Parameters
-    ----------
-    collector : Subclass of BaseCollector
-    **kwargs : dict, optional
-        Additional parameters to pass to the run function of the given
-        collector object. Current integrated examples include the
-        save_type of the output file and save_dir for storing the
-        output file.
-
-    See Also
-    --------
-    run :
-        Start-to-finish pipeline for running Collectors. See specific
-        repository Collector classes for more concrete details.
-    """
-
-    def __init__(self, collector: collector_base.BaseCollector, **kwargs: Any) -> None:
-        self.collector = collector
-        super().__init__(target=self.collector.run, **kwargs)
+from typing import Any, Callable, NoReturn
 
 
 class ViewPage(ttk.Frame):
@@ -106,7 +45,7 @@ class ViewPage(ttk.Frame):
         self.is_initialized = False
         self.next_page_button = None
 
-    def set_controller(self, controller: MVC.CuratorController) -> None:
+    def set_controller(self, controller: Any) -> None:
         """Setter for Controller element of PyCurator UI."""
         self.controller = controller
 
