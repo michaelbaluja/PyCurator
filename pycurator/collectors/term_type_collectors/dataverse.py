@@ -83,7 +83,7 @@ class DataverseCollector(BaseTermTypeCollector):
         self.headers["X-Dataverse-key"] = credentials
         return credentials
 
-    @BaseCollector._pb_indeterminate
+    @BaseCollector.track_indeterminate_progress
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
             self, search_term: SearchTerm, search_type: SearchType

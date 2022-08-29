@@ -75,7 +75,7 @@ class FigshareCollector(BaseTermTypeCollector):
         self.headers["Authorization"] = f"token {credentials}"
         return credentials
 
-    @BaseCollector._pb_indeterminate
+    @BaseCollector.track_indeterminate_progress
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
             self,
@@ -187,7 +187,7 @@ class FigshareCollector(BaseTermTypeCollector):
 
         metadata_df = pd.DataFrame()
 
-        for object_path in self._pb_determinate(object_paths):
+        for object_path in self.track_determinate_progress(object_paths):
             _, json_data = self.get_request_output(
                 url=object_path, headers=self.headers
             )

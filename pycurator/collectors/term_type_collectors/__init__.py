@@ -2,11 +2,11 @@
 Import term type collectors into parent package.
 """
 
-from .Dataverse import DataverseCollector
-from .Figshare import FigshareCollector
-from .PapersWithCode import PapersWithCodeCollector
+from .dataverse import DataverseCollector
+from .figshare import FigshareCollector
+from .papers_with_code import PapersWithCodeCollector
 
 try:
-    from .Kaggle import KaggleCollector
+    from .kaggle import KaggleCollector
 except (OSError, ModuleNotFoundError):
     pass

@@ -59,7 +59,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
     def search_type_options(cls) -> tuple[SearchType, ...]:
         return ("conferences", "datasets", "evaluations", "papers", "tasks")
 
-    @BaseCollector._pb_indeterminate
+    @BaseCollector.track_indeterminate_progress
     def _conduct_search_over_pages(
             self,
             search_url: str,

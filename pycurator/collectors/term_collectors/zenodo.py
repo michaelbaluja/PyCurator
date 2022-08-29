@@ -40,7 +40,7 @@ class ZenodoCollector(BaseTermCollector):
         return True
 
     @BaseTermCollector.validate_search_term
-    @BaseCollector._pb_indeterminate
+    @BaseCollector.track_indeterminate_progress
     def get_individual_search_output(self, search_term: SearchTerm) -> pd.DataFrame:
         """Returns information about all records from Zenodo.
 

@@ -2,5 +2,5 @@
 Import term collectors into parent package.
 """
 
-from .Dryad import DryadCollector
-from .Zenodo import ZenodoCollector
+from .dryad import DryadCollector
+from .zenodo import ZenodoCollector

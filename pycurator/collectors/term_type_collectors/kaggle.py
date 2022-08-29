@@ -60,7 +60,7 @@ class KaggleCollector(BaseTermTypeCollector):
     def search_type_options(cls) -> tuple[SearchType, ...]:
         return ("datasets", "kernels")
 
-    @BaseCollector._pb_indeterminate
+    @BaseCollector.track_indeterminate_progress
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
             self,
@@ -186,7 +186,7 @@ class KaggleCollector(BaseTermTypeCollector):
 
         metadata_df = pd.DataFrame()
 
-        for object_path in self._pb_determinate(object_paths):
+        for object_path in self.track_determinate_progress(object_paths):
             json_data = self._retrieve_object_json(object_path=object_path)
             metadata_df = pd.concat([metadata_df, pd.DataFrame(json_data)]).reset_index(
                 drop=True

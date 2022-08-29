@@ -46,7 +46,7 @@ class DryadCollector(BaseTermCollector):
     def accepts_user_credentials() -> bool:
         return True
 
-    @BaseCollector._pb_indeterminate
+    @BaseCollector.track_indeterminate_progress
     def _conduct_search_over_pages(
             self,
             search_url: str,
@@ -190,7 +190,7 @@ class DryadCollector(BaseTermCollector):
         start_page = 1
         metadata_df = pd.DataFrame()
 
-        for object_path in self._pb_determinate(object_paths):
+        for object_path in self.track_determinate_progress(object_paths):
             search_url = f"{self.base_url}/versions/{object_path}/files"
             search_params = {"page": start_page}
 
