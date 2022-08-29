@@ -30,10 +30,10 @@ class FigshareCollector(BaseTermTypeCollector):
     """
 
     def __init__(
-            self,
-            search_terms: Optional[Collection[SearchTerm]] = None,
-            search_types: Optional[Collection[SearchType]] = None,
-            credentials: Optional[str] = None,
+        self,
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        search_types: Optional[Collection[SearchType]] = None,
+        credentials: Optional[str] = None,
     ) -> None:
         super().__init__(
             repository_name="figshare",
@@ -78,9 +78,9 @@ class FigshareCollector(BaseTermTypeCollector):
     @BaseCollector.track_indeterminate_progress
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
-            self,
-            search_term: SearchTerm,
-            search_type: SearchType,
+        self,
+        search_term: SearchTerm,
+        search_type: SearchType,
     ) -> Union[TermTypeResultDict, None]:
         """Queries the Figshare API for the given search term and type.
 
@@ -144,8 +144,8 @@ class FigshareCollector(BaseTermTypeCollector):
                 )
 
             if (
-                    output_df is not None
-                    and output_df.shape[0] < search_params["page_size"]
+                output_df is not None
+                and output_df.shape[0] < search_params["page_size"]
             ):
                 return search_df
 
@@ -166,8 +166,8 @@ class FigshareCollector(BaseTermTypeCollector):
         return search_df
 
     def get_query_metadata(
-            self,
-            object_paths: Union[str, Collection[str]],
+        self,
+        object_paths: Union[str, Collection[str]],
     ) -> pd.DataFrame:
         """
         Retrieves metadata for the object_paths objects.
@@ -224,6 +224,4 @@ class FigshareCollector(BaseTermTypeCollector):
 
                 object_path_dict[query] = object_paths
 
-        metadata_dict = super().get_all_metadata(object_path_dict=object_path_dict)
-
-        return metadata_dict
+        return self._get_metadata_from_paths(object_path_dict)

@@ -27,9 +27,9 @@ class OpenMLCollector(BaseTypeCollector):
     """
 
     def __init__(
-            self,
-            search_types: Optional[Collection[SearchType]] = None,
-            credentials: Optional[str] = None,
+        self,
+        search_types: Optional[Collection[SearchType]] = None,
+        credentials: Optional[str] = None,
     ) -> None:
 
         super().__init__(repository_name="openml", search_types=search_types)
@@ -128,7 +128,7 @@ class OpenMLCollector(BaseTypeCollector):
 
     @BaseTypeCollector.validate_search_type
     def get_query_metadata(
-            self, object_paths: Union[str, Collection[str]], search_type: SearchType
+        self, object_paths: Union[str, Collection[str]], search_type: SearchType
     ) -> pd.DataFrame:
         """Retrieves the metadata for the object_paths objects.
 

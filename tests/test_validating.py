@@ -29,7 +29,7 @@ def test_validate_metadata_parameters_error(metadata_params):
 def test_validate_from_arguments_no_params(type_collector):
     with pytest.raises(ValueError):
         validating.validate_from_arguments(
-            base=type_collector,
+            validator=type_collector._validate,
             param='search_type',
             func=type_collector.get_query_metadata
         )
@@ -37,7 +37,7 @@ def test_validate_from_arguments_no_params(type_collector):
 
 def test_validate_from_arguments_args(sample_args, type_collector):
     assert validating.validate_from_arguments(
-        base=type_collector,
+        validator=type_collector._validate,
         param='search_type',
         func=type_collector.get_query_metadata,
         args=sample_args,
@@ -46,7 +46,7 @@ def test_validate_from_arguments_args(sample_args, type_collector):
 
 def test_validate_from_arguments_kwargs(sample_kwargs, type_collector):
     assert validating.validate_from_arguments(
-        base=type_collector,
+        validator=type_collector._validate,
         param='search_type',
         func=type_collector.get_query_metadata,
         kwargs=sample_kwargs,
@@ -59,7 +59,7 @@ def test_validate_from_arguments_args_kwargs(
         type_collector
 ):
     assert validating.validate_from_arguments(
-        base=type_collector,
+        validator=type_collector._validate,
         param='search_type',
         func=type_collector.get_query_metadata,
         args=sample_args,

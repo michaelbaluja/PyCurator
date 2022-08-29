@@ -30,9 +30,9 @@ class DryadCollector(BaseTermCollector):
     """
 
     def __init__(
-            self,
-            search_terms: Optional[Collection[SearchTerm]] = None,
-            credentials: Optional[bool] = None,
+        self,
+        search_terms: Optional[Collection[SearchTerm]] = None,
+        credentials: Optional[bool] = None,
     ) -> None:
 
         super().__init__(
@@ -48,11 +48,11 @@ class DryadCollector(BaseTermCollector):
 
     @BaseCollector.track_indeterminate_progress
     def _conduct_search_over_pages(
-            self,
-            search_url: str,
-            search_params: Any,
-            print_progress: bool = False,
-            delim: Optional[str] = None,
+        self,
+        search_url: str,
+        search_params: Any,
+        print_progress: bool = False,
+        delim: Optional[str] = None,
     ) -> pd.DataFrame:
         """Query records from the Dryad API for given parameters.
 
@@ -167,7 +167,7 @@ class DryadCollector(BaseTermCollector):
         return search_df
 
     def get_query_metadata(
-            self, object_paths: Union[str, Collection[str]], **kwargs: Any
+        self, object_paths: Union[str, Collection[str]], **kwargs: Any
     ) -> pd.DataFrame:
         """Retrieves the metadata for the object_paths objects.
 
@@ -230,9 +230,8 @@ class DryadCollector(BaseTermCollector):
         """
 
         object_path_dict = {
-            query: self._extract_version_ids(version_df=query_df) for query, query_df in search_dict.items()
+            query: self._extract_version_ids(version_df=query_df)
+            for query, query_df in search_dict.items()
         }
 
-        metadata_dict = super().get_all_metadata(object_path_dict=object_path_dict)
-
-        return metadata_dict
+        return self._get_metadata_from_paths(object_path_dict)
