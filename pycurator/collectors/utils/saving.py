@@ -28,7 +28,7 @@ save_options = validating.sort_dict_by_keys(save_options)
 
 
 def save_results(
-        results: dict, data_dir: Union[str, os.PathLike[str]], output_format: str
+    results: dict, data_dir: Union[str, os.PathLike[str]], output_format: str
 ) -> None:
     """Export DataFrame objects to specified directory.
 
@@ -88,7 +88,7 @@ def save_results(
 
 
 def save_dataframe(
-        results: pd.DataFrame, filepath: Union[str, os.PathLike[str]], output_format: str
+    results: pd.DataFrame, filepath: Union[str, os.PathLike[str]], output_format: str
 ) -> None:
     """Saves the specified results to the file provided.
 

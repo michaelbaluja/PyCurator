@@ -4,11 +4,11 @@ Module for UI Model View Controller structure.
 
 from __future__ import annotations
 
-import _tkinter
 import os
 import queue
 import tkinter as tk
 from typing import Optional, ParamSpec, Type, Union
+import _tkinter
 
 from . import view, model
 from .._typing import AttributeKey, AttributeValue, TKVarValue
@@ -40,8 +40,9 @@ class CuratorController:
     """
 
     def __init__(
-            self, model_: Optional[model.CollectorModel] = None,
-            view_: Optional[view.view.CuratorView] = None
+        self,
+        model_: Optional[model.CollectorModel] = None,
+        view_: Optional[view.view.CuratorView] = None,
     ) -> None:
         self.model = model_
         self.view = view_
@@ -76,7 +77,7 @@ class CuratorController:
         self.view.show(page_)
 
     def set_model(
-            self, collector: Type[collector_base.BaseCollector], collector_name: str
+        self, collector: Type[collector_base.BaseCollector], collector_name: str
     ) -> None:
         """Dynamically set the model component and helper variables.
 
@@ -121,7 +122,7 @@ class CuratorController:
         self._runtime_requirements = requirements
 
     def evaluate_parameter(
-            self, param_name: str
+        self, param_name: str
     ) -> Union[list[TKVarValue], TKVarValue, str]:
         """Retrieves values from the runtime_param_vars.
 
@@ -175,7 +176,9 @@ class CuratorController:
         ]
 
         if missing_reqs:
-            self.view.pages[view.selection_page.SelectionPage].alert_missing_reqs(missing_reqs)
+            self.view.pages[view.selection_page.SelectionPage].alert_missing_reqs(
+                missing_reqs
+            )
         else:
             self.initialize_run(**param_val_kwargs)
 
@@ -273,10 +276,11 @@ class CuratorController:
         )
         self.view.current_page.progress_bar["mode"] = "determinate"
         self.view.current_page.progress_bar["value"] = (
-                                                               self.model.run_thread.collector.queries_completed
-                                                               / self.model.run_thread.collector.num_queries
-                                                               * 100
-                                                       ) + 1
+            self.model.run_thread.collector.queries_completed
+            / self.model.run_thread.collector.num_queries
+            * 100
+            + 1
+        )
 
     def _update_progress_bar(self) -> None:
         """Update status of progress bar based on collector status."""
@@ -290,10 +294,10 @@ class CuratorController:
             self._update_progress_bar_determinate()
 
     def _update_runtime_output(
-            self,
-            update: str,
-            loc: _tkinter.Tcl_Obj | str | float | tk.Misc = "end",
-            newline: bool = True,
+        self,
+        update: str,
+        loc: _tkinter.Tcl_Obj | str | float | tk.Misc = "end",
+        newline: bool = True,
     ) -> None:
         """Push Collector status to PyCurator UI window.
 

@@ -123,9 +123,7 @@ class SelectionPage(page.ViewPage):
             label_text="Save Directory:",
             widget_cls=ttk.Button,
             text="Select Directory",
-            command=lambda: select_from_files(
-                root=self, selection_type="save_dir"
-            ),
+            command=lambda: select_from_files(root=self, selection_type="save_dir"),
         )
         save_frame = tk.Frame(master=self.param_frame)
         save_label = ttk.Label(master=save_frame, text="File Type:")
@@ -234,7 +232,7 @@ class SelectionPage(page.ViewPage):
 
     @staticmethod
     def _toggle_button_state(
-            toggle_vars: Iterable[tk.Variable], btn: tk.Button
+        toggle_vars: Iterable[tk.Variable], btn: tk.Button
     ) -> None:
         """Modify button state based on values of provided variables.
 

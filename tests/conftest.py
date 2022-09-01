@@ -36,7 +36,7 @@ def type_collector():
         def get_query_metadata(self, object_paths, search_type):
             pass
 
-        def get_all_metadata(self, **kwargs):
+        def get_all_metadata(self, search_dict):
             pass
 
         def accepts_user_credentials(self):

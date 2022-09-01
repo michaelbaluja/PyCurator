@@ -1,3 +1,7 @@
+"""
+Module for creating model for MVC format.
+"""
+
 import threading
 from typing import Any, Type, ParamSpec
 
@@ -49,7 +53,7 @@ class CollectorModel:
     """
 
     def __init__(
-            self, collector_class: Type[collector_base.BaseCollector], collector_name: str
+        self, collector_class: Type[collector_base.BaseCollector], collector_name: str
     ) -> None:
         self.collector_class = collector_class
         self.collector_name = collector_name
@@ -57,8 +61,12 @@ class CollectorModel:
         self.run_thread = None
 
         self.requirements = {
-            "search_terms": issubclass(self.collector_class, collector_base.TermQueryMixin),
-            "search_types": issubclass(self.collector_class, collector_base.TypeQueryMixin),
+            "search_terms": issubclass(
+                self.collector_class, collector_base.TermQueryMixin
+            ),
+            "search_types": issubclass(
+                self.collector_class, collector_base.TypeQueryMixin
+            ),
         }
 
     def initialize_collector(self, **param_val_kwargs: P.kwargs) -> None:

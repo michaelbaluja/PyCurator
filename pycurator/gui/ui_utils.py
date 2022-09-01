@@ -5,6 +5,7 @@ Module for utility functions for UI.
 from __future__ import annotations
 
 import tkinter as tk
+from tkinter import filedialog as fd
 from tkinter import ttk
 from typing import ParamSpec, Type, TypeVar, TYPE_CHECKING
 
@@ -16,10 +17,10 @@ T = TypeVar("T")
 
 
 def widget_label_frame(
-        frame_master: tk.Misc,
-        label_text: float | str,
-        widget_cls: Type[tk.Widget],
-        **widget_kwargs: P.kwargs,
+    frame_master: tk.Misc,
+    label_text: float | str,
+    widget_cls: Type[tk.Widget],
+    **widget_kwargs: P.kwargs,
 ) -> ttk.Frame:
     """Create frame containing vertically-aligned widget and label.
 
@@ -56,9 +57,9 @@ def widget_label_frame(
 
 
 def select_from_files(
-        root: view.page.ViewPage,
-        selection_type: str,
-        filetypes: list[tuple[str, str]] = (("All File Types", "*.*"),),
+    root: view.page.ViewPage,
+    selection_type: str,
+    filetypes: list[tuple[str, str]] = (("All File Types", "*.*"),),
 ) -> None:
     """Allows user to select local file/directory.
 
@@ -101,8 +102,6 @@ def select_from_files(
     ...     selection_type='dir',
     ... )
     """
-
-    from tkinter import filedialog as fd
 
     if "dir" in selection_type:
         selection = fd.askdirectory(title="Choose Directory", initialdir=".")

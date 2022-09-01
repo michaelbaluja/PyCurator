@@ -76,7 +76,7 @@ class BaseCollector(ABC):
         self.current_query_ref = None
 
     def track_determinate_progress(
-        self, coll: Collection[T]
+            self, coll: Collection[T]
     ) -> Generator[T, None, None]:
         """Generator for iterating data and updating progress bar.
 
@@ -114,7 +114,7 @@ class BaseCollector(ABC):
         self.current_query_ref = None
 
     def _save_results(
-        self, save_dir: str, final_dict: QueryResultDict, output_format: str
+            self, save_dir: str, final_dict: QueryResultDict, output_format: str
     ) -> None:
         """Helper function for saving results and reporting status to UI."""
         self.status_queue.put(f'Saving output to "{save_dir}".')
@@ -128,7 +128,7 @@ class BaseCollector(ABC):
 
     @staticmethod
     def track_indeterminate_progress(
-        indeterminate_query_func: Callable[P, T]
+            indeterminate_query_func: Callable[P, T]
     ) -> Callable[P, T]:
         """Progress bar wrapper for indeterminate-length queries."""
 
@@ -334,16 +334,16 @@ class BaseAPICollector(BaseCollector):
         """Abstract placeholder method for returning search outputs."""
         raise NotImplementedError('Subclass must override "get_all_search_outputs()".')
 
-    def get_all_metadata(self, **kwargs: Any) -> NoReturn:
+    def get_all_metadata(self, search_dict: QueryResultDict) -> NoReturn:
         """Abstract placeholder method for returning metadata."""
         raise NotImplementedError('Subclass must override "get_all_metadata()".')
 
     def get_request_output_and_update_query_ref(
-        self,
-        url: AnyStr,
-        params: Optional[Any] = None,
-        headers: Optional[Any] = None,
-        **ref_kwargs: Any,
+            self,
+            url: AnyStr,
+            params: Optional[Any] = None,
+            headers: Optional[Any] = None,
+            **ref_kwargs: Any,
     ) -> tuple[requests.Response, JSONDict]:
         """Return request output and update base.current_query_ref.
 
@@ -368,7 +368,7 @@ class BaseAPICollector(BaseCollector):
         return self.get_request_output(url=url, params=params, headers=headers)
 
     def get_request_output(
-        self, url: AnyStr, params: Optional[Any] = None, headers: Optional[Any] = None
+            self, url: AnyStr, params: Optional[Any] = None, headers: Optional[Any] = None
     ) -> tuple[requests.Response, JSONDict]:
         """Return Response and JSON from requests.get().
 
@@ -433,10 +433,10 @@ class BaseAPICollector(BaseCollector):
         return request_obj, output
 
     def merge_search_and_metadata_dicts(
-        self,
-        search_dict: QueryResultDict,
-        metadata_dict: dict,
-        **kwargs: Any,
+            self,
+            search_dict: QueryResultDict,
+            metadata_dict: dict,
+            **kwargs: Any,
     ) -> QueryResultDict:
         """Merges together search and metadata DataFrames by 'on' key.
 
@@ -594,10 +594,10 @@ class BaseTermCollector(TermQueryMixin, BaseAPICollector):
     """
 
     def __init__(
-        self,
-        repository_name: str,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        credentials: Optional[str] = None,
+            self,
+            repository_name: str,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
         super().__init__(repository_name=repository_name, credentials=credentials)
 
@@ -639,7 +639,7 @@ class BaseTermCollector(TermQueryMixin, BaseAPICollector):
         return
 
     def _get_metadata_from_paths(
-        self, object_path_dict: dict[SearchTerm, pd.DataFrame]
+            self, object_path_dict: dict[SearchTerm, pd.DataFrame]
     ) -> TermResultDict:
         """Retrieves all metadata related to the provided DataFrames.
 
@@ -687,7 +687,7 @@ class TypeQueryMixin:
     def search_types(self, search_types: tuple[SearchType]) -> None:
         """Set search_types if all are allowed by current Collector."""
         if not all(
-            search_type in self.search_type_options for search_type in search_types
+                search_type in self.search_type_options for search_type in search_types
         ):
             raise ValueError(f"Only {self.search_type_options} search types are valid.")
         self._search_types = search_types
@@ -714,6 +714,7 @@ class TypeQueryMixin:
         return search_type
 
     @classmethod
+    @property
     @abstractmethod
     def search_type_options(cls) -> NoReturn:
         """Return the valid search type options for a given repository."""
@@ -754,11 +755,11 @@ class BaseTermTypeCollector(TermQueryMixin, TypeQueryMixin, BaseAPICollector):
     """
 
     def __init__(
-        self,
-        repository_name: str,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None,
+            self,
+            repository_name: str,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
         super().__init__(repository_name=repository_name, credentials=credentials)
 
@@ -810,13 +811,13 @@ class BaseTermTypeCollector(TermQueryMixin, TypeQueryMixin, BaseAPICollector):
 
     @abstractmethod
     def get_individual_search_output(
-        self, search_term: SearchTerm, search_type: SearchType
+            self, search_term: SearchTerm, search_type: SearchType
     ) -> None:
         """Abstract placeholder method for retrieving search output."""
-        pass
+        raise NotImplementedError
 
     def _get_metadata_from_paths(
-        self, object_path_dict: dict[SearchTuple, Collection[str]]
+            self, object_path_dict: dict[SearchTuple, Collection[str]]
     ) -> TermTypeResultDict:
         """Retrieves metadata for records contained in input DataFrames.
 
@@ -875,10 +876,10 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
     """
 
     def __init__(
-        self,
-        repository_name: str,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None,
+            self,
+            repository_name: str,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
         super().__init__(repository_name=repository_name, credentials=credentials)
 
@@ -894,16 +895,17 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
         if not search_types:
             return
         if not all(
-            search_type in self.search_type_options for search_type in search_types
+                search_type in self.search_type_options for search_type in search_types
         ):
             raise ValueError(f"Only {self.search_type_options} search types are valid.")
         self._search_types = search_types
 
     @classmethod
+    @property
     @abstractmethod
     def search_type_options(cls) -> None:
         """Return the valid search type options for a given repository."""
-        pass
+        return NotImplementedError
 
     def get_all_search_outputs(self, **kwargs: Any) -> TermResultDict:
         """Queries the API for each search type.
@@ -940,9 +942,9 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
         return
 
     def get_query_metadata(
-        self,
-        object_paths: Collection[str],
-        search_type: SearchType,
+            self,
+            object_paths: Collection[str],
+            search_type: SearchType,
     ) -> NoReturn:
         """Placeholder method for retrieving query metadata."""
         raise NotImplementedError('Subclass must override "get_query_metadata()".')

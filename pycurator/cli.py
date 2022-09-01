@@ -6,6 +6,7 @@ from . import gui
 
 
 def main():
+    """Launch Pycurator UI for collecting data from repositories."""
     root = gui.interface.PyCuratorUI()
     root.mainloop()
 

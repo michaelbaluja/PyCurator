@@ -28,7 +28,7 @@ class LandingPage(page.ViewPage):
                 """
                 Making repository research curation as easy as py.
 
-                This software is Copyright © 2021-2022 
+                This software is Copyright © 2021-2022
                 The Regents of the University of California.
                 All Rights Reserved.
                 For full licensing information, reference the LICENSE present

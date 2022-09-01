@@ -1,3 +1,5 @@
+"""Module for creating View of MVC structure."""
+
 from __future__ import annotations
 
 import itertools as it
@@ -38,8 +40,14 @@ class CuratorView(ttk.Frame):
         self.grid_columnconfigure(0, weight=1)
         self.grid(row=0, column=0, sticky="nsew")
 
-        page_order = (landing_page.LandingPage, selection_page.SelectionPage, run_page.RunPage)
-        self.pages = {C: C(self, next_page=N) for C, N in it.pairwise(page_order + (None,))}
+        page_order = (
+            landing_page.LandingPage,
+            selection_page.SelectionPage,
+            run_page.RunPage,
+        )
+        self.pages = {
+            C: C(self, next_page=N) for C, N in it.pairwise(page_order + (None,))
+        }
 
     def set_controller(self, curator_controller: controller.CuratorController) -> None:
         """Setter for UI Controller of View object."""
