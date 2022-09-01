@@ -22,7 +22,7 @@ import requests
 
 from .utils.saving import save_results
 from .utils.validating import is_all_type, validate_from_arguments
-from .._typing import (
+from pycurator._typing import (
     JSONDict,
     SearchTerm,
     SearchType,

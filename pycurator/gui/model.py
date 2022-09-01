@@ -5,7 +5,7 @@ Module for creating model for MVC format.
 import threading
 from typing import Any, Type, ParamSpec
 
-from ..collectors import base as collector_base
+from pycurator.collectors import base as collector_base
 
 P = ParamSpec("P")
 
@@ -53,7 +53,7 @@ class CollectorModel:
     """
 
     def __init__(
-        self, collector_class: Type[collector_base.BaseCollector], collector_name: str
+            self, collector_class: Type[collector_base.BaseCollector], collector_name: str
     ) -> None:
         self.collector_class = collector_class
         self.collector_name = collector_name

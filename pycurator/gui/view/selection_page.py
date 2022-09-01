@@ -9,8 +9,8 @@ from typing import Any, NoReturn
 
 from . import page
 from ..ui_utils import widget_label_frame, select_from_files
-from ... import collectors
-from ...collectors.utils import saving
+from pycurator.collectors import available_repos
+from pycurator.collectors.utils import saving
 
 
 class SelectionPage(page.ViewPage):
@@ -43,7 +43,7 @@ class SelectionPage(page.ViewPage):
         self.repo_listbox = tk.Listbox(master=self.selector_frame)
         self.repo_listbox.bind("<<ListboxSelect>>", self.display_repo_params)
 
-        for repo_name in collectors.available_repos:
+        for repo_name in available_repos:
             self.repo_listbox.insert(tk.END, repo_name)
 
         self.param_frame = ttk.Frame(master=self)
@@ -73,7 +73,7 @@ class SelectionPage(page.ViewPage):
 
     def _set_model_from_name(self, repo_name) -> None:
         """Update Model element via Controller."""
-        repo_class = collectors.available_repos[repo_name]
+        repo_class = available_repos[repo_name]
         self.controller.set_model(repo_class, repo_name)
 
     @staticmethod
@@ -232,7 +232,7 @@ class SelectionPage(page.ViewPage):
 
     @staticmethod
     def _toggle_button_state(
-        toggle_vars: Iterable[tk.Variable], btn: tk.Button
+            toggle_vars: Iterable[tk.Variable], btn: tk.Button
     ) -> None:
         """Modify button state based on values of provided variables.
 

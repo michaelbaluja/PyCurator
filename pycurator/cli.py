@@ -2,12 +2,12 @@
 CLI for running PyCurator user interface.
 """
 
-from . import gui
+from pycurator.gui import interface
 
 
 def main():
     """Launch Pycurator UI for collecting data from repositories."""
-    root = gui.interface.PyCuratorUI()
+    root = interface.PyCuratorUI()
     root.mainloop()
 
 

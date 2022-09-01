@@ -9,7 +9,7 @@ import pandas as pd
 
 from ..base import BaseCollector, BaseTermTypeCollector
 from ..utils.validating import validate_metadata_parameters
-from ..._typing import (
+from pycurator._typing import (
     SearchTerm,
     SearchType,
     SearchQuery,
@@ -37,10 +37,10 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
     """
 
     def __init__(
-        self,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None,
+            self,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
         super().__init__(
             repository_name="paperswithcode",
@@ -61,10 +61,10 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
 
     @BaseCollector.track_indeterminate_progress
     def _conduct_search_over_pages(
-        self,
-        search_url: str,
-        search_params: Optional[Any] = None,
-        print_progress: bool = False,
+            self,
+            search_url: str,
+            search_params: Optional[Any] = None,
+            print_progress: bool = False,
     ) -> Union[pd.DataFrame, None]:
         """Query paginated results from the Papers With Code API.
 
@@ -143,7 +143,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
 
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
-        self, search_term: SearchTerm, search_type: SearchType
+            self, search_term: SearchTerm, search_type: SearchType
     ) -> pd.DataFrame:
         """Queries Papers With Code API for the specified search term and type.
 
@@ -190,7 +190,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         return metadata_types
 
     def get_query_metadata(
-        self, object_paths: Collection[str], **kwargs: Any
+            self, object_paths: Collection[str], **kwargs: Any
     ) -> TypeResultDict:
         """Retrieves metadata for the object_paths objects.
 
@@ -248,7 +248,7 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         return metadata_dict
 
     def get_all_metadata(
-        self, search_dict: TermTypeResultDict
+            self, search_dict: TermTypeResultDict
     ) -> dict[SearchQuery, TermResultDict]:
         """Retrieves metadata for records contained in input DataFrames.
 

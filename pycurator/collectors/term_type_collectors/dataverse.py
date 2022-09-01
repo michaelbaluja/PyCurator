@@ -11,7 +11,7 @@ from ..base import (
     BaseCollector,
     BaseTermTypeCollector,
 )
-from ..._typing import (
+from pycurator._typing import (
     SearchTerm,
     SearchType,
 )
@@ -38,10 +38,10 @@ class DataverseCollector(BaseTermTypeCollector):
         pass
 
     def __init__(
-        self,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None,
+            self,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
 
         super().__init__(
@@ -86,7 +86,7 @@ class DataverseCollector(BaseTermTypeCollector):
     @BaseCollector.track_indeterminate_progress
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
-        self, search_term: SearchTerm, search_type: SearchType
+            self, search_term: SearchTerm, search_type: SearchType
     ) -> pd.DataFrame:
         """Queries Dataverse API for the specified search term and type.
 

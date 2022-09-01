@@ -13,7 +13,7 @@ from ..base import (
     BaseTermCollector,
 )
 from ..utils.validating import validate_metadata_parameters
-from ..._typing import SearchTerm, TermResultDict
+from pycurator._typing import SearchTerm, TermResultDict
 
 
 class DryadCollector(BaseTermCollector):
@@ -30,9 +30,9 @@ class DryadCollector(BaseTermCollector):
     """
 
     def __init__(
-        self,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        credentials: Optional[bool] = None,
+            self,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            credentials: Optional[bool] = None,
     ) -> None:
 
         super().__init__(
@@ -48,11 +48,11 @@ class DryadCollector(BaseTermCollector):
 
     @BaseCollector.track_indeterminate_progress
     def _conduct_search_over_pages(
-        self,
-        search_url: str,
-        search_params: Any,
-        print_progress: bool = False,
-        delim: Optional[str] = None,
+            self,
+            search_url: str,
+            search_params: Any,
+            print_progress: bool = False,
+            delim: Optional[str] = None,
     ) -> pd.DataFrame:
         """Query records from the Dryad API for given parameters.
 
@@ -167,7 +167,7 @@ class DryadCollector(BaseTermCollector):
         return search_df
 
     def get_query_metadata(
-        self, object_paths: Union[str, Collection[str]], **kwargs: Any
+            self, object_paths: Union[str, Collection[str]], **kwargs: Any
     ) -> pd.DataFrame:
         """Retrieves the metadata for the object_paths objects.
 
