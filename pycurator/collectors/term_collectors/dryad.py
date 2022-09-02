@@ -29,22 +29,17 @@ class DryadCollector(BaseTermCollector):
         {repository_name}: {key}.
     """
 
+    accepts_credentials: bool = True
+    base_url: str = "https://datadryad.org/api/v2"
+    merge_on: str = "version"
+
     def __init__(
             self,
             search_terms: Optional[Collection[SearchTerm]] = None,
             credentials: Optional[bool] = None,
     ) -> None:
 
-        super().__init__(
-            repository_name="dryad", search_terms=search_terms, credentials=credentials
-        )
-
-        self.base_url = "https://datadryad.org/api/v2"
-        self.merge_on = "version"
-
-    @staticmethod
-    def accepts_user_credentials() -> bool:
-        return True
+        super().__init__("dryad", search_terms=search_terms, credentials=credentials)
 
     @BaseCollector.track_indeterminate_progress
     def _conduct_search_over_pages(

@@ -36,6 +36,10 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
         {repository_name}: {key}.
     """
 
+    accepts_credentials: bool = True
+    base_url: str = "https://paperswithcode.com/api/v1"
+    search_type_options: tuple[SearchType, ...] = ("conferences", "datasets", "evaluations", "papers", "tasks")
+
     def __init__(
             self,
             search_terms: Optional[Collection[SearchTerm]] = None,
@@ -43,21 +47,8 @@ class PapersWithCodeCollector(BaseTermTypeCollector):
             credentials: Optional[str] = None,
     ) -> None:
         super().__init__(
-            repository_name="paperswithcode",
-            search_terms=search_terms,
-            search_types=search_types,
-            credentials=credentials,
+            "paperswithcode", search_terms=search_terms, search_types=search_types, credentials=credentials
         )
-        self.base_url = "https://paperswithcode.com/api/v1"
-
-    @staticmethod
-    def accepts_user_credentials() -> bool:
-        return True
-
-    @classmethod
-    @property
-    def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ("conferences", "datasets", "evaluations", "papers", "tasks")
 
     @BaseCollector.track_indeterminate_progress
     def _conduct_search_over_pages(

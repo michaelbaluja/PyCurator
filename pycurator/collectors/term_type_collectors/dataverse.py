@@ -34,8 +34,9 @@ class DataverseCollector(BaseTermTypeCollector):
         {repository_name}: {key}.
     """
 
-    def get_query_metadata(self, object_paths: Collection[str]) -> NoReturn:
-        pass
+    accepts_credentials: bool = True
+    search_type_options: tuple[SearchType, ...] = ("dataset", "file")
+    api_url: str = "https://dataverse.harvard.edu/api"
 
     def __init__(
             self,
@@ -44,26 +45,14 @@ class DataverseCollector(BaseTermTypeCollector):
             credentials: Optional[str] = None,
     ) -> None:
 
-        super().__init__(
-            repository_name="dataverse",
-            search_terms=search_terms,
-            search_types=search_types,
-        )
-
-        self.api_url = "https://dataverse.harvard.edu/api"
+        super().__init__("dataverse", search_terms=search_terms, search_types=search_types)
         self.headers = {}
 
         if credentials:
             self.credentials = self.load_credentials(credential_filepath=credentials)
 
-    @staticmethod
-    def accepts_user_credentials() -> bool:
-        return True
-
-    @classmethod
-    @property
-    def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ("dataset", "file")
+    def get_query_metadata(self, object_paths: Collection[str]) -> NoReturn:
+        pass
 
     def load_credentials(self, credential_filepath: str) -> Union[str, None]:
         """Load the credentials given filepath or token.

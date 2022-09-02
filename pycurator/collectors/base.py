@@ -149,14 +149,6 @@ class BaseCollector(ABC):
         self.status_queue.put("Requesting program termination.")
         sys.exit()
 
-    @staticmethod
-    @abstractmethod
-    def accepts_user_credentials() -> NoReturn:
-        """Abstract placeholder method for repository credential requirements."""
-        raise NotImplementedError(
-            'Subclass must override "accepts_user_credentials()".'
-        )
-
     def _print_progress(self, page: str) -> None:
         """Update queue with current page being searched."""
         self.status_queue.put(f"Searching page {page}")
@@ -244,12 +236,6 @@ class BaseAPICollector(BaseCollector):
                 return credentials
         else:
             raise FileNotFoundError(f"{credential_filepath} does not exist.")
-
-    @staticmethod
-    def accepts_user_credentials() -> NoReturn:
-        raise NotImplementedError(
-            'Subclass must override "accepts_user_credentials()".'
-        )
 
     @staticmethod
     def _all_empty(data_dict: QueryResultDict) -> bool:
@@ -676,15 +662,16 @@ class TypeQueryMixin:
     BaseTypeCollector
     """
 
-    _search_types: tuple[SearchType]
+    _search_types: tuple[SearchType, ...]
+    search_type_options: tuple[SearchType, ...]
 
     @property
-    def search_types(self) -> tuple[SearchType]:
+    def search_types(self) -> tuple[SearchType, ...]:
         """Getter for search_types."""
         return self._search_types
 
     @search_types.setter
-    def search_types(self, search_types: tuple[SearchType]) -> None:
+    def search_types(self, search_types: tuple[SearchType, ...]) -> None:
         """Set search_types if all are allowed by current Collector."""
         if not all(
                 search_type in self.search_type_options for search_type in search_types
@@ -712,13 +699,6 @@ class TypeQueryMixin:
         if search_type not in self.search_type_options:
             raise ValueError(f"Can only search by {self.search_type_options}.")
         return search_type
-
-    @classmethod
-    @property
-    @abstractmethod
-    def search_type_options(cls) -> NoReturn:
-        """Return the valid search type options for a given repository."""
-        raise NotImplementedError('Subclass must override "search_type_options()".')
 
 
 class BaseTermTypeCollector(TermQueryMixin, TypeQueryMixin, BaseAPICollector):
@@ -891,7 +871,7 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
         return self._search_types
 
     @search_types.setter
-    def search_types(self, search_types: tuple[SearchType]) -> None:
+    def search_types(self, search_types: tuple[SearchType, ...]) -> None:
         if not search_types:
             return
         if not all(
@@ -899,13 +879,6 @@ class BaseTypeCollector(TypeQueryMixin, BaseAPICollector):
         ):
             raise ValueError(f"Only {self.search_type_options} search types are valid.")
         self._search_types = search_types
-
-    @classmethod
-    @property
-    @abstractmethod
-    def search_type_options(cls) -> None:
-        """Return the valid search type options for a given repository."""
-        return NotImplementedError
 
     def get_all_search_outputs(self, **kwargs: Any) -> TermResultDict:
         """Queries the API for each search type.

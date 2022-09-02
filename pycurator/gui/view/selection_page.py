@@ -139,7 +139,7 @@ class SelectionPage(page.ViewPage):
         save_frame.grid()
 
         # Get credentials
-        if self.controller.model.collector_class.accepts_user_credentials():
+        if self.controller.model.collector_class.accepts_credentials:
             user_credential_selection = widget_label_frame(
                 frame_master=self.param_frame,
                 label_text="Credentials:",

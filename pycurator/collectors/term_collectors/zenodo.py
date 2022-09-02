@@ -25,19 +25,15 @@ class ZenodoCollector(BaseTermCollector):
         {repository_name}: {key}.
     """
 
+    base_url: str = "https://zenodo.org/api/records"
+    accepts_credentials: bool = True
+
     def __init__(
             self,
             search_terms: Optional[Collection[SearchTerm]] = None,
             credentials: Optional[bool] = None,
     ) -> None:
-        super().__init__(
-            repository_name="zenodo", search_terms=search_terms, credentials=credentials
-        )
-        self.base_url = "https://zenodo.org/api/records"
-
-    @staticmethod
-    def accepts_user_credentials() -> bool:
-        return True
+        super().__init__("zenodo", search_terms=search_terms, credentials=credentials)
 
     @BaseTermCollector.validate_search_term
     @BaseCollector.track_indeterminate_progress

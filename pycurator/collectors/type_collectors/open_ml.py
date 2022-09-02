@@ -26,27 +26,19 @@ class OpenMLCollector(BaseTypeCollector):
         OpenML API key.
     """
 
+    accepts_credentials: bool = True
+    search_type_options: tuple[SearchType, ...] = ("datasets", "runs", "tasks", "evaluations")
+
     def __init__(
-        self,
-        search_types: Optional[Collection[SearchType]] = None,
-        credentials: Optional[str] = None,
+            self,
+            search_types: Optional[Collection[SearchType]] = None,
+            credentials: Optional[str] = None,
     ) -> None:
 
-        super().__init__(repository_name="openml", search_types=search_types)
-
-        self.base_url = None
+        super().__init__("openml", search_types=search_types)
 
         if not openml.config.apikey:
             openml.config.apikey = credentials
-
-    @staticmethod
-    def accepts_user_credentials() -> bool:
-        return True
-
-    @classmethod
-    @property
-    def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ("datasets", "runs", "tasks", "evaluations")
 
     @staticmethod
     def _get_evaluations_search_output() -> pd.DataFrame:
@@ -128,7 +120,7 @@ class OpenMLCollector(BaseTypeCollector):
 
     @BaseTypeCollector.validate_search_type
     def get_query_metadata(
-        self, object_paths: Union[str, Collection[str]], search_type: SearchType
+            self, object_paths: Union[str, Collection[str]], search_type: SearchType
     ) -> pd.DataFrame:
         """Retrieves the metadata for the object_paths objects.
 

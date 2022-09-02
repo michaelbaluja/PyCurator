@@ -35,10 +35,14 @@ class KaggleCollector(BaseTermTypeCollector):
     authentication at https://www.kaggle.com/docs/api.
     """
 
+    search_type_options: tuple[SearchType, ...] = ("datasets", "kernels")
+    merge_on: str = "id"
+    accepts_credentials: bool = False
+
     def __init__(
-        self,
-        search_terms: Optional[Collection[SearchTerm]] = None,
-        search_types: Optional[Collection[SearchType]] = None,
+            self,
+            search_terms: Optional[Collection[SearchTerm]] = None,
+            search_types: Optional[Collection[SearchType]] = None,
     ) -> None:
 
         super().__init__(
@@ -49,23 +53,13 @@ class KaggleCollector(BaseTermTypeCollector):
 
         self.api = KaggleApi()
         self.api.authenticate()
-        self.merge_on = "id"
-
-    @staticmethod
-    def accepts_user_credentials() -> bool:
-        return False
-
-    @classmethod
-    @property
-    def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ("datasets", "kernels")
 
     @BaseCollector.track_indeterminate_progress
     @BaseTermTypeCollector.validate_term_and_type
     def get_individual_search_output(
-        self,
-        search_term: SearchTerm,
-        search_type: SearchType,
+            self,
+            search_term: SearchTerm,
+            search_type: SearchType,
     ) -> pd.DataFrame:
         """Queries the Kaggle API for the specified search term and type.
 
@@ -122,7 +116,7 @@ class KaggleCollector(BaseTermTypeCollector):
         return search_df
 
     def _retrieve_object_json(
-        self, object_path: str, data_path: Optional[str] = f"data{os.sep}"
+            self, object_path: str, data_path: Optional[str] = f"data{os.sep}"
     ) -> Union[JSONDict, None]:
         """Queries the Kaggle API for metadata JSON file.
 
@@ -153,10 +147,10 @@ class KaggleCollector(BaseTermTypeCollector):
             self.api.dataset_metadata(dataset=object_path, path=data_path)
         except (TypeError, ApiException) as invalid_query_response:
             if (
-                isinstance(invalid_query_response, ApiException)
-                and invalid_query_response.status != 404
-                and "bigquery"
-                not in invalid_query_response.headers["Turbolinks-Location"]
+                    isinstance(invalid_query_response, ApiException)
+                    and invalid_query_response.status != 404
+                    and "bigquery"
+                    not in invalid_query_response.headers["Turbolinks-Location"]
             ):
                 raise invalid_query_response
         else:
@@ -169,8 +163,8 @@ class KaggleCollector(BaseTermTypeCollector):
         return json_data
 
     def get_query_metadata(
-        self,
-        object_paths: Collection[str],
+            self,
+            object_paths: Collection[str],
     ) -> pd.DataFrame:
         """Retrieves the metadata for the object_paths objects.
 

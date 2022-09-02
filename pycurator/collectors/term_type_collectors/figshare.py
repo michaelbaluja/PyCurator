@@ -29,33 +29,22 @@ class FigshareCollector(BaseTermTypeCollector):
         {repository_name}: {key}.
     """
 
+    accepts_credentials: bool = True
+    base_url: str = "https://api.figshare.com/v2"
+    merge_on: str = "id"
+    search_type_options: tuple[SearchType, ...] = ("articles", "collections", "projects")
+
     def __init__(
             self,
             search_terms: Optional[Collection[SearchTerm]] = None,
             search_types: Optional[Collection[SearchType]] = None,
             credentials: Optional[str] = None,
     ) -> None:
-        super().__init__(
-            repository_name="figshare",
-            search_terms=search_terms,
-            search_types=search_types,
-            credentials=None,
-        )
-        self.base_url = "https://api.figshare.com/v2"
-        self.merge_on = "id"
+        super().__init__("figshare", search_terms=search_terms, search_types=search_types)
         self.headers = {}
 
         if credentials:
             self.credentials = self.load_credentials(credential_filepath=credentials)
-
-    @staticmethod
-    def accepts_user_credentials() -> bool:
-        return True
-
-    @classmethod
-    @property
-    def search_type_options(cls) -> tuple[SearchType, ...]:
-        return ("articles", "collections", "projects")
 
     def load_credentials(self, credential_filepath: str) -> Union[str, None]:
         """Load the credentials given filepath or token.

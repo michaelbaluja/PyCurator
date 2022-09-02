@@ -1,2 +1,2 @@
-import gui
-import collectors
+from . import collectors
+from . import gui
