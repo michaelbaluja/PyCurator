@@ -1,0 +1,569 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pycurator.collectors.term_collectors.dryad &#8212; PyCurator 0.1.2 documentation</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">PyCurator 0.1.2 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../../../api.html">
+   API
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../../collectors/index.html">
+     Collector Methods
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../../../collectors/term_collectors/index.html">
+       Term Collectors
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+      <label for="toctree-checkbox-3">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../../collectors/term_collectors/pycurator.collectors.term_collectors.DryadCollector.html">
+         pycurator.collectors.term_collectors.DryadCollector
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../../collectors/term_collectors/pycurator.collectors.term_collectors.ZenodoCollector.html">
+         pycurator.collectors.term_collectors.ZenodoCollector
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../../../collectors/type_collectors/index.html">
+       Type Collectors
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+      <label for="toctree-checkbox-4">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../../collectors/type_collectors/pycurator.collectors.type_collectors.OpenMLCollector.html">
+         pycurator.collectors.type_collectors.OpenMLCollector
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../../../collectors/term_type_collectors/index.html">
+       Term and Type Collectors
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+      <label for="toctree-checkbox-5">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../../collectors/term_type_collectors/pycurator.collectors.term_type_collectors.DataverseCollector.html">
+         pycurator.collectors.term_type_collectors.DataverseCollector
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../../collectors/term_type_collectors/pycurator.collectors.term_type_collectors.FigshareCollector.html">
+         pycurator.collectors.term_type_collectors.FigshareCollector
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../../collectors/term_type_collectors/pycurator.collectors.term_type_collectors.KaggleCollector.html">
+         pycurator.collectors.term_type_collectors.KaggleCollector
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../../collectors/term_type_collectors/pycurator.collectors.term_type_collectors.PapersWithCodeCollector.html">
+         pycurator.collectors.term_type_collectors.PapersWithCodeCollector
+        </a>
+       </li>
+      </ul>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../../../extensions/index.html">
+   Extending
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+  <label for="toctree-checkbox-6">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../../extensions/_autosummary/pycurator.collectors.base.BaseAPICollector.html">
+     pycurator.collectors.base.BaseAPICollector
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../../extensions/_autosummary/pycurator.collectors.base.BaseTermCollector.html">
+     pycurator.collectors.base.BaseTermCollector
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../../extensions/_autosummary/pycurator.collectors.base.BaseTermTypeCollector.html">
+     pycurator.collectors.base.BaseTermTypeCollector
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../../extensions/_autosummary/pycurator.collectors.base.BaseTypeCollector.html">
+     pycurator.collectors.base.BaseTypeCollector
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../usage.html">
+   Getting Started
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <h1>Source code for pycurator.collectors.term_collectors.dryad</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module for collecting data from Dryad repository.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">..base</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseCollector</span><span class="p">,</span>
+    <span class="n">BaseTermCollector</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">..utils.validating</span> <span class="kn">import</span> <span class="n">validate_metadata_parameters</span>
+<span class="kn">from</span> <span class="nn">pycurator._typing</span> <span class="kn">import</span> <span class="n">SearchTerm</span><span class="p">,</span> <span class="n">TermResultDict</span>
+
+
+<div class="viewcode-block" id="DryadCollector"><a class="viewcode-back" href="../../../../collectors/term_collectors/pycurator.collectors.term_collectors.DryadCollector.html#pycurator.collectors.term_collectors.DryadCollector">[docs]</a><span class="k">class</span> <span class="nc">DryadCollector</span><span class="p">(</span><span class="n">BaseTermCollector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;DataDryad collector for search term queries.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    search_terms : list-like, optional</span>
+<span class="sd">        Terms to search over. Can be (re)set via set_search_terms()</span>
+<span class="sd">        or passed in directly to search functions.</span>
+<span class="sd">    credentials : str, optional (default=None)</span>
+<span class="sd">        JSON filepath containing credentials in form</span>
+<span class="sd">        {repository_name}: {key}.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">accepts_credentials</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;https://datadryad.org/api/v2&quot;</span>
+    <span class="n">merge_on</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;version&quot;</span>
+
+<div class="viewcode-block" id="DryadCollector.__init__"><a class="viewcode-back" href="../../../../collectors/term_collectors/pycurator.collectors.term_collectors.DryadCollector.html#pycurator.collectors.term_collectors.DryadCollector.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">search_terms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">SearchTerm</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">credentials</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;dryad&quot;</span><span class="p">,</span> <span class="n">search_terms</span><span class="o">=</span><span class="n">search_terms</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">)</span></div>
+
+    <span class="nd">@BaseCollector</span><span class="o">.</span><span class="n">track_indeterminate_progress</span>
+    <span class="k">def</span> <span class="nf">_conduct_search_over_pages</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">search_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">search_params</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+            <span class="n">print_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">delim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Query records from the Dryad API for given parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        search_url : str</span>
+<span class="sd">        search_params : dict</span>
+<span class="sd">            Contains parameters to pass to requests.get({params}).</span>
+<span class="sd">            Most common include search term &#39;q&#39;, and page index &#39;page&#39;.</span>
+<span class="sd">            For full details, see the Notes.</span>
+<span class="sd">        print_progress : bool, optional (default=False)</span>
+<span class="sd">            If True, updates on query page progress is sent to object</span>
+<span class="sd">            queue to be displayed in UI window.</span>
+<span class="sd">        delim : bool, optional (default=None)</span>
+<span class="sd">            Key to grab results from query response JSON. If None,</span>
+<span class="sd">            entire JSON return is considered as the data results.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        search_df : pandas.DataFrame</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Dryad allows the following parameters when querying the noted</span>
+<span class="sd">        record type.</span>
+
+<span class="sd">        Datasets:</span>
+<span class="sd">        page : int, optional</span>
+<span class="sd">            Page to search over.</span>
+<span class="sd">        per_page : int, optional</span>
+<span class="sd">            Number of results per page.</span>
+<span class="sd">        q : str, optional</span>
+<span class="sd">            Term to query for.</span>
+<span class="sd">        affiliation : str, optional</span>
+<span class="sd">            ROR identifier to require in a dataset&#39;s authors.</span>
+<span class="sd">        tenant : str, optional</span>
+<span class="sd">            Tenant organization in Dryad. Ignored if affiliation given.</span>
+<span class="sd">        modifiedSince : str, optional</span>
+<span class="sd">            An ISO 8601 UTC timestamp for limiting results.</span>
+
+<span class="sd">        Files of a dataset version:</span>
+<span class="sd">        id : int</span>
+<span class="sd">            Version ID of the dataset.</span>
+<span class="sd">        page : int, optional</span>
+<span class="sd">            As above.</span>
+<span class="sd">        per_page : int, optional</span>
+<span class="sd">            As above.</span>
+
+<span class="sd">        When searching for file metadata, only id, as described above,</span>
+<span class="sd">        is allowed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">search_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">print_progress</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_query_ref</span><span class="p">(</span>
+                <span class="n">search_term</span><span class="o">=</span><span class="n">search_params</span><span class="p">[</span><span class="s2">&quot;q&quot;</span><span class="p">],</span> <span class="n">page</span><span class="o">=</span><span class="n">search_params</span><span class="p">[</span><span class="s2">&quot;page&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_output</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">search_url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">search_params</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="n">output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">):</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;_embedded&quot;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">delim</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">delim</span><span class="p">]</span>
+
+            <span class="n">output_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+            <span class="n">output_df</span><span class="p">[</span><span class="s2">&quot;page&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">search_params</span><span class="p">[</span><span class="s2">&quot;page&quot;</span><span class="p">]</span>
+
+            <span class="n">search_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">search_df</span><span class="p">,</span> <span class="n">output_df</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">search_params</span><span class="p">[</span><span class="s2">&quot;page&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">print_progress</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update_query_ref</span><span class="p">(</span>
+                    <span class="n">search_term</span><span class="o">=</span><span class="n">search_params</span><span class="p">[</span><span class="s2">&quot;q&quot;</span><span class="p">],</span> <span class="n">page</span><span class="o">=</span><span class="n">search_params</span><span class="p">[</span><span class="s2">&quot;page&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_output</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">search_url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">search_params</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">search_df</span>
+
+    <span class="nd">@BaseTermCollector</span><span class="o">.</span><span class="n">validate_search_term</span>
+    <span class="k">def</span> <span class="nf">get_individual_search_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_term</span><span class="p">:</span> <span class="n">SearchTerm</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns information about all datasets from DataDryad.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        search_term : str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        search_df : pandas.DataFrame</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            Incorrect search_term type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">search_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/search&quot;</span>
+        <span class="n">search_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="n">search_term</span><span class="p">,</span> <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;per_page&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}</span>
+
+        <span class="n">search_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conduct_search_over_pages</span><span class="p">(</span>
+            <span class="n">search_url</span><span class="o">=</span><span class="n">search_url</span><span class="p">,</span>
+            <span class="n">search_params</span><span class="o">=</span><span class="n">search_params</span><span class="p">,</span>
+            <span class="n">print_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">delim</span><span class="o">=</span><span class="s2">&quot;stash:datasets&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add dataset-specific version id for metadata querying</span>
+        <span class="n">search_df</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_version_ids</span><span class="p">(</span><span class="n">search_df</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">search_df</span>
+
+    <span class="k">def</span> <span class="nf">get_query_metadata</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">object_paths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Retrieves the metadata for the object_paths objects.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        object_paths : str or collection of str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        metadata_df : pandas.DataFrame</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If no object paths are provided.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">object_paths</span> <span class="o">=</span> <span class="n">validate_metadata_parameters</span><span class="p">(</span><span class="n">object_paths</span><span class="p">)</span>
+
+        <span class="n">start_page</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">metadata_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">object_path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_determinate_progress</span><span class="p">(</span><span class="n">object_paths</span><span class="p">):</span>
+            <span class="n">search_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/versions/</span><span class="si">{</span><span class="n">object_path</span><span class="si">}</span><span class="s2">/files&quot;</span>
+            <span class="n">search_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="n">start_page</span><span class="p">}</span>
+
+            <span class="n">object_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conduct_search_over_pages</span><span class="p">(</span>
+                <span class="n">search_url</span><span class="o">=</span><span class="n">search_url</span><span class="p">,</span>
+                <span class="n">search_params</span><span class="o">=</span><span class="n">search_params</span><span class="p">,</span>
+                <span class="n">delim</span><span class="o">=</span><span class="s2">&quot;stash:files&quot;</span><span class="p">,</span>
+                <span class="n">print_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">object_df</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">object_path</span>
+            <span class="n">object_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s2">&quot;page&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">search_params</span><span class="p">[</span><span class="s2">&quot;page&quot;</span><span class="p">]</span>
+            <span class="n">metadata_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">metadata_df</span><span class="p">,</span> <span class="n">object_df</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">metadata_df</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extract_version_ids</span><span class="p">(</span><span class="n">version_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Retrieve ids from DataFrame entries.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">version_df</span><span class="p">[</span><span class="s2">&quot;_links&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">entry</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stash:version&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;href&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_all_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_dict</span><span class="p">:</span> <span class="n">TermResultDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TermResultDict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Retrieves metadata for records contained in input DataFrames.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        search_dict : dict</span>
+<span class="sd">            Dictionary of DataFrames from get_all_search_outputs.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        metadata_dict : dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">object_path_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">query</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_version_ids</span><span class="p">(</span><span class="n">version_df</span><span class="o">=</span><span class="n">query_df</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">query</span><span class="p">,</span> <span class="n">query_df</span> <span class="ow">in</span> <span class="n">search_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_metadata_from_paths</span><span class="p">(</span><span class="n">object_path_dict</span><span class="p">)</span></div>
+</pre></div>
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By Michael Baluja<br/>
+  
+      &copy; Copyright 2022, Michael Baluja.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

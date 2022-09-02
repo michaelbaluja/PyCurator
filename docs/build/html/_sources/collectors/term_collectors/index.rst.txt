@@ -1,0 +1,13 @@
+Term Collectors
+===============
+
+Term Collectors in PyCurator are designed for repository APIs that only allow querying via a search term.
+
+.. currentmodule:: pycurator.collectors.term_collectors
+
+.. autosummary::
+    :recursive:
+    :toctree:
+
+    DryadCollector
+    ZenodoCollector

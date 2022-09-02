@@ -1,0 +1,6 @@
+Dataverse Collector
+===================
+
+.. toctree::
+
+    get_all_metadata

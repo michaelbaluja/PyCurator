@@ -1,0 +1,1260 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pycurator.collectors.base &#8212; PyCurator 0.1.2 documentation</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">PyCurator 0.1.2 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../../api.html">
+   API
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../collectors/index.html">
+     Collector Methods
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../../collectors/term_collectors/index.html">
+       Term Collectors
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+      <label for="toctree-checkbox-3">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../collectors/term_collectors/pycurator.collectors.term_collectors.DryadCollector.html">
+         pycurator.collectors.term_collectors.DryadCollector
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../collectors/term_collectors/pycurator.collectors.term_collectors.ZenodoCollector.html">
+         pycurator.collectors.term_collectors.ZenodoCollector
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../../collectors/type_collectors/index.html">
+       Type Collectors
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+      <label for="toctree-checkbox-4">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../collectors/type_collectors/pycurator.collectors.type_collectors.OpenMLCollector.html">
+         pycurator.collectors.type_collectors.OpenMLCollector
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toctree-l3 has-children">
+      <a class="reference internal" href="../../../collectors/term_type_collectors/index.html">
+       Term and Type Collectors
+      </a>
+      <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+      <label for="toctree-checkbox-5">
+       <i class="fas fa-chevron-down">
+       </i>
+      </label>
+      <ul>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../collectors/term_type_collectors/pycurator.collectors.term_type_collectors.DataverseCollector.html">
+         pycurator.collectors.term_type_collectors.DataverseCollector
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../collectors/term_type_collectors/pycurator.collectors.term_type_collectors.FigshareCollector.html">
+         pycurator.collectors.term_type_collectors.FigshareCollector
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../collectors/term_type_collectors/pycurator.collectors.term_type_collectors.KaggleCollector.html">
+         pycurator.collectors.term_type_collectors.KaggleCollector
+        </a>
+       </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../../../collectors/term_type_collectors/pycurator.collectors.term_type_collectors.PapersWithCodeCollector.html">
+         pycurator.collectors.term_type_collectors.PapersWithCodeCollector
+        </a>
+       </li>
+      </ul>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../../extensions/index.html">
+   Extending
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+  <label for="toctree-checkbox-6">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseAPICollector.html">
+     pycurator.collectors.base.BaseAPICollector
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTermCollector.html">
+     pycurator.collectors.base.BaseTermCollector
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTermTypeCollector.html">
+     pycurator.collectors.base.BaseTermTypeCollector
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTypeCollector.html">
+     pycurator.collectors.base.BaseTypeCollector
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../usage.html">
+   Getting Started
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <h1>Source code for pycurator.collectors.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module containing abstract base for PyCurator collector classes.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">queue</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Collection</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Generator</span><span class="p">,</span>
+    <span class="n">Iterable</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">AnyStr</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">from</span> <span class="nn">.utils.saving</span> <span class="kn">import</span> <span class="n">save_results</span>
+<span class="kn">from</span> <span class="nn">.utils.validating</span> <span class="kn">import</span> <span class="n">is_all_type</span><span class="p">,</span> <span class="n">validate_from_arguments</span>
+<span class="kn">from</span> <span class="nn">pycurator._typing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">JSONDict</span><span class="p">,</span>
+    <span class="n">SearchTerm</span><span class="p">,</span>
+    <span class="n">SearchType</span><span class="p">,</span>
+    <span class="n">SearchTuple</span><span class="p">,</span>
+    <span class="n">TermResultDict</span><span class="p">,</span>
+    <span class="n">TermTypeResultDict</span><span class="p">,</span>
+    <span class="n">QueryResultDict</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+<span class="n">P</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">BaseCollector</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic abstract base for data-collection classes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    repository_name : str</span>
+<span class="sd">        Name of the repository being collected from. Used for providing</span>
+<span class="sd">        updates to user, loading credentials, and saving output results.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    continue_running : bool</span>
+<span class="sd">        Flag when the collector completes a run. Used for pushing</span>
+<span class="sd">        updates from the object&#39;s status_queue.</span>
+<span class="sd">    current_query_ref : str or None (default=None)</span>
+<span class="sd">        Representation of the current state of the collector run.</span>
+<span class="sd">    num_queries : int or bool or None (default=None)</span>
+<span class="sd">        Number of queries for a given run.</span>
+<span class="sd">        If there is no fixed number, such as for paginated queries, the</span>
+<span class="sd">        variable is True.</span>
+<span class="sd">    queries_completed : int or None (default=None)</span>
+<span class="sd">    status_queue : queue.Queue of str</span>
+<span class="sd">        FIFO collection of the object&#39;s status.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    queue.Queue : Queue data structure</span>
+<span class="sd">    BaseAPICollector : Derived Class for API queries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repository_name</span> <span class="o">=</span> <span class="n">repository_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">continue_running</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queries_completed</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_query_ref</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">track_determinate_progress</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">coll</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Generator for iterating data and updating progress bar.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coll : iterable</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        next object of coll</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            coll parameter is not iterable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">coll</span><span class="p">,</span> <span class="s2">&quot;__iter__&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Parameter &quot;coll&quot; must be iterable.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Initialize tracking vars</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">coll</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queries_completed</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Yield next item in coll and update tracking vars</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">coll</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_query_ref</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">item</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queries_completed</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Reset tracking vars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queries_completed</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_query_ref</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_save_results</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">final_dict</span><span class="p">:</span> <span class="n">QueryResultDict</span><span class="p">,</span> <span class="n">output_format</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Helper function for saving results and reporting status to UI.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Saving output to &quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s1">&quot;.&#39;</span><span class="p">)</span>
+        <span class="n">save_results</span><span class="p">(</span><span class="n">results</span><span class="o">=</span><span class="n">final_dict</span><span class="p">,</span> <span class="n">data_dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="n">output_format</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;Save complete.&quot;</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Abstract placeholder method for collector run.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Subclass must override &quot;run()&quot;.&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">track_indeterminate_progress</span><span class="p">(</span>
+            <span class="n">indeterminate_query_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Progress bar wrapper for indeterminate-length queries.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">update_pb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">indeterminate_query_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="n">results</span>
+
+        <span class="k">return</span> <span class="n">update_pb</span>
+
+    <span class="k">def</span> <span class="nf">request_execution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Raise flag to stop output.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">continue_running</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Handle program execution.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;Requesting program termination.&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_print_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Update queue with current page being searched.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Searching page </span><span class="si">{</span><span class="n">page</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_query_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Combine keywords and update base.current_query_ref.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_query_ref</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+
+<div class="viewcode-block" id="BaseAPICollector"><a class="viewcode-back" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseAPICollector.html#pycurator.collectors.base.BaseAPICollector">[docs]</a><span class="k">class</span> <span class="nc">BaseAPICollector</span><span class="p">(</span><span class="n">BaseCollector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base for collection classes utilizing external API.</span>
+
+<span class="sd">    This base inherits from BaseCollector, which provides general</span>
+<span class="sd">    parameters for tracking collection progress.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    repository_name : str</span>
+<span class="sd">        Name of the repository being collected from. Used for providing</span>
+<span class="sd">        updates to user, loading credentials, and saving output results.</span>
+<span class="sd">    credentials : str, optional (default=None)</span>
+<span class="sd">        JSON filepath containing credentials in form</span>
+<span class="sd">        {repository_name}: {key}.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    credentials : str</span>
+<span class="sd">        Refer to credentials parameter.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    BaseTermCollector</span>
+<span class="sd">    BaseTermTypeCollector</span>
+<span class="sd">    BaseTypeCollector</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BaseAPICollector.__init__"><a class="viewcode-back" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseAPICollector.html#pycurator.collectors.base.BaseAPICollector.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">credentials</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">repository_name</span><span class="o">=</span><span class="n">repository_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">credentials</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">credentials</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_credentials</span><span class="p">(</span><span class="n">credential_filepath</span><span class="o">=</span><span class="n">credentials</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">load_credentials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">credential_filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Load the credential file from the given filepath.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        credential_filepath : str or path-like object</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        credentials : str or None</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If credential_filepath is not of type str.</span>
+<span class="sd">        FileNotFoundError</span>
+<span class="sd">            Credentials file does not exist.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        os.path : Module for functions on pathnames.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">credential_filepath</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Credential value must be of type str, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;not &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">credential_filepath</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Try to load credentials from file</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">credential_filepath</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">credential_filepath</span><span class="p">)</span> <span class="k">as</span> <span class="n">credential_file</span><span class="p">:</span>
+                <span class="n">credential_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">credential_file</span><span class="p">)</span>
+
+                <span class="n">credentials</span> <span class="o">=</span> <span class="n">credential_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repository_name</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">credentials</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                        <span class="s2">&quot;No credentials found, attempting unauthorized run.&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">return</span> <span class="n">credentials</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">credential_filepath</span><span class="si">}</span><span class="s2"> does not exist.&quot;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_all_empty</span><span class="p">(</span><span class="n">data_dict</span><span class="p">:</span> <span class="n">QueryResultDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Check if all DataFrames are empty.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_dict : dict from search params to pandas.DataFrame.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        all_empty : bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">data_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Queries all data from the implemented API.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Can temporarily overwrite base attributes.</span>
+<span class="sd">            Allows users to specify variable save parameters.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        In the following order, this function calls:</span>
+<span class="sd">            get_all_search_outputs</span>
+<span class="sd">            get_all_metadata (if applicable)</span>
+<span class="sd">            merge_search_and_metadata_dicts (if applicable)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">repository_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Set save parameters</span>
+        <span class="n">save_dir</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">save_type</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;save_type&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Get search_output</span>
+            <span class="n">search_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_search_outputs</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="c1"># Set merge parameters</span>
+            <span class="n">merge_on</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;merge_on&quot;</span><span class="p">)</span>
+            <span class="n">merge_right_on</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;merge_right_on&quot;</span><span class="p">)</span>
+            <span class="n">merge_left_on</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;merge_left_on&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Try to get metadata (if available)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">metadata_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_metadata</span><span class="p">(</span><span class="n">search_dict</span><span class="o">=</span><span class="n">search_dict</span><span class="p">)</span>
+                <span class="n">merged_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_search_and_metadata_dicts</span><span class="p">(</span>
+                    <span class="n">search_dict</span><span class="o">=</span><span class="n">search_dict</span><span class="p">,</span>
+                    <span class="n">metadata_dict</span><span class="o">=</span><span class="n">metadata_dict</span><span class="p">,</span>
+                    <span class="n">on</span><span class="o">=</span><span class="n">merge_on</span><span class="p">,</span>
+                    <span class="n">left_on</span><span class="o">=</span><span class="n">merge_left_on</span><span class="p">,</span>
+                    <span class="n">right_on</span><span class="o">=</span><span class="n">merge_right_on</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">final_dict</span> <span class="o">=</span> <span class="n">merged_dict</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># Function with incorrect parameters</span>
+                <span class="n">final_dict</span> <span class="o">=</span> <span class="n">search_dict</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">unexpected_error</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;An unexpected error has occurred: </span><span class="se">\n</span><span class="si">{</span><span class="n">unexpected_error</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">continue_running</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Handle saving if output exists</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all_empty</span><span class="p">(</span><span class="n">final_dict</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">save_dir</span> <span class="ow">and</span> <span class="n">save_type</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_save_results</span><span class="p">(</span>
+                    <span class="n">save_dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">final_dict</span><span class="o">=</span><span class="n">final_dict</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="n">save_type</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;No results found, nothing to save.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">repository_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> run complete.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">continue_running</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">get_all_search_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Abstract placeholder method for returning search outputs.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Subclass must override &quot;get_all_search_outputs()&quot;.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_all_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_dict</span><span class="p">:</span> <span class="n">QueryResultDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Abstract placeholder method for returning metadata.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Subclass must override &quot;get_all_metadata()&quot;.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_request_output_and_update_query_ref</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">url</span><span class="p">:</span> <span class="n">AnyStr</span><span class="p">,</span>
+            <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">headers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">ref_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">,</span> <span class="n">JSONDict</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Return request output and update base.current_query_ref.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        url : str</span>
+<span class="sd">        params : dict, optional (default=None)</span>
+<span class="sd">        headers : dict, optional (default=None)</span>
+<span class="sd">        **ref_kwargs : dict, optional</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        base.get_request_output(url, params, headers)</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        _update_query_ref</span>
+<span class="sd">        get_request_output</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_query_ref</span><span class="p">(</span><span class="o">**</span><span class="n">ref_kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_output</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_request_output</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="n">AnyStr</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">,</span> <span class="n">JSONDict</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Return Response and JSON from requests.get().</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        url : str</span>
+<span class="sd">        params : dict or list of tuples or bytes, optional</span>
+<span class="sd">                (default=None)</span>
+<span class="sd">            Dictionary, list of types or bytes to send in the query</span>
+<span class="sd">            string for the Request.</span>
+<span class="sd">        headers : dict, optional (default=None)</span>
+<span class="sd">            Dictionary of headers to send with the Request.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        r : requests.Response</span>
+<span class="sd">        output : dict</span>
+<span class="sd">            JSON-encoded content of a response.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        RuntimeError</span>
+<span class="sd">            Occurs when a query results in an un-parsable response.</span>
+<span class="sd">            Outputs the parameters provided to the query along with the</span>
+<span class="sd">            response status code for further troubleshooting.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        requests.get : Sends a GET request.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># If user has requested termination, handle cleanup instead of querying</span>
+        <span class="c1"># additional results</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">continue_running</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+
+        <span class="n">request_obj</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">request_obj</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">invalid_json</span><span class="p">:</span>
+            <span class="c1"># 429: Rate limiting (wait and then try the request again)</span>
+            <span class="k">if</span> <span class="n">request_obj</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">429</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;Rate limit hit, waiting for request...&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Wait until we can make another request</span>
+                <span class="n">reset_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request_obj</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;RateLimit-Reset&quot;</span><span class="p">])</span>
+                <span class="n">current_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">reset_time</span> <span class="o">-</span> <span class="n">current_time</span><span class="p">)</span>
+
+                <span class="n">request_obj</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_request_output</span><span class="p">(</span>
+                    <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Query to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2"> params and </span><span class="si">{</span><span class="n">headers</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; headers fails unexpectedly with status&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; code </span><span class="si">{</span><span class="n">request_obj</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> and full output </span><span class="si">{</span><span class="nb">vars</span><span class="p">(</span><span class="n">request_obj</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="p">)</span> <span class="kn">from</span> <span class="nn">invalid_json</span>
+
+        <span class="k">return</span> <span class="n">request_obj</span><span class="p">,</span> <span class="n">output</span>
+
+    <span class="k">def</span> <span class="nf">merge_search_and_metadata_dicts</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">search_dict</span><span class="p">:</span> <span class="n">QueryResultDict</span><span class="p">,</span>
+            <span class="n">metadata_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QueryResultDict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Merges together search and metadata DataFrames by &#39;on&#39; key.</span>
+
+<span class="sd">        For multiple DataFrames containing similar search references,</span>
+<span class="sd">        combines into one DataFrame. Search and Metadata DataFrames are</span>
+<span class="sd">        merged across their respective dictionaries via common keys.</span>
+<span class="sd">        For Search DataFrames with no matching Metadata, the Search</span>
+<span class="sd">        DataFrame is added as-is.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        search_dict : dict of pandas.DataFrame</span>
+<span class="sd">            Dictionary of search output results.</span>
+<span class="sd">        metadata_dict : dict of pandas.DataFrame</span>
+<span class="sd">            Dictionary of metadata results.</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Additional keyword arguments to pass to merge.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        df_dict : dict of pandas.DataFrame</span>
+<span class="sd">            Dict containing all the merged search/metadata DataFrames</span>
+<span class="sd">            or singleton search DataFrames.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            search_dict or metadata_dict are not instances of dict.</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            search_dict or metadata_dict contain entries that are not of</span>
+<span class="sd">            type pandas.DataFrame.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        pandas.merge</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;search_dict must be of type dict, not &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">search_dict</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;metadata_dict must be of type dict, not &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">metadata_dict</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_all_type</span><span class="p">(</span><span class="n">search_dict</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;All search_dict entries must be of type pandas.DataFrame.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_all_type</span><span class="p">(</span><span class="n">metadata_dict</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;All metadata_dict entries must be of type pandas.DataFrame.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">df_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">query_key</span> <span class="ow">in</span> <span class="n">search_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">search_df</span> <span class="o">=</span> <span class="n">search_dict</span><span class="p">[</span><span class="n">query_key</span><span class="p">]</span>
+
+            <span class="c1"># If the search DataFrame has matching metadata, merge</span>
+            <span class="k">if</span> <span class="n">query_key</span> <span class="ow">in</span> <span class="n">metadata_dict</span><span class="p">:</span>
+                <span class="n">metadata_df</span> <span class="o">=</span> <span class="n">metadata_dict</span><span class="p">[</span><span class="n">query_key</span><span class="p">]</span>
+                <span class="n">df_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+                    <span class="n">left</span><span class="o">=</span><span class="n">search_df</span><span class="o">.</span><span class="n">convert_dtypes</span><span class="p">(),</span>
+                    <span class="n">right</span><span class="o">=</span><span class="n">metadata_df</span><span class="o">.</span><span class="n">convert_dtypes</span><span class="p">(),</span>
+                    <span class="n">how</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">,</span>
+                    <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;_search&quot;</span><span class="p">,</span> <span class="s2">&quot;_metadata&quot;</span><span class="p">),</span>
+                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="c1"># If no metadata, just add the search_df</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">df_all</span> <span class="o">=</span> <span class="n">search_df</span>
+
+            <span class="n">df_dict</span><span class="p">[</span><span class="n">query_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_all</span>
+
+        <span class="k">return</span> <span class="n">df_dict</span></div>
+
+
+<span class="k">class</span> <span class="nc">TermQueryMixin</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Mixin for API collection classes that utilize search terms.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    BaseTermCollector</span>
+<span class="sd">    BaseTermTypeCollector</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_search_terms</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">SearchTerm</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">search_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Collection</span><span class="p">[</span><span class="n">SearchTerm</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Property method for search terms.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search_terms</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">validate_search_term</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Decorator for validating search term object type.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">validate_from_arguments</span><span class="p">(</span>
+                <span class="n">validator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">,</span>
+                <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="n">param</span><span class="o">=</span><span class="s2">&quot;search_term&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inner</span>
+
+    <span class="nd">@search_terms</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">search_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_terms</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">SearchTerm</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_terms</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">search_terms</span> <span class="o">=</span> <span class="p">[</span><span class="n">search_terms</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_all_type</span><span class="p">(</span><span class="n">search_terms</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;All search terms must be of type str.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_search_terms</span> <span class="o">=</span> <span class="n">search_terms</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="n">search_term</span><span class="p">:</span> <span class="n">SearchTerm</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchTerm</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Validate type of search_term.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_term</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;search_term must be of type str, not&quot;</span> <span class="sa">f</span><span class="s2">&quot; &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">search_term</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">search_term</span>
+
+
+<div class="viewcode-block" id="BaseTermCollector"><a class="viewcode-back" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTermCollector.html#pycurator.collectors.base.BaseTermCollector">[docs]</a><span class="k">class</span> <span class="nc">BaseTermCollector</span><span class="p">(</span><span class="n">TermQueryMixin</span><span class="p">,</span> <span class="n">BaseAPICollector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base for API collection classes that utilize search terms.</span>
+
+<span class="sd">    This base inherits from BaseAPICollector, which provides credential</span>
+<span class="sd">    info, as well as general parameters for tracking collection</span>
+<span class="sd">    progress, inherited from BaseCollector.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    repository_name : str</span>
+<span class="sd">        Name of the repository being collected from. Used for providing</span>
+<span class="sd">        updates to user, loading credentials, and saving output results.</span>
+<span class="sd">    search_terms : list-like, optional (default=None)</span>
+<span class="sd">        Terms to search over. Can be (re)set via set_search_terms() or</span>
+<span class="sd">        passed in directly to search functions to override set parameter.</span>
+<span class="sd">    credentials : str, optional (default=None)</span>
+<span class="sd">        JSON filepath containing credentials in form</span>
+<span class="sd">        {repository_name}: {key}.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    search_terms : list of str</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    pycurator.collectors.term_collectors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BaseTermCollector.__init__"><a class="viewcode-back" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTermCollector.html#pycurator.collectors.base.BaseTermCollector.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">repository_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">search_terms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">SearchTerm</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">credentials</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">repository_name</span><span class="o">=</span><span class="n">repository_name</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">search_terms</span> <span class="o">=</span> <span class="n">search_terms</span></div>
+
+    <span class="k">def</span> <span class="nf">get_all_search_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TermResultDict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Queries the API for each search term.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Can temporarily overwrite self search_terms.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        search_dict : dict of pandas.DataFrame</span>
+<span class="sd">            Stores the results of each call to</span>
+<span class="sd">            get_individual_search_output in the form</span>
+<span class="sd">            search_dict[{search_term}] = df.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Set method variables if different than default values</span>
+        <span class="n">search_terms</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;search_terms&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_terms</span><span class="p">)</span>
+
+        <span class="n">search_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">search_term</span> <span class="ow">in</span> <span class="n">search_terms</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Searching </span><span class="si">{</span><span class="n">search_term</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="n">search_dict</span><span class="p">[</span><span class="n">search_term</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_individual_search_output</span><span class="p">(</span>
+                <span class="n">search_term</span><span class="o">=</span><span class="n">search_term</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;Search completed.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">search_dict</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_individual_search_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_term</span><span class="p">:</span> <span class="n">SearchTerm</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Abstract placeholder method for search output.&quot;&quot;&quot;</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_get_metadata_from_paths</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">object_path_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SearchTerm</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TermResultDict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Retrieves all metadata related to the provided DataFrames.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        object_path_dict : dict</span>
+<span class="sd">            Dictionary of the form {query: object_paths} for path lists.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        metadata_dict : dict of {SearchTerm: pd.DataFrame}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">metadata_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">query</span><span class="p">,</span> <span class="n">object_paths</span> <span class="ow">in</span> <span class="n">object_path_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Querying </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2"> metadata.&quot;</span><span class="p">)</span>
+            <span class="n">metadata_dict</span><span class="p">[</span><span class="n">query</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_query_metadata</span><span class="p">(</span><span class="n">object_paths</span><span class="o">=</span><span class="n">object_paths</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;Metadata query complete.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">metadata_dict</span>
+
+    <span class="k">def</span> <span class="nf">get_query_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">object_paths</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Placeholder method for query metadata retrieval.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Subclass must override &quot;get_query_metadata()&quot;.&#39;</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">TypeQueryMixin</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Mixin for API collection classes that utilize search types.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    BaseTermTypeCollector</span>
+<span class="sd">    BaseTypeCollector</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_search_types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SearchType</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">search_type_options</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SearchType</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">search_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SearchType</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Getter for search_types.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search_types</span>
+
+    <span class="nd">@search_types</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">search_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SearchType</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Set search_types if all are allowed by current Collector.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="n">search_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_type_options</span> <span class="k">for</span> <span class="n">search_type</span> <span class="ow">in</span> <span class="n">search_types</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">search_type_options</span><span class="si">}</span><span class="s2"> search types are valid.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_search_types</span> <span class="o">=</span> <span class="n">search_types</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">validate_search_type</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Decorator for validating search term object type.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">validate_from_arguments</span><span class="p">(</span>
+                <span class="n">validator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">,</span>
+                <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="n">param</span><span class="o">=</span><span class="s2">&quot;search_type&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inner</span>
+
+    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_type</span><span class="p">:</span> <span class="n">SearchType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchType</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">search_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_type_options</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can only search by </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">search_type_options</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">search_type</span>
+
+
+<div class="viewcode-block" id="BaseTermTypeCollector"><a class="viewcode-back" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTermTypeCollector.html#pycurator.collectors.base.BaseTermTypeCollector">[docs]</a><span class="k">class</span> <span class="nc">BaseTermTypeCollector</span><span class="p">(</span><span class="n">TermQueryMixin</span><span class="p">,</span> <span class="n">TypeQueryMixin</span><span class="p">,</span> <span class="n">BaseAPICollector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base for API collection classes that utilize search terms and types.</span>
+
+<span class="sd">    This base inherits from BaseAPICollector, which provides credential</span>
+<span class="sd">    info, as well as general parameters for tracking collection</span>
+<span class="sd">    progress, inherited from BaseCollector.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    repository_name : str</span>
+<span class="sd">        Name of the repository being collected from. Used for providing</span>
+<span class="sd">        updates to user, loading credentials, and saving output results.</span>
+<span class="sd">    search_terms : list-like, optional (default=None)</span>
+<span class="sd">        Terms to search over. Can be (re)set via set_search_terms() or</span>
+<span class="sd">        passed in directly to search functions to override set parameter.</span>
+<span class="sd">    search_types : list-like, optional (default=None)</span>
+<span class="sd">        Data types to search over. Can be (re)set via set_search_types()</span>
+<span class="sd">        or passed in directly to search functions to override set</span>
+<span class="sd">        parameter.</span>
+<span class="sd">    credentials : str, optional (default=None)</span>
+<span class="sd">        JSON filepath containing credentials in form</span>
+<span class="sd">        {repository_name}: {key}.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    search_terms : list of str</span>
+<span class="sd">    search_types : list of str</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    pycurator.collectors.term_type_collectors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BaseTermTypeCollector.__init__"><a class="viewcode-back" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTermTypeCollector.html#pycurator.collectors.base.BaseTermTypeCollector.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">repository_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">search_terms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">SearchTerm</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">search_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">SearchType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">credentials</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">repository_name</span><span class="o">=</span><span class="n">repository_name</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">search_terms</span> <span class="o">=</span> <span class="n">search_terms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">search_types</span> <span class="o">=</span> <span class="n">search_types</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">validate_term_and_type</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Helper for wrapping function in both term/type validators.&quot;&quot;&quot;</span>
+
+        <span class="nd">@BaseTermTypeCollector</span><span class="o">.</span><span class="n">validate_search_term</span>
+        <span class="nd">@BaseTermTypeCollector</span><span class="o">.</span><span class="n">validate_search_type</span>
+        <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inner</span>
+
+    <span class="k">def</span> <span class="nf">get_all_search_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TermTypeResultDict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Queries the API for each search term/type combination.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Can temporarily overwrite self search_terms and</span>
+<span class="sd">            search_types.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        search_dict : dict of pandas.DataFrame</span>
+<span class="sd">            Stores the results of each call to</span>
+<span class="sd">            get_individual_search_output in the form</span>
+<span class="sd">            search_dict[(search_term, search_type)] = df.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Set method variables if different than default values.</span>
+        <span class="n">search_terms</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;search_terms&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_terms</span><span class="p">)</span>
+        <span class="n">search_types</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;search_types&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_types</span><span class="p">)</span>
+
+        <span class="n">search_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">search_term</span><span class="p">,</span> <span class="n">search_type</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">search_terms</span><span class="p">,</span> <span class="n">search_types</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Searching </span><span class="si">{</span><span class="n">search_term</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">search_type</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="n">search_dict</span><span class="p">[(</span><span class="n">search_term</span><span class="p">,</span> <span class="n">search_type</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_individual_search_output</span><span class="p">(</span>
+                <span class="n">search_term</span><span class="o">=</span><span class="n">search_term</span><span class="p">,</span> <span class="n">search_type</span><span class="o">=</span><span class="n">search_type</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;Search completed.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">search_dict</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_individual_search_output</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">search_term</span><span class="p">:</span> <span class="n">SearchTerm</span><span class="p">,</span> <span class="n">search_type</span><span class="p">:</span> <span class="n">SearchType</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Abstract placeholder method for retrieving search output.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">_get_metadata_from_paths</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">object_path_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SearchTuple</span><span class="p">,</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TermTypeResultDict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Retrieves metadata for records contained in input DataFrames.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        object_path_dict : dict</span>
+<span class="sd">            Dictionary of the form {query: object_paths} for path lists.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        metadata_dict : dict of {(SearchTerm, SearchType): pd.DataFrame}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">metadata_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">query</span><span class="p">,</span> <span class="n">object_paths</span> <span class="ow">in</span> <span class="n">object_path_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">search_term</span><span class="p">,</span> <span class="n">search_type</span> <span class="o">=</span> <span class="n">query</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Querying </span><span class="si">{</span><span class="n">search_term</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">search_type</span><span class="si">}</span><span class="s2"> metadata.&quot;</span><span class="p">)</span>
+
+            <span class="n">metadata_dict</span><span class="p">[</span><span class="n">query</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_query_metadata</span><span class="p">(</span><span class="n">object_paths</span><span class="o">=</span><span class="n">object_paths</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;Metadata query complete.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">metadata_dict</span>
+
+    <span class="k">def</span> <span class="nf">get_query_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">object_paths</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Placeholder method for query metadata retrieval.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Subclass must override &quot;get_query_metadata()&quot;.&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseTypeCollector"><a class="viewcode-back" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTypeCollector.html#pycurator.collectors.base.BaseTypeCollector">[docs]</a><span class="k">class</span> <span class="nc">BaseTypeCollector</span><span class="p">(</span><span class="n">TypeQueryMixin</span><span class="p">,</span> <span class="n">BaseAPICollector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base for API collection classes that utilize search types.</span>
+
+<span class="sd">    This base inherits from BaseAPICollector, which provides credential</span>
+<span class="sd">    info, as well as general parameters for tracking collection</span>
+<span class="sd">    progress, inherited from BaseCollector.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    repository_name : str</span>
+<span class="sd">        Name of the repository being collected from. Used for providing</span>
+<span class="sd">        updates to user, loading credentials, and saving output results.</span>
+<span class="sd">    search_types : list-like, optional (default=None)</span>
+<span class="sd">        types to search over. Can be (re)set via set_search_types() or</span>
+<span class="sd">        passed in directly to search functions to override set parameter.</span>
+<span class="sd">    credentials : str, optional (default=None)</span>
+<span class="sd">        JSON filepath containing credentials in form</span>
+<span class="sd">        {repository_name}: {key}.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    search_types : list of str</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    pycurator.collectors.type_collectors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BaseTypeCollector.__init__"><a class="viewcode-back" href="../../../extensions/_autosummary/pycurator.collectors.base.BaseTypeCollector.html#pycurator.collectors.base.BaseTypeCollector.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">repository_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">search_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">SearchType</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">credentials</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">repository_name</span><span class="o">=</span><span class="n">repository_name</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">search_types</span> <span class="o">=</span> <span class="n">search_types</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">search_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Collection</span><span class="p">[</span><span class="n">SearchType</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Getter for search_types.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search_types</span>
+
+    <span class="nd">@search_types</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">search_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SearchType</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">search_types</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="n">search_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_type_options</span> <span class="k">for</span> <span class="n">search_type</span> <span class="ow">in</span> <span class="n">search_types</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">search_type_options</span><span class="si">}</span><span class="s2"> search types are valid.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_search_types</span> <span class="o">=</span> <span class="n">search_types</span>
+
+    <span class="k">def</span> <span class="nf">get_all_search_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TermResultDict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Queries the API for each search type.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Can temporarily overwrite self search_types.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        search_dict : dict of pandas.DataFrame</span>
+<span class="sd">            Stores the results of each call to</span>
+<span class="sd">            get_individual_search_output in the form</span>
+<span class="sd">            search_output_dict[{search_type}] = df.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">search_types</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;search_types&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_types</span><span class="p">)</span>
+
+        <span class="n">search_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">search_type</span> <span class="ow">in</span> <span class="n">search_types</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Searching </span><span class="si">{</span><span class="n">search_type</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="n">search_dict</span><span class="p">[</span><span class="n">search_type</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_individual_search_output</span><span class="p">(</span>
+                <span class="n">search_type</span><span class="o">=</span><span class="n">search_type</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">search_type</span><span class="si">}</span><span class="s2"> search completed.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">search_dict</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_individual_search_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_type</span><span class="p">:</span> <span class="n">SearchType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Abstract placeholder method for search output.&quot;&quot;&quot;</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">get_query_metadata</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">object_paths</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+            <span class="n">search_type</span><span class="p">:</span> <span class="n">SearchType</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Placeholder method for retrieving query metadata.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Subclass must override &quot;get_query_metadata()&quot;.&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By Michael Baluja<br/>
+  
+      &copy; Copyright 2022, Michael Baluja.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

@@ -1,0 +1,4 @@
+get_all_metadata
+================
+
+.. autofunction:: pycurator.collectors.term_type_collectors.dataverse.DataverseCollector.get_individual_search_output

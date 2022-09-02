@@ -1,0 +1,4 @@
+Zenodo Collector
+================
+
+.. autoclass:: pycurator.collectors.term_collectors.zenodo.ZenodoCollector

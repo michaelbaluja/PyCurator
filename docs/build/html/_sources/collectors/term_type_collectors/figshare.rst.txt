@@ -1,0 +1,4 @@
+Figshare Collector
+==================
+
+.. autoclass:: pycurator.collectors.term_type_collectors.figshare.FigshareCollector

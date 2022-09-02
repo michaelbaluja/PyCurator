@@ -1,0 +1,4 @@
+Kaggle Collector
+================
+
+.. autoclass:: pycurator.collectors.term_type_collectors.kaggle.KaggleCollector

@@ -1,0 +1,45 @@
+﻿pycurator.collectors.term\_collectors.DryadCollector
+====================================================
+
+.. currentmodule:: pycurator.collectors.term_collectors
+
+.. autoclass:: DryadCollector
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DryadCollector.__init__
+      ~DryadCollector.get_all_metadata
+      ~DryadCollector.get_all_search_outputs
+      ~DryadCollector.get_individual_search_output
+      ~DryadCollector.get_query_metadata
+      ~DryadCollector.get_request_output
+      ~DryadCollector.get_request_output_and_update_query_ref
+      ~DryadCollector.load_credentials
+      ~DryadCollector.merge_search_and_metadata_dicts
+      ~DryadCollector.request_execution
+      ~DryadCollector.run
+      ~DryadCollector.terminate
+      ~DryadCollector.track_determinate_progress
+      ~DryadCollector.track_indeterminate_progress
+      ~DryadCollector.validate_search_term
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DryadCollector.accepts_credentials
+      ~DryadCollector.base_url
+      ~DryadCollector.merge_on
+      ~DryadCollector.search_terms
+   
+   

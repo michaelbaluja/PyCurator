@@ -1,0 +1,4 @@
+Papers With Code Collector
+==========================
+
+.. autoclass:: pycurator.collectors.term_type_collectors.papers_with_code.PapersWithCodeCollector

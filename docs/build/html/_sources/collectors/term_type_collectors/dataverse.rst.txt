@@ -1,0 +1,4 @@
+Dataverse Collector
+===================
+
+.. autoclass:: pycurator.collectors.term_type_collectors.dataverse.DataverseCollector

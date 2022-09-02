@@ -1,0 +1,4 @@
+OpenML Collector
+================
+
+.. autoclass:: pycurator.collectors.type_collectors.open_ml.OpenMLCollector

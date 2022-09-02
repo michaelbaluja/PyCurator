@@ -1,0 +1,23 @@
+﻿pycurator
+=========
+
+.. automodule:: pycurator
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

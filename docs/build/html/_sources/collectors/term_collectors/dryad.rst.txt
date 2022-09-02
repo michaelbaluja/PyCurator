@@ -1,0 +1,4 @@
+Dryad Collector
+===============
+
+.. autoclass:: pycurator.collectors.term_collectors.dryad.DryadCollector
