@@ -26,7 +26,6 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "numpydoc"
 ]
 
 numpydoc_class_members_toctree = False
