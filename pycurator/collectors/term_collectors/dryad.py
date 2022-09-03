@@ -5,7 +5,6 @@ Module for collecting data from Dryad repository.
 from collections.abc import Collection
 from typing import Any, Optional, Union
 
-import numpy as np
 import pandas as pd
 
 from ..base import (
@@ -203,12 +202,12 @@ class DryadCollector(BaseTermCollector):
         return metadata_df
 
     @staticmethod
-    def _extract_version_ids(version_df: pd.DataFrame) -> pd.DataFrame:
+    def _extract_version_ids(version_df: pd.DataFrame) -> pd.Series:
         """Retrieve ids from DataFrame entries."""
-        return version_df["_links"].apply(
-            lambda entry: entry.get("stash:version", {}).get("href", "").split("/")[-1]
-            if entry is not np.nan
-            else None
+
+        return version_df["_links"].where(
+            version_df["_links"].isna(),
+            version_df["_links"].apply(lambda entry: entry.get("stash:version", {}).get("href", "").split("/")[-1]),
         )
 
     def get_all_metadata(self, search_dict: TermResultDict) -> TermResultDict:
@@ -225,7 +224,7 @@ class DryadCollector(BaseTermCollector):
         """
 
         object_path_dict = {
-            query: self._extract_version_ids(version_df=query_df)
+            query: query_df["version"]
             for query, query_df in search_dict.items()
         }
 
