@@ -280,9 +280,17 @@ class BaseAPICollector(BaseCollector):
             search_dict = self.get_all_search_outputs(**kwargs)
 
             # Set merge parameters
-            merge_on = vars(self).get("merge_on")
-            merge_right_on = vars(self).get("merge_right_on")
-            merge_left_on = vars(self).get("merge_left_on")
+            merge_kwargs = {}
+            try:
+                merge_kwargs["on"] = getattr(self, "merge_on")
+            except AttributeError:
+                try:
+                    merge_kwargs["left_on"] = getattr(self, "merge_left_on")
+                    merge_kwargs["right_on"] = getattr(self, "merge_right_on")
+                except AttributeError:
+                    raise NotImplementedError(
+                        f"Class '{self.__name__}' must include 'merge_on' or both 'merge_left_on' and 'merge_right_on'"
+                    )
 
             # Try to get metadata (if available)
             try:
@@ -290,12 +298,10 @@ class BaseAPICollector(BaseCollector):
                 merged_dict = self.merge_search_and_metadata_dicts(
                     search_dict=search_dict,
                     metadata_dict=metadata_dict,
-                    on=merge_on,
-                    left_on=merge_left_on,
-                    right_on=merge_right_on,
+                    **merge_kwargs
                 )
                 final_dict = merged_dict
-            except TypeError:  # Function with incorrect parameters
+            except TypeError:
                 final_dict = search_dict
         except Exception as unexpected_error:
             self.status_queue.put(
@@ -486,8 +492,8 @@ class BaseAPICollector(BaseCollector):
             if query_key in metadata_dict:
                 metadata_df = metadata_dict[query_key]
                 df_all = pd.merge(
-                    left=search_df.convert_dtypes(),
-                    right=metadata_df.convert_dtypes(),
+                    left=search_df,
+                    right=metadata_df,
                     how="outer",
                     suffixes=("_search", "_metadata"),
                     **kwargs,
@@ -663,7 +669,7 @@ class TypeQueryMixin:
     """
 
     _search_types: tuple[SearchType, ...]
-    search_type_options: tuple[SearchType, ...]
+    search_type_options: tuple[SearchType, ...] = None
 
     @property
     def search_types(self) -> tuple[SearchType, ...]:
